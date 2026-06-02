@@ -35,7 +35,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# large media files (host separately or use Git LFS)
-public/videos/ptsd-founders.mp4
+# large media files managed via Git LFS (see .gitattributes)
 
 .vercel
