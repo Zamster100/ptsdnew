@@ -12,6 +12,13 @@ export const HeroVideo = () => {
     return () => clearTimeout(t)
   }, [])
 
+  // Allow external components (e.g. TVSection logo button) to open the modal
+  useEffect(() => {
+    const handler = () => setVisible(true)
+    window.addEventListener('openHeroVideo', handler)
+    return () => window.removeEventListener('openHeroVideo', handler)
+  }, [])
+
   const close = useCallback(() => setVisible(false), [])
 
   useEffect(() => {

@@ -1,13 +1,5 @@
-/* Recessed inset shadow so the video looks set into the bezel */
-.crtScreen {
-  border-radius: 4px;
-  box-shadow: inset 0 0 14px rgba(0, 0, 0, 0.8);
-}
-
-/* Subtle drifting scanlines over the video */
+/* Subtle drifting scanlines over the full-screen video */
 .scanlines {
-  position: absolute;
-  inset: 0;
   pointer-events: none;
   background: repeating-linear-gradient(
     0deg,
@@ -24,14 +16,68 @@
   to   { background-position: 0 120px; }
 }
 
-/* Edge vignette */
+/* Edge vignette darkens corners */
 .vignette {
-  position: absolute;
-  inset: 0;
   pointer-events: none;
   background: radial-gradient(
     ellipse at center,
-    transparent 50%,
-    rgba(0, 0, 0, 0.65) 100%
+    transparent 40%,
+    rgba(0, 0, 0, 0.75) 100%
   );
+}
+
+/* Logo button */
+.logoButton {
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+/* "PLAY ME" label */
+.playMe {
+  font-family: monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: rgba(255, 220, 100, 0.7);
+  animation: glowPulse 2.4s ease-in-out infinite;
+}
+
+/* Outer glow ring that pulses */
+.logoGlow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  padding: 16px;
+  animation: glowPulse 2.4s ease-in-out infinite;
+}
+
+@keyframes glowPulse {
+  0%, 100% {
+    filter: drop-shadow(0 0 8px rgba(255, 200, 50, 0.5))
+            drop-shadow(0 0 20px rgba(255, 150, 0, 0.3));
+  }
+  50% {
+    filter: drop-shadow(0 0 18px rgba(255, 220, 60, 0.95))
+            drop-shadow(0 0 40px rgba(255, 160, 0, 0.65))
+            drop-shadow(0 0 70px rgba(255, 100, 0, 0.3));
+  }
+}
+
+/* Logo scales subtly in sync with glow */
+.logoPulse {
+  animation: scalePulse 2.4s ease-in-out infinite;
+  transition: transform 0.15s ease;
+}
+
+.logoButton:hover .logoPulse {
+  transform: scale(1.12);
+}
+
+@keyframes scalePulse {
+  0%, 100% { transform: scale(1);    }
+  50%       { transform: scale(1.06); }
 }
