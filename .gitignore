@@ -36,6 +36,6 @@ yarn-error.log*
 next-env.d.ts
 
 # large media files (host separately or use Git LFS)
-public/videos/
+public/videos/ptsd-founders.mp4
 
 .vercel
