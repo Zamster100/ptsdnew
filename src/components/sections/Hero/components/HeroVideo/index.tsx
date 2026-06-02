@@ -9,6 +9,7 @@ export const HeroVideo = () => {
 
   useEffect(() => {
     const t = setTimeout(() => setVisible(true), 700)
+
     return () => clearTimeout(t)
   }, [])
 
@@ -16,6 +17,7 @@ export const HeroVideo = () => {
   useEffect(() => {
     const handler = () => setVisible(true)
     window.addEventListener('openHeroVideo', handler)
+
     return () => window.removeEventListener('openHeroVideo', handler)
   }, [])
 
@@ -26,6 +28,7 @@ export const HeroVideo = () => {
       if (e.key === 'Escape') close()
     }
     window.addEventListener('keydown', onKey)
+
     return () => window.removeEventListener('keydown', onKey)
   }, [close])
 

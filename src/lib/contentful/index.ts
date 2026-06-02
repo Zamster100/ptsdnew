@@ -12,6 +12,7 @@ function getPublishedClient() {
       environment: config.contentful.environment || 'master',
     })
   }
+
   return client
 }
 
@@ -24,6 +25,7 @@ function getPreviewClient() {
       host: 'preview.contentful.com',
     })
   }
+
   return previewClient
 }
 

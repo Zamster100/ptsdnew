@@ -21,6 +21,7 @@ function getPosOnCanvas(
   const scaleY = CANVAS_H / rect.height
   const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
   const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
+
   return {
     x: (clientX - rect.left) * scaleX,
     y: (clientY - rect.top) * scaleY,
