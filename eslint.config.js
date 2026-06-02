@@ -20,6 +20,21 @@ export default [
       globals: {
         process: 'readonly',
         console: 'readonly',
+        // Browser globals
+        window: 'readonly',
+        document: 'readonly',
+        navigator: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
+        setInterval: 'readonly',
+        clearInterval: 'readonly',
+        CustomEvent: 'readonly',
+        Event: 'readonly',
+        KeyboardEvent: 'readonly',
+        HTMLElement: 'readonly',
+        HTMLVideoElement: 'readonly',
+        HTMLButtonElement: 'readonly',
+        React: 'readonly',
       },
     },
     plugins: {
