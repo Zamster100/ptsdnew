@@ -1,0 +1,36 @@
+.colorsEffect {
+  animation: colorsEffect 3s linear infinite;
+}
+
+@keyframes colorsEffect {
+  0% {
+    background-color: var(--color-white);
+  }
+  25% {
+    background-color: var(--color-main-purple);
+  }
+  50% {
+    background-color: var(--color-main-yellow);
+  }
+  75% {
+    background-color: var(--color-main-red);
+  }
+  99% {
+    background-color: var(--color-main-cyan);
+  }
+  100% {
+    background-color: var(--color-white);
+  }
+}
+
+.colorsEffect {
+  transition:
+    background-color 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+.colorsEffect:hover {
+  animation-play-state: paused;
+  background-color: var(--color-main-cyan) !important;
+  box-shadow: 0px 8px 38px rgba(28, 232, 215, 0.3);
+}

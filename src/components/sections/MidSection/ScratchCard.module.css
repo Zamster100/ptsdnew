@@ -1,0 +1,20 @@
+.shimmer {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    105deg,
+    transparent 40%,
+    rgba(255, 255, 255, 0.13) 50%,
+    transparent 60%
+  );
+  background-size: 300% 100%;
+  animation: shimmer 2.5s ease-in-out infinite;
+  z-index: 10;
+}
+
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}

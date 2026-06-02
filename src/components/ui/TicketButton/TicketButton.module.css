@@ -1,0 +1,49 @@
+.wrapper {
+  display: inline-block;
+}
+
+.button {
+  min-height: 59px;
+  width: fit-content;
+  min-width: 160px;
+  cursor: pointer;
+  border-radius: 16px;
+  font-size: 1.25rem;
+  line-height: 1;
+  font-weight: 800;
+  color: black;
+  padding-left: 2rem;
+  padding-right: 2rem;
+  /* Semicircle notches on left and right — classic ticket stub shape */
+  -webkit-mask-image:
+    radial-gradient(circle at 0% 50%, transparent 13px, black 14px),
+    radial-gradient(circle at 100% 50%, transparent 13px, black 14px);
+  -webkit-mask-composite: destination-in;
+  mask-image:
+    radial-gradient(circle at 0% 50%, transparent 13px, black 14px),
+    radial-gradient(circle at 100% 50%, transparent 13px, black 14px);
+  mask-composite: intersect;
+  animation: ticketColors 3s linear infinite;
+}
+
+@keyframes ticketColors {
+  0%   { background-color: white; }
+  25%  { background-color: var(--color-main-purple); }
+  50%  { background-color: var(--color-main-yellow); }
+  75%  { background-color: var(--color-main-red); }
+  99%  { background-color: var(--color-main-cyan); }
+  100% { background-color: white; }
+}
+
+.button:hover {
+  animation-play-state: paused;
+  background-color: var(--color-main-cyan) !important;
+}
+
+@media (min-width: 1280px) {
+  .button {
+    min-height: 92px;
+    min-width: 224px;
+    font-size: 2rem;
+  }
+}
