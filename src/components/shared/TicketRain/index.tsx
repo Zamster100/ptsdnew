@@ -32,7 +32,7 @@ export const TicketRain = () => {
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    const img = new Image()
+    const img = new window.Image()
     img.src = '/images/gold-ticket.png'
     imgRef.current = img
 
@@ -63,10 +63,10 @@ export const TicketRain = () => {
       ([entry]) => {
         if (entry.isIntersecting) {
           spawnTickets(canvas.width || canvas.offsetWidth)
-          startTimeRef.current = performance.now()
+          startTimeRef.current = window.performance.now()
           animate()
         } else {
-          cancelAnimationFrame(rafRef.current)
+          window.cancelAnimationFrame(rafRef.current)
           ctx.clearRect(0, 0, canvas.width, canvas.height)
         }
       },
@@ -77,7 +77,7 @@ export const TicketRain = () => {
     let allDone = false
 
     const animate = () => {
-      const now = performance.now()
+      const now = window.performance.now()
       const elapsed = now - startTimeRef.current
       ctx.clearRect(0, 0, canvas.width, canvas.height)
       allDone = true
@@ -117,7 +117,7 @@ export const TicketRain = () => {
       }
 
       if (!allDone) {
-        rafRef.current = requestAnimationFrame(animate)
+        rafRef.current = window.requestAnimationFrame(animate)
       }
     }
 
@@ -127,7 +127,7 @@ export const TicketRain = () => {
 
     return () => {
       window.removeEventListener('resize', resize)
-      cancelAnimationFrame(rafRef.current)
+      window.cancelAnimationFrame(rafRef.current)
       observer.disconnect()
     }
   }, [])
