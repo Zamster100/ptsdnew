@@ -1,7 +1,10 @@
+import { TicketRain } from '@/components/shared/TicketRain'
+
 export const GoldenTicketSection = () => {
   return (
     <section className="section-blend px-[15px] py-10 font-sans md:px-[60px] md:py-14">
       <div className="relative overflow-hidden rounded-3xl border border-ticket-gold/30 bg-gradient-to-br from-ticket-gold/10 via-main-black to-main-black p-8 text-white md:p-12">
+        <TicketRain />
         {/* Ambient glow */}
         <div className="pointer-events-none absolute -top-24 -left-24 h-96 w-96 rounded-full bg-ticket-gold/10 blur-[100px]" />
         <div className="pointer-events-none absolute -bottom-24 -right-24 h-64 w-64 rounded-full bg-ticket-gold/8 blur-[80px]" />

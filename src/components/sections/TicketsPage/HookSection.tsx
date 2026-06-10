@@ -2,10 +2,10 @@ import Image from 'next/image'
 import { Button } from '@/components/ui/Button'
 
 const stats = [
-  { value: '4,444', label: 'Total tickets', gold: false },
+  { value: '1,333', label: 'Presale spots', gold: false },
   { value: '5', label: 'Golden tickets', gold: true },
   { value: '100x', label: 'Max multiplier', gold: true },
-  { value: '5', label: 'Rarity tiers', gold: false },
+  { value: '30%', label: 'Of collection presold', gold: false },
 ]
 
 export const HookSection = () => {
@@ -29,18 +29,36 @@ export const HookSection = () => {
           </div>
 
           <p className="font-manrope mb-3 text-base font-bold text-white md:text-xl">
-            <span className="text-ticket-red">A NON-FUDABLE TICKET.</span>
+            <span className="text-ticket-red">PRESALE. PAY NOW. MINT FREE ON OPENSEA.</span>
           </p>
 
           <p className="font-manrope mb-10 text-base leading-[1.75] text-light-text md:text-lg">
-            Every PTSD Ticket gives you future PTSD token allocation when the
-            token launches. Your rarity decides your multiplier. Mint now.
-            Reveal your tier. Get positioned before the public launch.
+            Your community got you in early. Pay now, mint free on OpenSea
+            July 7th. Your rarity determines your PTSD token multiplier — locked
+            in at reveal.
           </p>
 
           <a href="#purchase-section">
-            <Button className="px-10">Purchase Your Ticket</Button>
+            <Button className="px-10">Secure Your Presale Spot</Button>
           </a>
+
+          {/* Launch date */}
+          <div className="mt-6 inline-flex items-center gap-4 rounded-xl border border-main-yellow/25 bg-main-yellow/5 px-5 py-3">
+            {/* Pulsing live dot */}
+            <span className="relative flex h-3 w-3 shrink-0">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-main-yellow opacity-60" />
+              <span className="relative inline-flex h-3 w-3 rounded-full bg-main-yellow" />
+            </span>
+
+            <div>
+              <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-main-yellow/70">
+                Public Mint
+              </p>
+              <p className="font-manrope text-xl font-black uppercase tracking-wide text-white md:text-2xl">
+                July 7, 2026
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Right: character + sign ~55% — transparent PNG, no container styling */}

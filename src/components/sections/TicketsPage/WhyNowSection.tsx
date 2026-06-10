@@ -18,9 +18,10 @@ export const WhyNowSection = () => {
           early-access layer before it opens to the wider market.
         </p>
         <p className="font-manrope text-base leading-[1.75] text-light-text">
-          Ticket holders are the first PTSD token holders. After the mint closes,
-          this path is gone. Ticket holders are the first to have a PTSD token
-          allocation path.
+          Presale closes when the 1,333 spots are gone — or before July 7th,
+          when the public mint opens on OpenSea. After that, you&apos;re in the
+          public queue like everyone else. The people who got in here got in
+          before the queue existed.
         </p>
       </div>
     </section>

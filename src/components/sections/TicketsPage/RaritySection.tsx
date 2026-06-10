@@ -5,7 +5,7 @@ const rarities = [
   { name: 'Rare',      count: 1000, multiplier: '2x',    color: '#ef4444', pct: '22%' },
   { name: 'Epic',      count: 300,  multiplier: '3x',    color: '#22c55e', pct: '7%'  },
   { name: 'Legendary', count: 139,  multiplier: '5x',    color: '#3b82f6', pct: '3%'  },
-  { name: 'Golden',    count: 5,    multiplier: '100x+', color: '#c9a227', pct: '2%'  },
+  { name: 'Golden',    count: 5,    multiplier: '100x+', color: '#c9a227', pct: '1%'  },
 ]
 
 const steps = [
@@ -35,9 +35,9 @@ export const RaritySection = () => {
               access. The token is coming. This is how you get in before everyone else.
             </p>
             <p className="font-manrope text-base leading-[1.75] text-light-text">
-              Every ticket is randomly assigned a rarity at mint. Rarity determines
-              your PTSD token multiplier at launch. There is no way to choose, only to
-              mint.
+              Rarity is assigned at mint from the full 4,444 collection. Your presale
+              payment locks your spot — the reveal happens when you mint on OpenSea.
+              There is no way to choose, only to mint.
             </p>
             <p className="font-manrope text-base leading-[1.75] text-white">
               Even a Common ticket is a ticket. Common = 1x token allocation. That

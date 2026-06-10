@@ -5,7 +5,7 @@ import { DiscordIcon } from '@/components/icons/DiscordIcon'
 
 export const TicketsHeader = () => {
   return (
-    <header className="fixed left-0 right-0 top-0 z-50 flex items-center justify-between px-[15px] py-4 md:px-[40px]"
+    <header className="fixed left-0 right-0 top-8 z-50 flex items-center justify-between px-[15px] py-4 md:px-[40px]"
       style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, transparent 100%)' }}
     >
       {/* Logo */}

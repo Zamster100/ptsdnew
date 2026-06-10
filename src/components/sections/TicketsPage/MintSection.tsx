@@ -112,14 +112,14 @@ export const MintSection = () => {
               Presale · Purchase now
             </p>
             <h2 className="font-manrope mb-3 text-[32px] font-black leading-[1.1] md:text-[48px]">
-              PURCHASE YOUR
+              SECURE YOUR
               <br />
-              <span className="text-ticket-red">TICKETS.</span>
+              <span className="text-ticket-red">PRESALE SPOT.</span>
             </h2>
             <p className="font-manrope mb-8 max-w-xl text-base leading-[1.75] text-light-text">
-              4,444 tickets. 5 rarity tiers. Every ticket maps to future PTSD token
-              access. The more you purchase, the more allocation you lock in before
-              anyone else.
+              Pay now, mint free on OpenSea on July 7th. 1,333 presale spots
+              across 5 rarity tiers. The more you secure, the more allocation
+              you lock in before anyone else.
             </p>
 
             <div className="w-[90%]">
