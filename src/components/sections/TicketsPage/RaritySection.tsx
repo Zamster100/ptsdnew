@@ -34,6 +34,7 @@ export const RaritySection = () => {
       { threshold: 0.3 }
     )
     observer.observe(el)
+
     return () => observer.disconnect()
   }, [])
 

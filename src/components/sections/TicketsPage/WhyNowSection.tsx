@@ -22,6 +22,7 @@ export const WhyNowSection = () => {
       { threshold: 0.2 }
     )
     observer.observe(el)
+
     return () => observer.disconnect()
   }, [])
 
