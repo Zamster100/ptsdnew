@@ -3,11 +3,37 @@ import { TicketRain } from '@/components/shared/TicketRain'
 export const GoldenTicketSection = () => {
   return (
     <section className="section-blend px-[15px] py-10 font-sans md:px-[60px] md:py-14">
-      <div className="relative overflow-hidden rounded-3xl border border-ticket-gold/30 bg-gradient-to-br from-ticket-gold/10 via-main-black to-main-black p-8 text-white md:p-12">
+      {/* Laser border wrapper — 2px padding becomes the animated border */}
+      <div className="golden-laser-wrapper rounded-3xl p-[2px]"
+        style={{ boxShadow: '0 0 80px rgba(201,162,39,0.14), 0 0 200px rgba(201,162,39,0.07)' }}
+      >
+      <div
+        className="relative overflow-hidden rounded-[22px] p-8 text-white md:p-12"
+        style={{
+          background: 'linear-gradient(145deg, #1c1a10 0%, #0e0d08 30%, #070707 60%, #0c0b07 100%)',
+          boxShadow: 'inset 0 1px 0 rgba(201,162,39,0.4), inset 0 -1px 0 rgba(0,0,0,0.6)',
+        }}
+      >
         <TicketRain />
-        {/* Ambient glow */}
-        <div className="pointer-events-none absolute -top-24 -left-24 h-96 w-96 rounded-full bg-ticket-gold/10 blur-[100px]" />
-        <div className="pointer-events-none absolute -bottom-24 -right-24 h-64 w-64 rounded-full bg-ticket-gold/8 blur-[80px]" />
+
+        {/* Hover laser sweep across background */}
+        <div className="golden-laser-sweep" />
+
+        {/* Deep corner glows */}
+        <div className="pointer-events-none absolute -top-40 -left-40 h-[560px] w-[560px] rounded-full bg-ticket-gold/12 blur-[130px]" />
+        <div className="pointer-events-none absolute -bottom-32 -right-32 h-[400px] w-[400px] rounded-full bg-ticket-gold/8 blur-[110px]" />
+
+        {/* Diagonal metallic shine */}
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{ background: 'linear-gradient(118deg, transparent 15%, rgba(201,162,39,0.07) 38%, rgba(255,255,255,0.07) 50%, rgba(201,162,39,0.05) 62%, transparent 82%)' }}
+        />
+
+        {/* Top-edge gold highlight */}
+        <div className="pointer-events-none absolute top-0 right-0 left-0 h-px bg-gradient-to-r from-transparent via-ticket-gold/80 to-transparent" />
+
+        {/* Left-edge highlight */}
+        <div className="pointer-events-none absolute top-0 bottom-0 left-0 w-px bg-gradient-to-b from-ticket-gold/50 via-ticket-gold/10 to-transparent" />
 
         <p className="relative mb-6 font-mono text-xs uppercase tracking-widest text-ticket-gold">
           Golden Ticket
@@ -54,6 +80,7 @@ export const GoldenTicketSection = () => {
             If you pull Gold, you weren't just early. You were stupid early.
           </p>
         </div>
+      </div>
       </div>
     </section>
   )

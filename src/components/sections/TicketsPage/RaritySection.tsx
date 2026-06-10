@@ -1,4 +1,7 @@
+'use client'
+
 import Image from 'next/image'
+import { useEffect, useRef, useState } from 'react'
 
 const rarities = [
   { name: 'Common',    count: 3000, multiplier: '1x',    color: '#f97316', pct: '67%' },
@@ -15,6 +18,25 @@ const steps = [
 ]
 
 export const RaritySection = () => {
+  const tableRef = useRef<HTMLDivElement>(null)
+  const [animated, setAnimated] = useState(false)
+
+  useEffect(() => {
+    const el = tableRef.current
+    if (!el) return
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setAnimated(true)
+          observer.disconnect()
+        }
+      },
+      { threshold: 0.3 }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
   return (
     <section className="section-blend px-[15px] py-12 font-sans text-white md:px-[60px] md:py-16">
       <div className="bg-light-bg mb-8 h-[1px] w-full" />
@@ -61,12 +83,12 @@ export const RaritySection = () => {
       </div>
 
       {/* Full-width rarity table */}
-      <div className="bg-light-bg mb-16 rounded-2xl p-6 md:p-10">
+      <div ref={tableRef} className="bg-light-bg mb-16 rounded-2xl p-6 md:p-10">
         <p className="mb-8 font-mono text-xs uppercase tracking-widest text-light-text">
           Rarity System
         </p>
         <div className="space-y-6">
-          {rarities.map((r) => (
+          {rarities.map((r, i) => (
             <div key={r.name} className="flex items-center gap-5">
               <div className="w-28 flex-shrink-0">
                 <span
@@ -80,7 +102,11 @@ export const RaritySection = () => {
                 <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
                   <div
                     className="h-full rounded-full"
-                    style={{ width: r.pct, backgroundColor: r.color }}
+                    style={{
+                      width: animated ? r.pct : '0%',
+                      backgroundColor: r.color,
+                      transition: `width 0.9s cubic-bezier(0.4, 0, 0.2, 1) ${i * 120}ms`,
+                    }}
                   />
                 </div>
               </div>

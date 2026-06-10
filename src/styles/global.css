@@ -53,6 +53,60 @@ body {
   );
 }
 
+/* Golden card laser border */
+@property --laser-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes laser-spin {
+  to { --laser-angle: 360deg; }
+}
+
+@keyframes laser-sweep {
+  0%   { transform: translateX(-120%) skewX(-12deg); opacity: 0; }
+  20%  { opacity: 1; }
+  80%  { opacity: 1; }
+  100% { transform: translateX(220%) skewX(-12deg); opacity: 0; }
+}
+
+.golden-laser-wrapper {
+  background: conic-gradient(
+    from var(--laser-angle) at 50% 50%,
+    rgba(201,162,39,0.25) 0deg,
+    rgba(201,162,39,0.25) 290deg,
+    rgba(255,215,0,0.95)  330deg,
+    rgba(255,255,255,0.9) 345deg,
+    rgba(255,215,0,0.95)  360deg
+  );
+  transition: background 0.3s ease;
+}
+
+.golden-laser-wrapper:hover {
+  animation: laser-spin 2.4s linear infinite;
+}
+
+.golden-laser-sweep {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 35%,
+    rgba(201,162,39,0.10) 48%,
+    rgba(255,220,60,0.18) 54%,
+    rgba(201,162,39,0.10) 60%,
+    transparent 72%
+  );
+  opacity: 0;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.golden-laser-wrapper:hover .golden-laser-sweep {
+  animation: laser-sweep 1.8s ease-in-out infinite;
+}
+
 /* Stock ticker scroll */
 @keyframes ticker {
   0% { transform: translateX(0); }
