@@ -14,13 +14,13 @@ export const FinalCTASection = () => {
           <br />
           <span className="text-ticket-gold">5 GOLDEN.</span>
           <br />
-          ONE MINT WINDOW.
+          <span className="text-ticket-red">1,333 PRESALE SPOTS.</span>
         </h2>
 
         <p className="font-manrope mx-auto mb-3 max-w-xl text-base leading-[1.75] text-light-text md:text-lg">
-          Every ticket you mint is a rarity reveal. Every rarity reveal is a token
-          multiplier locked in. The mint closes when they're gone, or when the
-          window ends. After that, tickets only exist on secondary.
+          Presale holders pay now and mint free on OpenSea on July 7th. The
+          presale window is 30% of the collection. When those 1,333 spots are
+          gone, this price and this access level are gone with them.
         </p>
         <p className="font-manrope mx-auto mb-12 max-w-xl text-base font-medium leading-[1.75] text-white">
           This is the beginning of the PTSD token economy. The ticket is how you
@@ -28,7 +28,7 @@ export const FinalCTASection = () => {
         </p>
 
         <a href="#purchase-section">
-          <Button className="px-14">Purchase Your Ticket</Button>
+          <Button className="px-14">Secure Your Presale Spot</Button>
         </a>
       </div>
     </section>

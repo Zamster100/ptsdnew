@@ -3,6 +3,7 @@ import '../styles/global.css'
 import { Rubik_Glitch, Manrope } from 'next/font/google'
 import { cn } from '@/lib/utils'
 import { Metadata } from 'next'
+import { TickerBanner } from '@/components/shared/TickerBanner'
 
 const rubikGlitch = Rubik_Glitch({
   subsets: ['latin'],
@@ -64,6 +65,7 @@ export default function RootLayout({
           manrope.className,
         )}
       >
+        <TickerBanner />
         {children}
       </body>
     </html>

@@ -116,14 +116,14 @@ const MobileHero = ({
     <div className="relative md:hidden">
       <Badge
         rounded="right"
-        className="absolute top-[15px] left-0 z-10 flex items-center gap-2"
+        className="absolute top-[47px] left-0 z-10 flex items-center gap-2"
       >
         <StarIcon />
         <span>Starring PT, SD, ZachGPT, Cousin Dick</span>
       </Badge>
       <Badge
         rounded="right"
-        className="absolute top-[45px] left-0 z-10 flex items-center gap-2"
+        className="absolute top-[79px] left-0 z-10 flex items-center gap-2"
       >
         <TopTenIcon />
         <span>#1 Rated show on X</span>

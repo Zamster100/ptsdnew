@@ -19,12 +19,16 @@ const faqs = [
     a: 'PTSD Show is building a token economy around the brand and community. These tickets are the first and only pre-launch access path. Ticket holders are the first wave — before any public round.',
   },
   {
-    q: 'Is there a limit on how many I can mint?',
-    a: 'No enforced cap. Mint as few or as many as makes sense to you. The math on multiple mints is straightforward — more tickets, more rolls, more total allocation across tiers.',
+    q: 'What exactly am I paying for right now?',
+    a: "You're prepaying your mint. When PTSD Tickets launches on OpenSea on July 7th, 2026, presale holders mint for free — your payment today is your ticket in. Everyone else pays mint price on the day.",
   },
   {
-    q: "What happens if I don't mint?",
-    a: "The ticket window closes when all 4,444 are gone or the mint ends. After that, this allocation path doesn't exist. Secondary market is the only option — at whatever price holders decide.",
+    q: 'Is there a limit on how many I can mint?',
+    a: '5 tickets per wallet. The presale pool is capped at 30% of the collection (~1,333 tickets total). More tickets mean more rarity rolls and more total allocation stacking across tiers.',
+  },
+  {
+    q: "What happens if I don't get in during presale?",
+    a: "The presale window closes when the ~1,333 spots are gone, or when the public mint opens on July 7th. After that, you'd need to mint in the public round on OpenSea — no presale pricing, no guaranteed spot. Secondary market is the only other option.",
   },
   {
     q: 'Why should I mint more than one?',

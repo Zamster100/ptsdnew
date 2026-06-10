@@ -53,6 +53,16 @@ body {
   );
 }
 
+/* Stock ticker scroll */
+@keyframes ticker {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-ticker {
+  animation: ticker 45s linear infinite;
+}
+
 /* Custom slider styles */
 .episodes-scroll-container,
 .partners-scroll-container {
