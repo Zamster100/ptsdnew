@@ -2,7 +2,7 @@ const ITEMS = [
   { text: '4,444 TOTAL SUPPLY', cls: 'text-main-cyan' },
   { text: '5 GOLDEN TICKETS', cls: 'text-ticket-gold' },
   { text: '100x MAX TOKEN MULTIPLIER', cls: 'text-ticket-gold' },
-  { text: 'PUBLIC MINT · JULY 7, 2026', cls: 'text-main-yellow' },
+  { text: 'PUBLIC MINT · DATE TBD', cls: 'text-main-yellow' },
   { text: '5 RARITY TIERS', cls: 'text-white/70' },
   { text: 'PRE-TOKEN ACCESS ROUND', cls: 'text-main-cyan' },
   { text: 'SAME PRICE · RANDOM GOLDEN REVEAL', cls: 'text-ticket-gold' },
@@ -32,7 +32,7 @@ export const TickerBanner = () => (
     {/* Left label */}
     <div className="relative z-10 flex h-full shrink-0 items-center bg-ticket-red px-3">
       <span className="font-mono text-[9px] font-black uppercase tracking-[0.2em] text-white">
-        PRESALE
+        GUARANTEED
       </span>
     </div>
 

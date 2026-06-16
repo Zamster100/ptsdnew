@@ -69,12 +69,7 @@ export const GoldenTicketSection = () => {
 
         <div className="relative max-w-2xl space-y-3">
           <p className="font-manrope text-base leading-[1.75] text-white">
-            Each Golden Ticket unlocks a 100x PTSD token multiplier — the highest
-            in the entire collection. Five people in the world will pull one. Same
-            mint. Same price. Same random chance.
-          </p>
-          <p className="font-manrope text-base leading-[1.75] text-light-text">
-            Most people will mint for early access. A few will pull destiny.
+            Five in the world. Same mint, same price, same random chance as everyone else.
           </p>
           <p className="font-manrope text-sm font-bold text-ticket-gold">
             If you pull Gold, you weren't just early. You were stupid early.

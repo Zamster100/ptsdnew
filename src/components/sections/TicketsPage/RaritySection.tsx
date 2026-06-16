@@ -54,18 +54,11 @@ export const RaritySection = () => {
 
           <div className="max-w-2xl space-y-3">
             <p className="font-manrope text-base leading-[1.75] text-light-text md:text-lg">
-              4,444 tickets. 5 rarity tiers. Every ticket maps to future PTSD token
-              access. The token is coming. This is how you get in before everyone else.
-            </p>
-            <p className="font-manrope text-base leading-[1.75] text-light-text">
-              Rarity is assigned at mint from the full 4,444 collection. Your presale
-              payment locks your spot — the reveal happens when you mint on OpenSea.
-              There is no way to choose, only to mint.
+              4,444 tickets. 5 rarity tiers. Every ticket maps to a future PTSD token allocation.
+              Rarity is random, assigned at mint. You can't choose, only roll.
             </p>
             <p className="font-manrope text-base leading-[1.75] text-white">
-              Even a Common ticket is a ticket. Common = 1x token allocation. That
-              alone is the earliest-access path available before the public launch. The
-              multiplier is the upside. The allocation is the floor.
+              Even a Common ticket gets you in early. The multiplier is the upside. Getting in at all is the floor.
             </p>
           </div>
         </div>
@@ -149,7 +142,7 @@ export const RaritySection = () => {
       <p className="font-manrope max-w-2xl text-base leading-[1.75] text-light-text">
         When the PTSD token launches, your ticket determines your allocation tier.
         The higher your rarity, the bigger your token multiplier. No action
-        required — your rarity is set at mint.
+        required, your rarity is set at mint.
       </p>
     </section>
   )

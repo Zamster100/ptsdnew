@@ -89,18 +89,13 @@ export const WhyNowSection = () => {
           className="font-manrope text-base leading-[1.75]"
           style={{ color: '#aaffcc' }}
         >
-          PTSD Show is live. The brand is growing. The audience is already here.
-          The PTSD token is the next chapter, and these 4,444 tickets are the only
-          early-access layer before it opens to the wider market.
+          The PTSD token is the next chapter. These 4,444 tickets are the only early-access layer before it opens to the wider market.
         </p>
         <p
           className="font-manrope text-base leading-[1.75]"
           style={{ color: '#88ccff' }}
         >
-          Presale closes when the 1,333 spots are gone — or before July 7th,
-          when the public mint opens on OpenSea. After that, you&apos;re in the
-          public queue like everyone else. The people who got in here got in
-          before the queue existed.
+          When the 1,333 spots are gone, you&apos;re in the public queue like everyone else. The people who got in here got in before the queue existed.
         </p>
       </div>
     </section>

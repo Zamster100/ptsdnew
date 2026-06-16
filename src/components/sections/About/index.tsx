@@ -59,7 +59,7 @@ export const About = () => {
               The story follows PT, a 20-year-old college dropout with diamond
               hands and a dream of finally making it. Fueled by ambition,
               hopium, and questionable alpha, PT dives headfirst into the
-              trenches—where he will be forced to confront the only thing
+              trenches, where he will be forced to confront the only thing
               scarier than a bear market: himself.
             </p>
             <br />

@@ -8,27 +8,31 @@ import { ChevronIcon } from '@/components/icons'
 const faqs = [
   {
     q: 'Why is this different from a normal NFT?',
-    a: "Because it has a specific, stated purpose beyond the art. Every ticket has a direct function — it maps to a future PTSD token allocation. It's not a JPEG. It's a position in something that hasn't fully launched yet.",
+    a: "Because it has a specific, stated purpose beyond the art. Every ticket has a direct function - it maps to a future PTSD token allocation. It's not a JPEG. It's a position in something that hasn't fully launched yet.",
   },
   {
     q: 'What if I pull Common?',
-    a: "You're still in. A Common ticket gives you base PTSD token allocation — the same early-access position that won't exist once the token opens to the public. The floor is the point.",
+    a: "You're still in. Common = 1x PTSD token allocation. That's the same early-access position that won't exist once the token opens to the public. The multiplier is the upside. The allocation is the floor.",
+  },
+  {
+    q: 'What does a Golden Ticket get me?',
+    a: "A 100x PTSD token multiplier, the highest in the entire collection. Only 5 Golden Tickets exist across all 4,444 mints. Same price as every other ticket, same random reveal. No way to choose it, no premium to pay for it. If you pull one, you were simply in before almost everyone else.",
   },
   {
     q: 'What is the PTSD token?',
-    a: 'PTSD Show is building a token economy around the brand and community. These tickets are the first and only pre-launch access path. Ticket holders are the first wave — before any public round.',
+    a: 'PTSD Show is building a token economy around the brand and community. These tickets are the first and only pre-launch access path. Ticket holders are the first wave, before any public round.',
   },
   {
     q: 'What exactly am I paying for right now?',
-    a: "You're prepaying your mint. When PTSD Tickets launches on OpenSea on July 7th, 2026, presale holders mint for free — your payment today is your ticket in. Everyone else pays mint price on the day.",
+    a: "You're prepaying your mint. When PTSD Tickets launches on OpenSea (date TBD), guaranteed spot holders mint for free. Your payment today is your ticket in. Everyone else pays mint price on the day.",
   },
   {
     q: 'Is there a limit on how many I can mint?',
-    a: '5 tickets per wallet. The presale pool is capped at 30% of the collection (~1,333 tickets total). More tickets mean more rarity rolls and more total allocation stacking across tiers.',
+    a: '5 tickets per wallet. The guaranteed pool is capped at 30% of the collection (~1,333 tickets total). More tickets mean more rarity rolls and more total allocation stacking across tiers.',
   },
   {
-    q: "What happens if I don't get in during presale?",
-    a: "The presale window closes when the ~1,333 spots are gone, or when the public mint opens on July 7th. After that, you'd need to mint in the public round on OpenSea — no presale pricing, no guaranteed spot. Secondary market is the only other option.",
+    q: "What happens if I don't get in during the guaranteed round?",
+    a: "The guaranteed window closes when the ~1,333 spots are gone, or when the public mint opens (date TBD). After that, you'd need to mint in the public round on OpenSea. No guaranteed pricing, no guaranteed spot. Secondary market is the only other option.",
   },
   {
     q: 'Why should I mint more than one?',
