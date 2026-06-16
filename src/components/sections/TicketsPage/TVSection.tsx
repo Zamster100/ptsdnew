@@ -1,18 +1,24 @@
 'use client'
 
 import Image from 'next/image'
+import { useRef } from 'react'
 import { cn } from '@/lib/utils'
 import styles from './TVSection.module.css'
 
-const openHeroVideo = () => window.dispatchEvent(new CustomEvent('openHeroVideo'))
-
 export const TVSection = () => {
+  const videoRef = useRef<HTMLVideoElement>(null)
+
+  const handlePlay = () => {
+    videoRef.current?.play()
+    window.dispatchEvent(new CustomEvent('openHeroVideo'))
+  }
+
   return (
     <section className="relative h-screen w-full overflow-hidden">
-      {/* Full-screen looped background video */}
+      {/* Full-screen looped background video — plays only on user click */}
       <video
+        ref={videoRef}
         src="/videos/hero-loop.mp4"
-        autoPlay
         muted
         loop
         playsInline
@@ -27,7 +33,7 @@ export const TVSection = () => {
 
       {/* PTSD logo — position matches TV screen center in the video */}
       <button
-        onClick={openHeroVideo}
+        onClick={handlePlay}
         className={cn('absolute z-20 flex flex-col items-center gap-2', styles.logoButton)}
         style={{ left: '49%', top: '40%', transform: 'translate(-50%, -50%)' }}
         aria-label="Watch PTSD Show"
