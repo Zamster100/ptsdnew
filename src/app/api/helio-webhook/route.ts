@@ -31,18 +31,23 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Missing transaction' }, { status: 400 })
   }
 
+  console.log('[helio-webhook] updating quantity:', { solTx, quantity })
+
   // Update quantity on the record the client-side save already inserted.
   // ETH wallet is not in the webhook payload — we preserve it by doing UPDATE not upsert.
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('minters')
     .update({ quantity })
     .eq('sol_transaction', solTx)
+    .select('id, quantity')
 
   if (error) {
     console.error('[helio-webhook] supabase error:', error)
 
     return NextResponse.json({ error: 'DB error' }, { status: 500 })
   }
+
+  console.log('[helio-webhook] rows updated:', data?.length ?? 0, data)
 
   return NextResponse.json({ ok: true })
 }
