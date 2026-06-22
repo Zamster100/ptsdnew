@@ -23,8 +23,6 @@ const SuccessModal = ({
   mintWallet?: string | null
   transaction?: string
 }) => {
-  const [qty, setQty] = useState<number | null>(null)
-
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
@@ -33,35 +31,6 @@ const SuccessModal = ({
 
     return () => window.removeEventListener('keydown', handler)
   }, [onClose])
-
-  // Poll our DB until the webhook has updated the quantity (fires ~60s after payment)
-  useEffect(() => {
-    if (!mintWallet || !transaction) return
-    let attempts = 0
-
-    const poll = () => {
-      fetch(`/api/lookup?wallet=${encodeURIComponent(mintWallet)}`)
-        .then((r) => r.json())
-        .then((json: { mints?: { sol_transaction: string; quantity: number }[] }) => {
-          const record = json.mints?.find((m) => m.sol_transaction === transaction)
-          if (record) {
-            setQty(record.quantity)
-
-            return
-          }
-          attempts++
-          if (attempts < 20) setTimeout(poll, 4000)
-        })
-        .catch(() => {
-          attempts++
-          if (attempts < 20) setTimeout(poll, 4000)
-        })
-    }
-
-    const t = setTimeout(poll, 3000)
-
-    return () => clearTimeout(t)
-  }, [mintWallet, transaction])
 
   const shortTx = transaction && transaction.length > 12
     ? `${transaction.slice(0, 8)}...${transaction.slice(-4)}`
@@ -100,12 +69,6 @@ const SuccessModal = ({
 
         {/* Receipt rows */}
         <div className="mb-6 divide-y divide-white/5 rounded-xl border border-white/10 bg-white/[0.03]">
-          <div className="flex items-center justify-between gap-4 px-4 py-3">
-            <span className="font-mono text-xs uppercase tracking-widest text-white/40">Spots Secured</span>
-            <span className="font-mono text-xs text-white/70">
-              {qty !== null ? qty : <span className="animate-pulse">…</span>}
-            </span>
-          </div>
           {shortTx && (
             <div className="flex items-center justify-between gap-4 px-4 py-3">
               <span className="font-mono text-xs uppercase tracking-widest text-white/40">Transaction ID</span>
