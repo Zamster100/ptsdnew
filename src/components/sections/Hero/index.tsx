@@ -8,12 +8,15 @@ import { PlayIcon } from '@/components/icons/PlayIcon'
 import Image from 'next/image'
 import Logo from '@/public/images/hero/logo.png'
 import { TicketButton } from '@/components/ui/TicketButton'
+import { useRouter } from 'next/navigation'
 
 interface HeroProps {
   originStoryRef: React.RefObject<HTMLDivElement | null>
 }
 
 export const Hero = ({ originStoryRef }: HeroProps) => {
+  const router = useRouter()
+
   const handlePlay = () => {
     if (originStoryRef.current) {
       originStoryRef.current.scrollIntoView({ behavior: 'smooth' })
@@ -21,7 +24,7 @@ export const Hero = ({ originStoryRef }: HeroProps) => {
   }
 
   const handleTickets = () => {
-    document.getElementById('tickets-section')?.scrollIntoView({ behavior: 'smooth' })
+    router.push('/tickets')
   }
 
   return (
