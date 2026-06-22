@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { TicketsHeader } from '@/components/sections/TicketsPage/TicketsHeader'
 
 interface MintRecord {
@@ -66,6 +67,17 @@ export default function ProfilePage() {
       {/* Vertically centered content — expands naturally when results appear */}
       <div className="flex flex-1 flex-col justify-center px-[15px] pb-16 pt-32 md:px-[60px]">
         <div className="mx-auto w-full max-w-2xl">
+
+          {/* Back */}
+          <Link
+            href="/tickets"
+            className="mb-8 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-white/40 transition-colors hover:text-white/70"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M19 12H5M12 19l-7-7 7-7" />
+            </svg>
+            Back to tickets
+          </Link>
 
           {/* Heading */}
           <p className="mb-4 font-mono text-xs uppercase tracking-widest text-main-yellow">
