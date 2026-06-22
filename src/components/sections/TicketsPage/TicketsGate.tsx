@@ -13,7 +13,7 @@ export function TicketsGate({ children }: { children: ReactNode }) {
   const [checked, setChecked] = useState(false)
 
   useEffect(() => {
-    if (sessionStorage.getItem(STORAGE_KEY) === '1') {
+    if (window.sessionStorage.getItem(STORAGE_KEY) === '1') {
       setUnlocked(true)
     }
     setChecked(true)
@@ -22,7 +22,7 @@ export function TicketsGate({ children }: { children: ReactNode }) {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (input === PASSWORD) {
-      sessionStorage.setItem(STORAGE_KEY, '1')
+      window.sessionStorage.setItem(STORAGE_KEY, '1')
       setUnlocked(true)
     } else {
       setError(true)
