@@ -7,12 +7,6 @@ import styles from './styles.module.css'
 export const HeroVideo = () => {
   const [visible, setVisible] = useState(false)
 
-  useEffect(() => {
-    const t = setTimeout(() => setVisible(true), 700)
-
-    return () => clearTimeout(t)
-  }, [])
-
   // Allow external components (e.g. TVSection logo button) to open the modal
   useEffect(() => {
     const handler = () => setVisible(true)
