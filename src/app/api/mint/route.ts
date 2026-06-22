@@ -61,6 +61,7 @@ export async function POST(req: NextRequest) {
   // 23505 = unique_violation — tx already recorded, treat as success
   if (error && error.code !== '23505') {
     console.error('Supabase insert error:', error)
+
     return NextResponse.json({ error: 'Failed to save' }, { status: 500 })
   }
 

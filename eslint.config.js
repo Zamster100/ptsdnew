@@ -24,6 +24,7 @@ export default [
         window: 'readonly',
         document: 'readonly',
         navigator: 'readonly',
+        fetch: 'readonly',
         setTimeout: 'readonly',
         clearTimeout: 'readonly',
         setInterval: 'readonly',

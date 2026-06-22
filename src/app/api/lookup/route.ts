@@ -33,6 +33,7 @@ export async function GET(req: NextRequest) {
 
   if (error) {
     console.error('Supabase lookup error:', error)
+
     return NextResponse.json({ error: 'Lookup failed' }, { status: 500 })
   }
 
