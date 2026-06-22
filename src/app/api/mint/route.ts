@@ -21,11 +21,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
   }
 
-  // Origin check in production — only our site can call this
+  // Origin check — only enforce if NEXT_PUBLIC_SITE_URL is configured
   if (process.env.NODE_ENV === 'production') {
     const origin = req.headers.get('origin') ?? ''
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? ''
-    if (!siteUrl || !origin.startsWith(siteUrl)) {
+    if (siteUrl && !origin.startsWith(siteUrl)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
   }

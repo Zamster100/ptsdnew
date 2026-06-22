@@ -182,8 +182,12 @@ export const MintSection = () => {
       additionalProductValue: walletInput.trim(),
     },
     onSuccess: (event: { data: unknown; transaction: string }) => {
+      console.log('[Helio onSuccess]', JSON.stringify(event, null, 2))
       const d = event.data as Record<string, unknown>
-      const qty = Number(d?.quantity ?? d?.amount ?? 1)
+      const content = d?.content as Record<string, unknown> | undefined
+      const qty = Number(
+        d?.quantity ?? d?.amount ?? content?.quantity ?? content?.amount ?? 1,
+      )
       setSuccessData({
         transaction: event.transaction,
         mintWallet: walletInput.trim() || null,
