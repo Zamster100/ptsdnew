@@ -17,12 +17,10 @@ const DISCORD_URL = 'https://discord.com/invite/PTSDshow'
 const SuccessModal = ({
   onClose,
   mintWallet,
-  quantity,
   transaction,
 }: {
   onClose: () => void
   mintWallet?: string | null
-  quantity?: number
   transaction?: string
 }) => {
   useEffect(() => {
@@ -87,12 +85,6 @@ const SuccessModal = ({
               ) : (
                 <span className="font-mono text-xs text-white/70">{shortTx}</span>
               )}
-            </div>
-          )}
-          {quantity && (
-            <div className="flex items-center justify-between gap-4 px-4 py-3">
-              <span className="font-mono text-xs uppercase tracking-widest text-white/40">Quantity</span>
-              <span className="font-mono text-xs text-white/70">{quantity}</span>
             </div>
           )}
           {shortMintWallet && (
@@ -167,11 +159,9 @@ const ETH_ADDRESS_RE = /^0x[a-fA-F0-9]{40}$/
 
 export const MintSection = () => {
   const [walletInput, setWalletInput] = useState('')
-  const [quantity, setQuantity] = useState(1)
   const [successData, setSuccessData] = useState<{
     transaction: string
     mintWallet: string | null
-    quantity: number
   } | null>(null)
   const handleClose = useCallback(() => setSuccessData(null), [])
 
@@ -188,15 +178,15 @@ export const MintSection = () => {
       setSuccessData({
         transaction: solTx,
         mintWallet: walletInput.trim() || null,
-        quantity,
       })
+      // Quantity is not available in Helio's client callback — the webhook
+      // receives the accurate value and updates the DB record server-side
       fetch('/api/mint', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ethWallet: walletInput.trim(),
           solTransaction: solTx,
-          quantity,
         }),
       }).catch(() => {})
     },
@@ -208,7 +198,6 @@ export const MintSection = () => {
         <SuccessModal
           onClose={handleClose}
           mintWallet={successData.mintWallet}
-          quantity={successData.quantity}
           transaction={successData.transaction}
         />
       )}
@@ -231,7 +220,7 @@ export const MintSection = () => {
               <span className="text-ticket-red">GUARANTEED SPOT.</span>
             </h2>
             <p className="font-manrope mb-8 max-w-xl text-base leading-[1.75] text-light-text">
-              Three steps to lock in your spot. Pay now in any currency — your
+              Two steps to lock in your spot. Pay now in any currency — your
               ETH wallet gets allowlisted for the free mint on OpenSea when the
               date drops.
             </p>
@@ -265,52 +254,11 @@ export const MintSection = () => {
                 </p>
               </div>
 
-              {/* Step 2 — quantity */}
+              {/* Step 2 — payment */}
               <div>
                 <div className="mb-3 flex items-center gap-3">
                   <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full font-mono text-xs font-bold text-white transition-colors ${isValidWallet ? 'bg-ticket-red' : 'bg-white/10'}`}>
                     2
-                  </span>
-                  <span className={`font-sans text-sm font-semibold transition-colors ${isValidWallet ? 'text-white' : 'text-white/30'}`}>
-                    How many spots?
-                  </span>
-                </div>
-                <div className="flex items-center gap-4">
-                  <button
-                    type="button"
-                    onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                    disabled={!isValidWallet || quantity <= 1}
-                    className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5 font-mono text-lg text-white transition-colors hover:border-white/30 disabled:cursor-not-allowed disabled:opacity-30"
-                    aria-label="Decrease quantity"
-                  >
-                    −
-                  </button>
-                  <span className="w-8 text-center font-mono text-xl font-bold text-white">
-                    {quantity}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setQuantity((q) => Math.min(10, q + 1))}
-                    disabled={!isValidWallet || quantity >= 10}
-                    className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5 font-mono text-lg text-white transition-colors hover:border-white/30 disabled:cursor-not-allowed disabled:opacity-30"
-                    aria-label="Increase quantity"
-                  >
-                    +
-                  </button>
-                  <span className="font-sans text-xs text-white/30">
-                    spot{quantity > 1 ? 's' : ''}
-                  </span>
-                </div>
-                <p className="mt-2 font-sans text-xs text-white/30">
-                  Select the same number in the payment widget below.
-                </p>
-              </div>
-
-              {/* Step 3 — payment */}
-              <div>
-                <div className="mb-3 flex items-center gap-3">
-                  <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full font-mono text-xs font-bold text-white transition-colors ${isValidWallet ? 'bg-ticket-red' : 'bg-white/10'}`}>
-                    3
                   </span>
                   <span className={`font-sans text-sm font-semibold transition-colors ${isValidWallet ? 'text-white' : 'text-white/30'}`}>
                     Pay with any wallet or card

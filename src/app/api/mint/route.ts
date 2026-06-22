@@ -39,10 +39,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
-  const { ethWallet, solTransaction, quantity } = body as {
+  const { ethWallet, solTransaction } = body as {
     ethWallet: unknown
     solTransaction: unknown
-    quantity: unknown
   }
 
   if (typeof ethWallet !== 'string' || !ETH_RE.test(ethWallet)) {
@@ -56,12 +55,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid transaction signature' }, { status: 400 })
   }
 
-  const qty = Math.max(1, Math.min(100, Number(quantity) || 1))
-
   const { error } = await supabase.from('minters').insert({
     eth_wallet: ethWallet.toLowerCase(),
     sol_transaction: solTransaction.trim(),
-    quantity: qty,
+    quantity: 1,
   })
 
   // 23505 = unique_violation — tx already recorded, treat as success
