@@ -188,8 +188,10 @@ export const MintSection = () => {
       const qty = Number(
         d?.quantity ?? d?.amount ?? content?.quantity ?? content?.amount ?? 1,
       )
+      // Prefer event.transaction; fall back to data.transactionSignature
+      const solTx = event.transaction || (d?.transactionSignature as string) || ''
       setSuccessData({
-        transaction: event.transaction,
+        transaction: solTx,
         mintWallet: walletInput.trim() || null,
         quantity: qty,
       })
@@ -198,7 +200,7 @@ export const MintSection = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ethWallet: walletInput.trim(),
-          solTransaction: event.transaction,
+          solTransaction: solTx,
           quantity: qty,
         }),
       }).catch(() => {})
