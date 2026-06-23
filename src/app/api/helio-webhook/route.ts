@@ -16,10 +16,20 @@ export async function POST(req: NextRequest) {
 
   const meta = tx.meta as Record<string, unknown> | undefined
 
+  // Log full payload so we can verify Helio's field structure
+  console.log('[helio-webhook] raw event keys:', Object.keys(event))
+  console.log('[helio-webhook] transactionObject keys:', Object.keys(tx))
+  console.log('[helio-webhook] meta:', JSON.stringify(meta))
+
   // transactionSignature lives inside transactionObject.meta
   const solTx = String(meta?.transactionSignature ?? '')
   const txStatus = String(meta?.transactionStatus ?? '')
-  const quantity = Number(tx.quantity ?? 1)
+
+  // quantity may be in meta or at transactionObject root — check both
+  const rawQty = meta?.quantity ?? tx.quantity ?? tx.itemQuantity ?? tx.paylinkQuantity ?? 1
+  const quantity = Math.max(1, Number(rawQty))
+
+  console.log('[helio-webhook] quantity sources — meta.quantity:', meta?.quantity, '| tx.quantity:', tx.quantity, '| resolved:', quantity)
 
   if (txStatus !== 'SUCCESS') {
     return NextResponse.json({ ok: true })
