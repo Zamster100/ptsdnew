@@ -2,7 +2,6 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react'
 import Image from 'next/image'
-import Script from 'next/script'
 
 const DISCORD_URL = 'https://discord.com/invite/PTSDshow'
 
@@ -161,44 +160,70 @@ export const MintSection = () => {
 
   const isValidWallet = ETH_ADDRESS_RE.test(walletInput.trim())
 
-  // Capture wallet at init time so the onSuccess closure has the right value
+  // Keep a ref so the onSuccess closure always reads the latest wallet value
   const walletRef = useRef(walletInput)
   useEffect(() => { walletRef.current = walletInput }, [walletInput])
 
+  // Inject the Helio embed script as a real ES module (type="module" + crossorigin)
+  useEffect(() => {
+    if (document.getElementById('helio-embed-script')) {
+      setScriptLoaded(true)
+
+      return
+    }
+
+    const s = document.createElement('script')
+    s.id = 'helio-embed-script'
+    s.type = 'module'
+    s.crossOrigin = 'anonymous'
+    s.src = 'https://embed.hel.io/assets/index-v1.js'
+    s.onload = () => setScriptLoaded(true)
+    s.onerror = () => console.error('[helio] failed to load embed script')
+    document.head.appendChild(s)
+  }, [])
+
+  // Init the widget once the wallet is valid and the script is ready
   useEffect(() => {
     if (!isValidWallet || !scriptLoaded || widgetInitialised.current) return
+
     const container = document.getElementById('helioCheckoutContainer')
     if (!container) return
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const fn = (window as any).helioCheckout
+    if (typeof fn !== 'function') {
+      console.error('[helio] window.helioCheckout not available yet')
+
+      return
+    }
+
     widgetInitialised.current = true
-    ;(window as any).helioCheckout(container, { // eslint-disable-line @typescript-eslint/no-explicit-any
-      paylinkId: '6a3adf1eb3e518619b5dcd25',
-      theme: { themeMode: 'dark' },
-      primaryColor: '#CC0038',
-      neutralColor: '#5A6578',
-      onSuccess: (event: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
-        const solTx =
-          event?.transaction ||
-          event?.data?.transactionSignature ||
-          ''
-        const wallet = walletRef.current.trim()
-        setSuccessData({ transaction: solTx, mintWallet: wallet || null })
-        fetch('/api/mint', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ethWallet: wallet, solTransaction: solTx }),
-        }).catch(() => {})
-      },
-    })
+    try {
+      fn(container, {
+        paylinkId: '6a3adf1eb3e518619b5dcd25',
+        theme: { themeMode: 'dark' },
+        primaryColor: '#CC0038',
+        neutralColor: '#5A6578',
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        onSuccess: (event: any) => {
+          const solTx = event?.transaction || event?.data?.transactionSignature || ''
+          const wallet = walletRef.current.trim()
+          setSuccessData({ transaction: solTx, mintWallet: wallet || null })
+          fetch('/api/mint', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ethWallet: wallet, solTransaction: solTx }),
+          }).catch(() => {})
+        },
+      })
+    } catch (err) {
+      console.error('[helio] widget init error:', err)
+      widgetInitialised.current = false
+    }
   }, [isValidWallet, scriptLoaded])
 
   return (
     <>
-      <Script
-        src="https://embed.hel.io/assets/index-v1.js"
-        strategy="afterInteractive"
-        onLoad={() => setScriptLoaded(true)}
-      />
       {successData && (
         <SuccessModal
           onClose={handleClose}
