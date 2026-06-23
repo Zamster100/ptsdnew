@@ -204,6 +204,7 @@ export const MintSection = () => {
         theme: { themeMode: 'dark' },
         primaryColor: '#CC0038',
         neutralColor: '#5A6578',
+        stretchFullWidth: true,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         onSuccess: (event: any) => {
           const solTx = event?.transaction || event?.data?.transactionSignature || ''
@@ -255,7 +256,7 @@ export const MintSection = () => {
               date drops.
             </p>
 
-            <div className="w-[90%] space-y-8">
+            <div className="w-full space-y-8">
               {/* Step 1 */}
               <div>
                 <div className="mb-3 flex items-center gap-3">
