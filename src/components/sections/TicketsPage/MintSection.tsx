@@ -1,16 +1,8 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import Image from 'next/image'
-import { HelioCheckout } from '@heliofi/checkout-react'
-
-const helioConfig = {
-  paylinkId: '6a0751538f30fd2db4f3abdf',
-  theme: { themeMode: 'dark' as const },
-  primaryColor: '#CC003F',
-  neutralColor: '#5A6578',
-  stretchFullWidth: true,
-}
+import Script from 'next/script'
 
 const DISCORD_URL = 'https://discord.com/invite/PTSDshow'
 
@@ -163,37 +155,52 @@ export const MintSection = () => {
     transaction: string
     mintWallet: string | null
   } | null>(null)
+  const [scriptLoaded, setScriptLoaded] = useState(false)
+  const widgetInitialised = useRef(false)
   const handleClose = useCallback(() => setSuccessData(null), [])
 
   const isValidWallet = ETH_ADDRESS_RE.test(walletInput.trim())
 
-  const config = {
-    ...helioConfig,
-    autofill: {
-      additionalProductValue: walletInput.trim(),
-    },
-    onSuccess: (event: { data: unknown; transaction: string }) => {
-      const d = event.data as Record<string, unknown>
-      const solTx = event.transaction || (d?.transactionSignature as string) || ''
-      setSuccessData({
-        transaction: solTx,
-        mintWallet: walletInput.trim() || null,
-      })
-      // Quantity is not available in Helio's client callback — the webhook
-      // receives the accurate value and updates the DB record server-side
-      fetch('/api/mint', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ethWallet: walletInput.trim(),
-          solTransaction: solTx,
-        }),
-      }).catch(() => {})
-    },
-  }
+  // Capture wallet at init time so the onSuccess closure has the right value
+  const walletRef = useRef(walletInput)
+  useEffect(() => { walletRef.current = walletInput }, [walletInput])
+
+  useEffect(() => {
+    if (!isValidWallet || !scriptLoaded || widgetInitialised.current) return
+    const container = document.getElementById('helioCheckoutContainer')
+    if (!container) return
+
+    widgetInitialised.current = true
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(window as any).helioCheckout(container, {
+      paylinkId: '6a3adf1eb3e518619b5dcd25',
+      theme: { themeMode: 'dark' },
+      primaryColor: '#CC0038',
+      neutralColor: '#5A6578',
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      onSuccess: (event: any) => {
+        const solTx =
+          event?.transaction ||
+          event?.data?.transactionSignature ||
+          ''
+        const wallet = walletRef.current.trim()
+        setSuccessData({ transaction: solTx, mintWallet: wallet || null })
+        fetch('/api/mint', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ethWallet: wallet, solTransaction: solTx }),
+        }).catch(() => {})
+      },
+    })
+  }, [isValidWallet, scriptLoaded])
 
   return (
     <>
+      <Script
+        src="https://embed.hel.io/assets/index-v1.js"
+        strategy="afterInteractive"
+        onLoad={() => setScriptLoaded(true)}
+      />
       {successData && (
         <SuccessModal
           onClose={handleClose}
@@ -264,10 +271,9 @@ export const MintSection = () => {
                     Pay with any wallet or card
                   </span>
                 </div>
-                {/* Helio widget — only mounts once a valid ETH address is entered so autofill is correct at mount time */}
-                {isValidWallet ? (
-                  <HelioCheckout config={config} />
-                ) : (
+                {/* Helio embed — container always in DOM so the widget can mount into it; locked state shown until wallet is valid */}
+                <div id="helioCheckoutContainer" />
+                {!isValidWallet && (
                   <div
                     className="flex cursor-not-allowed flex-col items-center justify-center gap-3 rounded-xl border border-white/5 py-14"
                     style={{ background: 'rgba(255,255,255,0.02)' }}
