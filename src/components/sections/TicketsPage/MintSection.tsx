@@ -256,7 +256,7 @@ export const MintSection = () => {
               date drops.
             </p>
 
-            <div className="w-full space-y-8">
+            <div className="w-[90%] space-y-8">
               {/* Step 1 */}
               <div>
                 <div className="mb-3 flex items-center gap-3">
