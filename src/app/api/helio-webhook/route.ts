@@ -59,12 +59,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Missing transaction' }, { status: 400 })
   }
 
-  console.log('[helio-webhook] updating DB — solTx:', solTx, 'quantity:', quantity)
+  console.log('[helio-webhook] upserting DB — solTx:', solTx, 'quantity:', quantity)
 
+  // Upsert so the webhook wins regardless of whether /api/mint has inserted yet.
+  // If the row exists → quantity gets updated. If it doesn't yet → row is created
+  // with the correct quantity and the client insert later becomes a no-op (unique conflict).
   const { data, error } = await supabase
     .from('minters')
-    .update({ quantity })
-    .eq('sol_transaction', solTx)
+    .upsert({ sol_transaction: solTx, quantity }, { onConflict: 'sol_transaction', ignoreDuplicates: false })
     .select('id, quantity')
 
   if (error) {
@@ -73,7 +75,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'DB error' }, { status: 500 })
   }
 
-  console.log('[helio-webhook] rows updated:', data?.length ?? 0, data)
+  console.log('[helio-webhook] upserted rows:', data?.length ?? 0, data)
 
   return NextResponse.json({ ok: true })
 }
