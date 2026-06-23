@@ -54,7 +54,7 @@ export const Hero = ({ originStoryRef }: HeroProps) => {
           <div className="z-10 flex items-center gap-1.5 font-bold lg:gap-2.5 xl:gap-4">
             <span className="text-main-green">69% Match</span>
             <div className="bg-light-bg h-5 w-px" />
-            <span>2025</span>
+            <span>2026</span>
             <div className="bg-light-bg h-5 w-px" />
             <span>12 Episodes</span>
             <div className="bg-light-bg h-5 w-px" />
@@ -156,7 +156,7 @@ const MobileHero = ({
         <div className="tablet:justify-start z-10 flex items-center justify-between gap-1.5 font-bold">
           <span className="text-main-green">69% Match</span>
           <div className="bg-light-bg h-5 w-px" />
-          <span>2025</span>
+          <span>2026</span>
           <div className="bg-light-bg h-5 w-px" />
           <span>12 Episodes</span>
           <div className="bg-light-bg h-5 w-px" />
