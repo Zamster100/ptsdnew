@@ -295,7 +295,7 @@ export const MintSection = () => {
                   </span>
                 </div>
                 {/* Helio embed — container always in DOM so the widget can mount into it; locked state shown until wallet is valid */}
-                <div id="helioCheckoutContainer" />
+                <div id="helioCheckoutContainer" className="w-full" />
                 {!isValidWallet && (
                   <div
                     className="flex cursor-not-allowed flex-col items-center justify-center gap-3 rounded-xl border border-white/5 py-14"
