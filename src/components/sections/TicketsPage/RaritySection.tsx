@@ -54,7 +54,7 @@ export const RaritySection = () => {
 
           <div className="max-w-2xl space-y-3">
             <p className="font-manrope text-base leading-[1.75] text-light-text md:text-lg">
-              4,444 tickets. 5 rarity tiers. Every ticket maps to a future PTSD token allocation.
+              4,444 tickets. 5 rarity tiers. Every ticket maps to a future PTSD token multiplier.
               Rarity is random, assigned at mint. You can't choose, only roll.
             </p>
             <p className="font-manrope text-base leading-[1.75] text-white">
@@ -140,7 +140,7 @@ export const RaritySection = () => {
         ))}
       </div>
       <p className="font-manrope max-w-2xl text-base leading-[1.75] text-light-text">
-        When the PTSD token launches, your ticket determines your allocation tier.
+        When the PTSD token launches, your ticket determines your token multiplier.
         The higher your rarity, the bigger your token multiplier. No action
         required, your rarity is set at mint.
       </p>
