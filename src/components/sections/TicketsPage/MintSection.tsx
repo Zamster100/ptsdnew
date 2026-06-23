@@ -209,12 +209,12 @@ export const MintSection = () => {
         onSuccess: (event: any) => {
           const solTx = event?.transaction || event?.data?.transactionSignature || ''
           const wallet = walletRef.current.trim()
-          setSuccessData({ transaction: solTx, mintWallet: wallet || null })
           fetch('/api/mint', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ ethWallet: wallet, solTransaction: solTx }),
           }).catch(() => {})
+          setTimeout(() => setSuccessData({ transaction: solTx, mintWallet: wallet || null }), 1000)
         },
       })
     } catch (err) {
