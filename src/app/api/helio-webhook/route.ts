@@ -6,6 +6,7 @@ export async function POST(req: NextRequest) {
   try {
     rawBody = await req.text()
   } catch {
+
     return NextResponse.json({ error: 'Failed to read body' }, { status: 400 })
   }
 
@@ -18,6 +19,7 @@ export async function POST(req: NextRequest) {
     event = JSON.parse(rawBody)
   } catch {
     console.error('[helio-webhook] invalid JSON')
+
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
@@ -27,6 +29,7 @@ export async function POST(req: NextRequest) {
   const tx = event.transactionObject as Record<string, unknown> | undefined
   if (!tx) {
     console.warn('[helio-webhook] no transactionObject — keys were:', Object.keys(event))
+
     return NextResponse.json({ ok: true })
   }
 
@@ -46,11 +49,13 @@ export async function POST(req: NextRequest) {
 
   if (txStatus !== 'SUCCESS') {
     console.log('[helio-webhook] skipping — txStatus:', txStatus)
+
     return NextResponse.json({ ok: true })
   }
 
   if (!solTx) {
     console.error('[helio-webhook] missing transactionSignature in meta')
+
     return NextResponse.json({ error: 'Missing transaction' }, { status: 400 })
   }
 
@@ -64,6 +69,7 @@ export async function POST(req: NextRequest) {
 
   if (error) {
     console.error('[helio-webhook] supabase error:', error)
+
     return NextResponse.json({ error: 'DB error' }, { status: 500 })
   }
 

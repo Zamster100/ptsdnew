@@ -171,14 +171,12 @@ export const MintSection = () => {
     if (!container) return
 
     widgetInitialised.current = true
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(window as any).helioCheckout(container, {
+    ;(window as any).helioCheckout(container, { // eslint-disable-line @typescript-eslint/no-explicit-any
       paylinkId: '6a3adf1eb3e518619b5dcd25',
       theme: { themeMode: 'dark' },
       primaryColor: '#CC0038',
       neutralColor: '#5A6578',
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      onSuccess: (event: any) => {
+      onSuccess: (event: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
         const solTx =
           event?.transaction ||
           event?.data?.transactionSignature ||
