@@ -8,7 +8,6 @@ import { WhyNowSection } from '@/components/sections/TicketsPage/WhyNowSection'
 import { FAQSection } from '@/components/sections/TicketsPage/FAQSection'
 import { MintSection } from '@/components/sections/TicketsPage/MintSection'
 import { FinalCTASection } from '@/components/sections/TicketsPage/FinalCTASection'
-import { TicketsGate } from '@/components/sections/TicketsPage/TicketsGate'
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -18,21 +17,19 @@ export const metadata: Metadata = {
 
 export default function TicketsPage() {
   return (
-    <TicketsGate>
-      <div className="overflow-hidden">
-        <TicketsHeader />
-        <HeroVideo />
-        <TVSection />
-        <div className="mx-auto max-w-[1400px]">
-          <HookSection />
-          <RaritySection />
-          <GoldenTicketSection />
-          <WhyNowSection />
-          <FAQSection />
-          <MintSection />
-          <FinalCTASection />
-        </div>
+    <div className="overflow-hidden">
+      <TicketsHeader />
+      <HeroVideo />
+      <TVSection />
+      <div className="mx-auto max-w-[1400px]">
+        <HookSection />
+        <RaritySection />
+        <GoldenTicketSection />
+        <WhyNowSection />
+        <FAQSection />
+        <MintSection />
+        <FinalCTASection />
       </div>
-    </TicketsGate>
+    </div>
   )
 }
