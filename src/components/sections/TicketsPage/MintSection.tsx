@@ -9,10 +9,12 @@ const SuccessModal = ({
   onClose,
   mintWallet,
   transaction,
+  quantity,
 }: {
   onClose: () => void
   mintWallet?: string | null
   transaction?: string
+  quantity?: number | null
 }) => {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -60,6 +62,12 @@ const SuccessModal = ({
 
         {/* Receipt rows */}
         <div className="mb-6 divide-y divide-white/5 rounded-xl border border-white/10 bg-white/[0.03]">
+          {quantity && quantity > 0 && (
+            <div className="flex items-center justify-between gap-4 px-4 py-3">
+              <span className="font-mono text-xs uppercase tracking-widest text-white/40">Spots Secured</span>
+              <span className="font-mono text-xs text-white/70">{quantity}</span>
+            </div>
+          )}
           {shortTx && (
             <div className="flex items-center justify-between gap-4 px-4 py-3">
               <span className="font-mono text-xs uppercase tracking-widest text-white/40">Transaction ID</span>
@@ -153,6 +161,7 @@ export const MintSection = () => {
   const [successData, setSuccessData] = useState<{
     transaction: string
     mintWallet: string | null
+    quantity: number | null
   } | null>(null)
   const [scriptLoaded, setScriptLoaded] = useState(false)
   const widgetInitialised = useRef(false)
@@ -209,12 +218,23 @@ export const MintSection = () => {
         onSuccess: (event: any) => {
           const solTx = event?.transaction || event?.data?.transactionSignature || ''
           const wallet = walletRef.current.trim()
+          // Check every known location Helio may put quantity
+          const rawQty =
+            event?.quantity ??
+            event?.data?.quantity ??
+            event?.meta?.quantity ??
+            event?.transactionObject?.quantity ??
+            event?.transactionObject?.meta?.quantity ??
+            null
+          const quantity = rawQty !== null ? Number(rawQty) : null
+          console.log('[helio] onSuccess event keys:', Object.keys(event ?? {}))
+          console.log('[helio] quantity resolved:', quantity, '| raw:', rawQty)
           fetch('/api/mint', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ ethWallet: wallet, solTransaction: solTx }),
           }).catch(() => {})
-          setTimeout(() => setSuccessData({ transaction: solTx, mintWallet: wallet || null }), 1000)
+          setTimeout(() => setSuccessData({ transaction: solTx, mintWallet: wallet || null, quantity }), 1000)
         },
       })
     } catch (err) {
@@ -230,6 +250,7 @@ export const MintSection = () => {
           onClose={handleClose}
           mintWallet={successData.mintWallet}
           transaction={successData.transaction}
+          quantity={successData.quantity}
         />
       )}
 
