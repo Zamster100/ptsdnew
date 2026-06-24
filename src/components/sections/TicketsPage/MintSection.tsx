@@ -10,11 +10,13 @@ const SuccessModal = ({
   mintWallet,
   transaction,
   quantity,
+  finalizing,
 }: {
   onClose: () => void
   mintWallet?: string | null
   transaction?: string
   quantity?: number | null
+  finalizing?: boolean
 }) => {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -62,12 +64,21 @@ const SuccessModal = ({
 
         {/* Receipt rows */}
         <div className="mb-6 divide-y divide-white/5 rounded-xl border border-white/10 bg-white/[0.03]">
-          {quantity && quantity > 0 && (
-            <div className="flex items-center justify-between gap-4 px-4 py-3">
-              <span className="font-mono text-xs uppercase tracking-widest text-white/40">Spots Secured</span>
-              <span className="font-mono text-xs text-white/70">{quantity}</span>
-            </div>
-          )}
+          <div className="flex items-center justify-between gap-4 px-4 py-3">
+            <span className="font-mono text-xs uppercase tracking-widest text-white/40">Spots Secured</span>
+            {finalizing ? (
+              <span className="flex items-center gap-1.5 font-mono text-xs text-white/30">
+                <span className="inline-flex gap-[3px]">
+                  <span className="animate-bounce [animation-delay:0ms]">·</span>
+                  <span className="animate-bounce [animation-delay:150ms]">·</span>
+                  <span className="animate-bounce [animation-delay:300ms]">·</span>
+                </span>
+                Finalizing
+              </span>
+            ) : (
+              <span className="font-mono text-xs text-white/70">{quantity ?? '—'}</span>
+            )}
+          </div>
           {shortTx && (
             <div className="flex items-center justify-between gap-4 px-4 py-3">
               <span className="font-mono text-xs uppercase tracking-widest text-white/40">Transaction ID</span>
@@ -162,6 +173,7 @@ export const MintSection = () => {
     transaction: string
     mintWallet: string | null
     quantity: number | null
+    finalizing: boolean
   } | null>(null)
   const [scriptLoaded, setScriptLoaded] = useState(false)
   const widgetInitialised = useRef(false)
@@ -223,7 +235,9 @@ export const MintSection = () => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ ethWallet: wallet, solTransaction: solTx }),
           }).catch(() => {})
-          // Poll DB until webhook has written the real quantity (qty > 1) or max 6 attempts
+          // Show modal immediately with finalizing animation
+          setSuccessData({ transaction: solTx, mintWallet: wallet || null, quantity: null, finalizing: true })
+          // Poll DB in background until webhook writes the real quantity
           let attempts = 0
           const poll = () => {
             fetch(`/api/lookup?wallet=${encodeURIComponent(wallet)}`)
@@ -233,7 +247,7 @@ export const MintSection = () => {
                 const qty: number | null = match?.quantity ?? null
                 attempts++
                 if ((qty !== null && qty > 1) || attempts >= 6) {
-                  setSuccessData({ transaction: solTx, mintWallet: wallet || null, quantity: qty })
+                  setSuccessData({ transaction: solTx, mintWallet: wallet || null, quantity: qty, finalizing: false })
                 } else {
                   setTimeout(poll, 700)
                 }
@@ -241,7 +255,7 @@ export const MintSection = () => {
               .catch(() => {
                 attempts++
                 if (attempts >= 6) {
-                  setSuccessData({ transaction: solTx, mintWallet: wallet || null, quantity: null })
+                  setSuccessData({ transaction: solTx, mintWallet: wallet || null, quantity: null, finalizing: false })
                 } else {
                   setTimeout(poll, 700)
                 }
@@ -264,6 +278,7 @@ export const MintSection = () => {
           mintWallet={successData.mintWallet}
           transaction={successData.transaction}
           quantity={successData.quantity}
+          finalizing={successData.finalizing}
         />
       )}
 
