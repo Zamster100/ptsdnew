@@ -218,23 +218,21 @@ export const MintSection = () => {
         onSuccess: (event: any) => {
           const solTx = event?.transaction || event?.data?.transactionSignature || ''
           const wallet = walletRef.current.trim()
-          // Check every known location Helio may put quantity
-          const rawQty =
-            event?.quantity ??
-            event?.data?.quantity ??
-            event?.meta?.quantity ??
-            event?.transactionObject?.quantity ??
-            event?.transactionObject?.meta?.quantity ??
-            null
-          const quantity = rawQty !== null ? Number(rawQty) : null
-          console.log('[helio] onSuccess event keys:', Object.keys(event ?? {}))
-          console.log('[helio] quantity resolved:', quantity, '| raw:', rawQty)
           fetch('/api/mint', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ ethWallet: wallet, solTransaction: solTx }),
           }).catch(() => {})
-          setTimeout(() => setSuccessData({ transaction: solTx, mintWallet: wallet || null, quantity }), 1000)
+          // After 1s, poll the DB for the quantity the webhook wrote
+          setTimeout(() => {
+            fetch(`/api/lookup?wallet=${encodeURIComponent(wallet)}`)
+              .then(r => r.json())
+              .then(({ mints }) => {
+                const match = mints?.find((m: any) => m.sol_transaction === solTx)
+                setSuccessData({ transaction: solTx, mintWallet: wallet || null, quantity: match?.quantity ?? null })
+              })
+              .catch(() => setSuccessData({ transaction: solTx, mintWallet: wallet || null, quantity: null }))
+          }, 1000)
         },
       })
     } catch (err) {
