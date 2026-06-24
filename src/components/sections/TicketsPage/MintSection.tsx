@@ -221,7 +221,7 @@ export const MintSection = () => {
     widgetInitialised.current = true
     try {
       fn(container, {
-        paylinkId: '6a3adf1eb3e518619b5dcd25',
+        paylinkId: '6a3bee4d78c427b7ae5fc8ca',
         theme: { themeMode: 'dark' },
         primaryColor: '#CC0038',
         neutralColor: '#5A6578',
