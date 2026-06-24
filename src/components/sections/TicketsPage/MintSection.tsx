@@ -223,16 +223,31 @@ export const MintSection = () => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ ethWallet: wallet, solTransaction: solTx }),
           }).catch(() => {})
-          // After 1s, poll the DB for the quantity the webhook wrote
-          setTimeout(() => {
+          // Poll DB until webhook has written the real quantity (qty > 1) or max 6 attempts
+          let attempts = 0
+          const poll = () => {
             fetch(`/api/lookup?wallet=${encodeURIComponent(wallet)}`)
               .then(r => r.json())
               .then(({ mints }) => {
                 const match = mints?.find((m: any) => m.sol_transaction === solTx)
-                setSuccessData({ transaction: solTx, mintWallet: wallet || null, quantity: match?.quantity ?? null })
+                const qty: number | null = match?.quantity ?? null
+                attempts++
+                if ((qty !== null && qty > 1) || attempts >= 6) {
+                  setSuccessData({ transaction: solTx, mintWallet: wallet || null, quantity: qty })
+                } else {
+                  setTimeout(poll, 700)
+                }
               })
-              .catch(() => setSuccessData({ transaction: solTx, mintWallet: wallet || null, quantity: null }))
-          }, 1000)
+              .catch(() => {
+                attempts++
+                if (attempts >= 6) {
+                  setSuccessData({ transaction: solTx, mintWallet: wallet || null, quantity: null })
+                } else {
+                  setTimeout(poll, 700)
+                }
+              })
+          }
+          setTimeout(poll, 800)
         },
       })
     } catch (err) {
