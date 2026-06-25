@@ -18,6 +18,12 @@ function shortTx(tx: string) {
   return tx.length > 12 ? `${tx.slice(0, 8)}...${tx.slice(-4)}` : tx
 }
 
+function txUrl(tx: string) {
+  return tx.startsWith('0x')
+    ? `https://etherscan.io/tx/${tx}`
+    : `https://solscan.io/tx/${tx}?cluster=mainnet`
+}
+
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-US', {
     month: 'short',
@@ -172,7 +178,7 @@ export default function ProfilePage() {
                         {formatDate(mint.created_at)}
                       </span>
                       <a
-                        href={`https://solscan.io/tx/${mint.sol_transaction}?cluster=mainnet`}
+                        href={txUrl(mint.sol_transaction)}
                         target="_blank"
                         rel="noopener noreferrer"
                         title={mint.sol_transaction}
