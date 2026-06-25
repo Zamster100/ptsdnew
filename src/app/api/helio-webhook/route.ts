@@ -2,6 +2,15 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 
 export async function POST(req: NextRequest) {
+  // Verify the request is genuinely from Helio using the shared Bearer token
+  const authHeader = req.headers.get('authorization') ?? ''
+  const expectedToken = process.env.HELIO_WEBHOOK_SECRET ?? ''
+  if (!expectedToken || authHeader !== `Bearer ${expectedToken}`) {
+    console.warn('[helio-webhook] unauthorised — invalid or missing token')
+
+    return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
+  }
+
   let rawBody: string
   try {
     rawBody = await req.text()
