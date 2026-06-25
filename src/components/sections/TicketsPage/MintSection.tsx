@@ -226,6 +226,7 @@ export const MintSection = () => {
         primaryColor: '#CC0038',
         neutralColor: '#5A6578',
         stretchFullWidth: true,
+        showQRCode: false,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         onSuccess: (event: any) => {
           const solTx = event?.transaction || event?.data?.transactionSignature || ''
