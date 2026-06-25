@@ -3,8 +3,8 @@ import { supabase } from '@/lib/supabase'
 import { rateLimit } from '@/lib/rateLimit'
 
 const ETH_RE = /^0x[a-fA-F0-9]{40}$/
-// Solana tx signatures are base58 — accept 30-100 chars to allow for Helio's format
-const SOL_TX_RE = /^[1-9A-HJ-NP-Za-km-z]{30,100}$/
+// Accept Solana base58 signatures AND Ethereum tx hashes (0x + 64 hex chars)
+const SOL_TX_RE = /^(0x[a-fA-F0-9]{64}|[1-9A-HJ-NP-Za-km-z]{30,100})$/
 
 function getIp(req: NextRequest): string {
   return (
@@ -61,8 +61,22 @@ export async function POST(req: NextRequest) {
     quantity: 1,
   })
 
-  // 23505 = unique_violation — tx already recorded, treat as success
-  if (error && error.code !== '23505') {
+  if (error && error.code === '23505') {
+    // Row already exists — webhook beat the client (common for ETH wallet payments).
+    // Patch eth_wallet onto the webhook-created row which won't have it.
+    const { error: patchErr } = await supabase
+      .from('minters')
+      .update({ eth_wallet: ethWallet.toLowerCase() })
+      .eq('sol_transaction', solTransaction.trim())
+
+    if (patchErr) {
+      console.error('[mint] failed to patch eth_wallet:', patchErr)
+    }
+
+    return NextResponse.json({ ok: true })
+  }
+
+  if (error) {
     console.error('Supabase insert error:', error)
 
     return NextResponse.json({ error: 'Failed to save' }, { status: 500 })

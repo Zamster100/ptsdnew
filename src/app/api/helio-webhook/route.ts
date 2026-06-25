@@ -59,29 +59,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Missing transaction' }, { status: 400 })
   }
 
-  // Retry loop: if the webhook beats /api/mint to the DB, wait and retry until the row exists.
-  // Max 5 attempts × 600 ms = ~3 s — well within Vercel's function timeout.
-  let attempts = 0
-  let data = null
-  let error = null
-
-  while (attempts < 5) {
-    const result = await supabase
-      .from('minters')
-      .update({ quantity })
-      .eq('sol_transaction', solTx)
-      .select('id, quantity')
-
-    error = result.error
-    data = result.data
-
-    if (error) break
-    if (data && data.length > 0) break
-
-    attempts++
-    console.log(`[helio-webhook] no row yet, retrying (${attempts}/5)…`)
-    await new Promise(r => setTimeout(r, 600))
-  }
+  // Upsert: creates the row if the client callback never fired (e.g. ETH/Rabby wallet
+  // payments where onSuccess doesn't reliably trigger), or updates quantity on the
+  // existing row (normal SOL flow where /api/mint already inserted).
+  // Requires eth_wallet to be nullable in Supabase — webhook-created rows won't have it;
+  // /api/mint patches it in when the client call arrives.
+  const { data, error } = await supabase
+    .from('minters')
+    .upsert(
+      { sol_transaction: solTx, quantity },
+      { onConflict: 'sol_transaction' }
+    )
+    .select('id, quantity')
 
   if (error) {
     console.error('[helio-webhook] supabase error:', error)
@@ -89,7 +78,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'DB error' }, { status: 500 })
   }
 
-  console.log('[helio-webhook] rows updated:', data?.length ?? 0, 'after', attempts, 'retries', data)
+  console.log('[helio-webhook] upserted:', data)
 
   return NextResponse.json({ ok: true })
 }
