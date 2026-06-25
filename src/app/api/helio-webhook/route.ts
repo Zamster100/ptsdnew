@@ -59,25 +59,58 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Missing transaction' }, { status: 400 })
   }
 
-  // For ETH payments, senderPK is the ETH wallet address — capture it directly from the
-  // webhook so the row is fully populated without needing the client onSuccess callback.
+  // For ETH payments, senderPK is the ETH wallet address — capture it directly so the
+  // row is fully populated from the webhook without needing the client onSuccess callback.
   const ETH_WALLET_RE = /^0x[a-fA-F0-9]{40}$/
   const senderPK = String(meta?.senderPK ?? '')
   const ethWalletFromWebhook = ETH_WALLET_RE.test(senderPK) ? senderPK.toLowerCase() : null
 
   console.log('[helio-webhook] senderPK:', senderPK, '| ethWalletFromWebhook:', ethWalletFromWebhook)
 
-  const upsertData: Record<string, unknown> = { sol_transaction: solTx, quantity }
   if (ethWalletFromWebhook) {
-    upsertData.eth_wallet = ethWalletFromWebhook
+    // ETH payment: upsert the full row — client onSuccess is unreliable for ETH wallets.
+    const { data, error } = await supabase
+      .from('minters')
+      .upsert(
+        { sol_transaction: solTx, quantity, eth_wallet: ethWalletFromWebhook },
+        { onConflict: 'sol_transaction' }
+      )
+      .select('id, quantity')
+
+    if (error) {
+      console.error('[helio-webhook] supabase error:', error)
+
+      return NextResponse.json({ error: 'DB error' }, { status: 500 })
+    }
+
+    console.log('[helio-webhook] eth upserted:', data)
+
+    return NextResponse.json({ ok: true })
   }
 
-  // Upsert: creates the row if the client callback never fired (ETH/Rabby wallet payments),
-  // or updates quantity (and eth_wallet if available) on the existing row.
-  const { data, error } = await supabase
-    .from('minters')
-    .upsert(upsertData, { onConflict: 'sol_transaction' })
-    .select('id, quantity')
+  // SOL payment: client onSuccess is reliable and always inserts the row with eth_wallet.
+  // Retry-loop UPDATE preserves eth_wallet and avoids creating a row without it.
+  let attempts = 0
+  let data = null
+  let error = null
+
+  while (attempts < 5) {
+    const result = await supabase
+      .from('minters')
+      .update({ quantity })
+      .eq('sol_transaction', solTx)
+      .select('id, quantity')
+
+    error = result.error
+    data = result.data
+
+    if (error) break
+    if (data && data.length > 0) break
+
+    attempts++
+    console.log(`[helio-webhook] no row yet, retrying (${attempts}/5)…`)
+    await new Promise(r => setTimeout(r, 600))
+  }
 
   if (error) {
     console.error('[helio-webhook] supabase error:', error)
@@ -85,7 +118,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'DB error' }, { status: 500 })
   }
 
-  console.log('[helio-webhook] upserted:', data)
+  console.log('[helio-webhook] sol rows updated:', data?.length ?? 0, 'after', attempts, 'retries', data)
 
   return NextResponse.json({ ok: true })
 }
