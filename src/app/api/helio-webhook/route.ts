@@ -59,17 +59,24 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Missing transaction' }, { status: 400 })
   }
 
-  // Upsert: creates the row if the client callback never fired (e.g. ETH/Rabby wallet
-  // payments where onSuccess doesn't reliably trigger), or updates quantity on the
-  // existing row (normal SOL flow where /api/mint already inserted).
-  // Requires eth_wallet to be nullable in Supabase — webhook-created rows won't have it;
-  // /api/mint patches it in when the client call arrives.
+  // For ETH payments, senderPK is the ETH wallet address — capture it directly from the
+  // webhook so the row is fully populated without needing the client onSuccess callback.
+  const ETH_WALLET_RE = /^0x[a-fA-F0-9]{40}$/
+  const senderPK = String(meta?.senderPK ?? '')
+  const ethWalletFromWebhook = ETH_WALLET_RE.test(senderPK) ? senderPK.toLowerCase() : null
+
+  console.log('[helio-webhook] senderPK:', senderPK, '| ethWalletFromWebhook:', ethWalletFromWebhook)
+
+  const upsertData: Record<string, unknown> = { sol_transaction: solTx, quantity }
+  if (ethWalletFromWebhook) {
+    upsertData.eth_wallet = ethWalletFromWebhook
+  }
+
+  // Upsert: creates the row if the client callback never fired (ETH/Rabby wallet payments),
+  // or updates quantity (and eth_wallet if available) on the existing row.
   const { data, error } = await supabase
     .from('minters')
-    .upsert(
-      { sol_transaction: solTx, quantity },
-      { onConflict: 'sol_transaction' }
-    )
+    .upsert(upsertData, { onConflict: 'sol_transaction' })
     .select('id, quantity')
 
   if (error) {
