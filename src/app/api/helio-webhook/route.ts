@@ -20,9 +20,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Failed to read body' }, { status: 400 })
   }
 
-  // Log immediately — before any parsing — so we always see something if the webhook fires
   console.log('[helio-webhook] received — body length:', rawBody.length)
-  console.log('[helio-webhook] raw body:', rawBody.slice(0, 2000))
 
   let event: Record<string, unknown>
   try {
@@ -33,20 +31,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
-  console.log('[helio-webhook] top-level keys:', Object.keys(event))
-  console.log('[helio-webhook] full event:', JSON.stringify(event).slice(0, 3000))
-
   const tx = event.transactionObject as Record<string, unknown> | undefined
   if (!tx) {
-    console.warn('[helio-webhook] no transactionObject — keys were:', Object.keys(event))
+    console.warn('[helio-webhook] no transactionObject')
 
     return NextResponse.json({ ok: true })
   }
 
   const meta = tx.meta as Record<string, unknown> | undefined
-
-  console.log('[helio-webhook] transactionObject keys:', Object.keys(tx))
-  console.log('[helio-webhook] meta:', JSON.stringify(meta))
 
   const solTx = String(meta?.transactionSignature ?? '')
   const txStatus = String(meta?.transactionStatus ?? '')
