@@ -5,6 +5,8 @@ export async function POST(req: NextRequest) {
   // Verify the request is genuinely from Helio using the shared Bearer token
   const authHeader = req.headers.get('authorization') ?? ''
   const expectedToken = process.env.HELIO_WEBHOOK_SECRET ?? ''
+  console.log('[helio-webhook] auth header received:', authHeader.slice(0, 40))
+  console.log('[helio-webhook] expected token prefix:', `Bearer ${expectedToken}`.slice(0, 40))
   if (!expectedToken || authHeader !== `Bearer ${expectedToken}`) {
     console.warn('[helio-webhook] unauthorised — invalid or missing token')
 
