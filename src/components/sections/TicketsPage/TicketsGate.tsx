@@ -21,6 +21,7 @@ function useCountdown() {
     const tick = () => setRemaining(Math.max(0, deadline - Date.now()))
     tick()
     const id = setInterval(tick, 1000)
+
     return () => clearInterval(id)
   }, [])
 
@@ -32,6 +33,7 @@ function formatCountdown(ms: number) {
   const hours = Math.floor(totalSeconds / 3600)
   const minutes = Math.floor((totalSeconds % 3600) / 60)
   const seconds = totalSeconds % 60
+
   return [hours, minutes, seconds].map(n => String(n).padStart(2, '0')).join(':')
 }
 
