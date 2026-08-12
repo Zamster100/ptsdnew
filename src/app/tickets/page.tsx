@@ -1,3 +1,4 @@
+import { TicketsGate } from '@/components/sections/TicketsPage/TicketsGate'
 import { HookSection } from '@/components/sections/TicketsPage/HookSection'
 import { HeroVideo } from '@/components/sections/Hero/components/HeroVideo'
 import { TVSection } from '@/components/sections/TicketsPage/TVSection'
@@ -17,19 +18,21 @@ export const metadata: Metadata = {
 
 export default function TicketsPage() {
   return (
-    <div className="overflow-hidden">
-      <TicketsHeader />
-      <HeroVideo />
-      <TVSection />
-      <div className="mx-auto max-w-[1400px]">
-        <HookSection />
-        <RaritySection />
-        <GoldenTicketSection />
-        <WhyNowSection />
-        <FAQSection />
-        <MintSection />
-        <FinalCTASection />
+    <TicketsGate>
+      <div className="overflow-hidden">
+        <TicketsHeader />
+        <HeroVideo />
+        <TVSection />
+        <div className="mx-auto max-w-[1400px]">
+          <HookSection />
+          <RaritySection />
+          <GoldenTicketSection />
+          <WhyNowSection />
+          <FAQSection />
+          <MintSection />
+          <FinalCTASection />
+        </div>
       </div>
-    </div>
+    </TicketsGate>
   )
 }

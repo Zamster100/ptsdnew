@@ -38,3 +38,6 @@ next-env.d.ts
 # large media files managed via Git LFS (see .gitattributes)
 
 .vercel
+
+.vercel
+.env*
