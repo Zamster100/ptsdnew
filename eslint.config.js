@@ -50,6 +50,10 @@ export default [
       '@next/next/no-html-link-for-pages': 'error',
 
       // TypeScript rules
+      // Core no-unused-vars doesn't understand TS-only syntax (e.g. named
+      // params in interface function-type members) and false-positives on
+      // it — disable in favor of the TS-aware version below.
+      'no-unused-vars': 'off',
       '@typescript-eslint/no-unused-vars': 'error',
       '@typescript-eslint/ban-ts-comment': 'off',
       '@typescript-eslint/no-explicit-any': 'off',

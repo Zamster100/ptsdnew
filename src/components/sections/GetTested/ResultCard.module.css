@@ -1,0 +1,39 @@
+/* UNTOUCHED — visibly cleaner/pastel than every other band */
+.tierClean {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+/* Default dark card — EXPOSED / SYMPTOMATIC / CHRONIC */
+.tierStandard {
+  background: var(--color-light-bg);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* TERMINAL / OVER 9000 — visually degraded, grimy, desaturated */
+.tierDegraded {
+  background: var(--color-light-bg);
+  border-color: rgba(255, 255, 255, 0.08);
+  filter: contrast(1.2) saturate(0.7) brightness(0.9);
+  position: relative;
+}
+
+.tierDegradedExtreme {
+  filter: contrast(1.35) saturate(0.55) brightness(0.85);
+}
+
+.grime {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: repeating-linear-gradient(
+    115deg,
+    transparent,
+    transparent 3px,
+    rgba(0, 0, 0, 0.25) 3px,
+    rgba(0, 0, 0, 0.25) 4px
+  );
+  mix-blend-mode: overlay;
+  opacity: 0.5;
+}
