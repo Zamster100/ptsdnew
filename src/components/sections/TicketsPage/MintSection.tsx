@@ -210,7 +210,7 @@ export const MintSection = () => {
     const container = document.getElementById('helioCheckoutContainer')
     if (!container) return
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const fn = (window as any).helioCheckout
     if (typeof fn !== 'function') {
       console.error('[helio] window.helioCheckout not available yet')
@@ -227,7 +227,7 @@ export const MintSection = () => {
         neutralColor: '#5A6578',
         stretchFullWidth: true,
         showQRCode: false,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         onSuccess: (event: any) => {
           const solTx = event?.transaction || event?.data?.transactionSignature || ''
           const wallet = walletRef.current.trim()

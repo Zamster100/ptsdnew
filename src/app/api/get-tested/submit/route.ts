@@ -29,9 +29,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
-  const { handle, referredBy, cycle, worst, answers } = body as {
+  const { handle, cycle, worst, answers } = body as {
     handle: unknown
-    referredBy: unknown
     cycle: unknown
     worst: unknown
     answers: unknown
@@ -40,11 +39,6 @@ export async function POST(req: NextRequest) {
   const trimmedHandle = typeof handle === 'string' ? handle.trim() : ''
   if (!trimmedHandle || trimmedHandle.length > 32) {
     return NextResponse.json({ error: 'Invalid handle' }, { status: 400 })
-  }
-
-  const trimmedReferrer = typeof referredBy === 'string' ? referredBy.trim() : ''
-  if (trimmedReferrer.length > 32) {
-    return NextResponse.json({ error: 'Invalid referrer' }, { status: 400 })
   }
 
   if (typeof cycle !== 'string' || !CYCLE_OPTIONS.includes(cycle)) {
@@ -56,7 +50,7 @@ export async function POST(req: NextRequest) {
 
   if (
     !Array.isArray(answers) ||
-    answers.length !== 25 ||
+    answers.length !== 10 ||
     !answers.every(a => Number.isInteger(a) && a >= 0 && a <= 4)
   ) {
     return NextResponse.json({ error: 'Invalid answers' }, { status: 400 })
@@ -68,7 +62,6 @@ export async function POST(req: NextRequest) {
     .from('patients')
     .insert({
       handle: trimmedHandle,
-      referred_by: trimmedReferrer || null,
       cycle,
       worst,
       answers,

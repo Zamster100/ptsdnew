@@ -5,12 +5,11 @@ import { Button } from '@/components/ui/Button'
 import { CornerStamp } from './CornerStamp'
 
 interface IntroStepProps {
-  onBegin: (handle: string, referredBy: string) => void
+  onBegin: (handle: string) => void
 }
 
 export const IntroStep = ({ onBegin }: IntroStepProps) => {
   const [handle, setHandle] = useState('')
-  const [referredBy, setReferredBy] = useState('')
 
   const trimmedHandle = handle.trim()
   const isValid = trimmedHandle.length > 0 && trimmedHandle.length <= 32
@@ -18,7 +17,7 @@ export const IntroStep = ({ onBegin }: IntroStepProps) => {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!isValid) return
-    onBegin(trimmedHandle, referredBy.trim())
+    onBegin(trimmedHandle)
   }
 
   return (
@@ -33,7 +32,7 @@ export const IntroStep = ({ onBegin }: IntroStepProps) => {
           Before we begin
         </p>
         <p className="font-manrope mb-8 max-w-lg text-sm leading-[1.7] text-light-text">
-          25 scored items across five clusters, plus two reverse-scored items to
+          10 scored items across five clusters, plus two reverse-scored items to
           catch straight-liners. Answer honestly — it doesn't count if you lie.
         </p>
 
@@ -47,20 +46,6 @@ export const IntroStep = ({ onBegin }: IntroStepProps) => {
               value={handle}
               onChange={e => setHandle(e.target.value)}
               placeholder="@yourname"
-              maxLength={32}
-              className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/20 outline-none transition-colors focus:border-white/30"
-            />
-          </div>
-
-          <div>
-            <label className="mb-2 block font-mono text-xs uppercase tracking-widest text-white/50">
-              Referred by <span className="normal-case text-white/25">(optional)</span>
-            </label>
-            <input
-              type="text"
-              value={referredBy}
-              onChange={e => setReferredBy(e.target.value)}
-              placeholder="@whoever sent you"
               maxLength={32}
               className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/20 outline-none transition-colors focus:border-white/30"
             />

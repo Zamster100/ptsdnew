@@ -2,13 +2,15 @@
 
 import { RefObject, useState } from 'react'
 import { toPng } from 'html-to-image'
+import { cn } from '@/lib/utils'
 
 interface DownloadButtonProps {
   targetRef: RefObject<HTMLDivElement | null>
   filename: string
+  className?: string
 }
 
-export const DownloadButton = ({ targetRef, filename }: DownloadButtonProps) => {
+export const DownloadButton = ({ targetRef, filename, className }: DownloadButtonProps) => {
   const [busy, setBusy] = useState(false)
 
   async function handleDownload() {
@@ -35,7 +37,10 @@ export const DownloadButton = ({ targetRef, filename }: DownloadButtonProps) => 
       type="button"
       onClick={handleDownload}
       disabled={busy}
-      className="font-manrope w-full max-w-md rounded-xl border border-white/20 bg-white/5 px-6 py-3 text-sm font-bold text-white transition-colors duration-150 hover:border-white/40 disabled:cursor-not-allowed disabled:opacity-50"
+      className={cn(
+        'font-manrope w-full rounded-xl border border-white/20 bg-white/5 px-6 py-3 text-sm font-bold text-white transition-colors duration-150 hover:border-white/40 disabled:cursor-not-allowed disabled:opacity-50',
+        className,
+      )}
     >
       {busy ? 'Preparing…' : 'Download Chart'}
     </button>

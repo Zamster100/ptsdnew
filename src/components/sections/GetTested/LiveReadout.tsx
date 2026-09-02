@@ -17,7 +17,7 @@ export const LiveReadout = ({ answers, currentStep }: LiveReadoutProps) => {
       <span className="tabular-nums font-bold" style={{ color: accentColor }}>
         {rawSoFar}
       </span>
-      <span className="text-white/20">/ 100</span>
+      <span className="text-white/20">/ 40</span>
     </div>
   )
 }

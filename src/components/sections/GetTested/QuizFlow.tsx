@@ -38,7 +38,6 @@ const DEFAULT_EKG_COLOR = 'var(--color-main-red)'
 export const QuizFlow = () => {
   const [stage, setStage] = useState<Stage>('intro')
   const [handle, setHandle] = useState('')
-  const [referredBy, setReferredBy] = useState('')
   const [answers, setAnswers] = useState<(number | null)[]>(Array(TOTAL_STEPS).fill(null))
   const [currentIndex, setCurrentIndex] = useState(0)
   const [submitting, setSubmitting] = useState(false)
@@ -47,9 +46,8 @@ export const QuizFlow = () => {
 
   const cardRef = useRef<HTMLDivElement>(null)
 
-  function handleBegin(h: string, ref: string) {
+  function handleBegin(h: string) {
     setHandle(h)
-    setReferredBy(ref)
     setStage('quiz')
   }
 
@@ -64,7 +62,7 @@ export const QuizFlow = () => {
       const res = await fetch('/api/get-tested/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ handle, referredBy, cycle, worst, answers: itemAnswers }),
+        body: JSON.stringify({ handle, cycle, worst, answers: itemAnswers }),
       })
       const json = await res.json()
 
@@ -111,7 +109,7 @@ export const QuizFlow = () => {
   // (or the dominant cluster on the result), speed picks up as the live
   // score climbs, same behavior as the ptsd25.html prototype it's ported from.
   const rawSoFar = computePartialRawScore(answers.slice(2))
-  const ekgSpeed = Math.max(0.5, 1.7 - (rawSoFar / 100) * 1.1)
+  const ekgSpeed = Math.max(0.5, 1.7 - (rawSoFar / 40) * 1.1)
 
   let ekgColor = DEFAULT_EKG_COLOR
   const currentStep = stage === 'quiz' ? STEPS[currentIndex] : null
@@ -123,7 +121,7 @@ export const QuizFlow = () => {
 
   const deck =
     stage === 'intro'
-      ? "25 questions. 5 clusters. One number you can't unsee. Find out exactly how held, hunted, and haunted you really are."
+      ? "12 questions. 5 clusters. One number you can't unsee. Find out exactly how held, hunted, and haunted you really are."
       : stage === 'quiz'
         ? "Over the last 30 days, how often have you experienced the following? The chart doesn't lie and neither should you."
         : 'Diagnosis confirmed. Chart closed.'
@@ -132,6 +130,7 @@ export const QuizFlow = () => {
     <div className="mx-auto w-full max-w-2xl px-[15px] pb-24 pt-28 md:px-[60px]">
       <Masthead title="The PTSD-25" deck={deck} liveValue={rawSoFar} accentColor={ekgColor} />
       <EkgStrip color={ekgColor} speedSeconds={ekgSpeed} />
+      <ProgressBar answers={answers} currentIndex={stage === 'result' ? TOTAL_STEPS : currentIndex} />
 
       <div className="mt-10">
         {stage === 'intro' && <IntroStep onBegin={handleBegin} />}
@@ -149,7 +148,6 @@ export const QuizFlow = () => {
               )}
             </div>
 
-            <ProgressBar answers={answers} currentIndex={currentIndex} />
             <LiveReadout answers={answers} currentStep={currentStep} />
             <QuestionStep step={currentStep} selected={answers[currentIndex]} onSelect={handleSelect} />
 
@@ -172,18 +170,18 @@ export const QuizFlow = () => {
               ref={cardRef}
               patientNo={String(result.id).padStart(6, '0')}
               handle={handle}
-              referredBy={referredBy}
               cycle={INTAKE_QUESTIONS[0].options[answers[0]!]}
               worst={INTAKE_QUESTIONS[1].options[answers[1]!]}
               result={result}
             />
 
-            <div className="mt-6 flex w-full max-w-lg flex-col gap-3">
+            <div className="mt-6 flex w-full max-w-lg gap-3">
               <DownloadButton
                 targetRef={cardRef}
                 filename={`ptsd25-patient-${String(result.id).padStart(6, '0')}.png`}
+                className="flex-1"
               />
-              <Button variant="outline" className="w-full justify-center" onClick={handleRetake}>
+              <Button variant="outline" className="flex-1 justify-center" onClick={handleRetake}>
                 Retake
               </Button>
             </div>

@@ -1,9 +1,0 @@
-/* Faint graph-paper grid, shared by the intro and result cards to tie them
-   to the "clinical chart" theme set up by the masthead. */
-.chartGrid {
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
-  background-size: 22px 22px;
-  background-position: -1px -1px;
-}

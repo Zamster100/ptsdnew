@@ -4,45 +4,13 @@ import { useState, useEffect, ReactNode } from 'react'
 import Image from 'next/image'
 
 const STORAGE_KEY = 'ptsd_tickets_access'
-const DEADLINE_KEY = 'ptsd_tickets_countdown_deadline'
-const PASSWORD = 'primetime'
-const COUNTDOWN_MS = 26 * 60 * 60 * 1000
-
-function useCountdown() {
-  const [remaining, setRemaining] = useState<number | null>(null)
-
-  useEffect(() => {
-    let deadline = Number(window.localStorage.getItem(DEADLINE_KEY))
-    if (!deadline || deadline < Date.now()) {
-      deadline = Date.now() + COUNTDOWN_MS
-      window.localStorage.setItem(DEADLINE_KEY, String(deadline))
-    }
-
-    const tick = () => setRemaining(Math.max(0, deadline - Date.now()))
-    tick()
-    const id = setInterval(tick, 1000)
-
-    return () => clearInterval(id)
-  }, [])
-
-  return remaining
-}
-
-function formatCountdown(ms: number) {
-  const totalSeconds = Math.floor(ms / 1000)
-  const hours = Math.floor(totalSeconds / 3600)
-  const minutes = Math.floor((totalSeconds % 3600) / 60)
-  const seconds = totalSeconds % 60
-
-  return [hours, minutes, seconds].map(n => String(n).padStart(2, '0')).join(':')
-}
+const PASSWORD = 'BigDick'
 
 export function TicketsGate({ children }: { children: ReactNode }) {
   const [unlocked, setUnlocked] = useState(false)
   const [input, setInput] = useState('')
   const [error, setError] = useState(false)
   const [checked, setChecked] = useState(false)
-  const remaining = useCountdown()
 
   useEffect(() => {
     if (window.sessionStorage.getItem(STORAGE_KEY) === '1') {
@@ -79,17 +47,8 @@ export function TicketsGate({ children }: { children: ReactNode }) {
 
         <div className="text-center">
           <h1 className="text-white text-2xl font-bold tracking-tight">Private Access Only</h1>
-          <p className="text-white/50 text-sm mt-2">Enter the access password to continue.</p>
+          <p className="text-white/50 text-sm mt-2">Phase 1 of Presale Closed.</p>
         </div>
-
-        {remaining !== null && (
-          <div className="text-center">
-            <p className="text-[10px] uppercase tracking-[0.25em] text-white/40 mb-2">Access Closes In</p>
-            <p className="text-white text-3xl font-mono font-bold tabular-nums tracking-widest">
-              {formatCountdown(remaining)}
-            </p>
-          </div>
-        )}
 
         <form onSubmit={handleSubmit} className="w-full flex flex-col gap-3">
           <input

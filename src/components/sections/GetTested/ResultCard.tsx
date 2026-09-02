@@ -4,19 +4,17 @@ import { SubscaleBars } from './SubscaleBars'
 import { getPrimaryClusterColor } from '@/lib/getTested/scoring'
 import { ScoreResult } from '@/lib/getTested/types'
 import styles from './ResultCard.module.css'
-import chromeStyles from './CardChrome.module.css'
 
 interface ResultCardProps {
   patientNo: string
   handle: string
-  referredBy: string
   cycle: string
   worst: string
   result: ScoreResult
 }
 
 export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(
-  ({ patientNo, handle, referredBy, cycle, worst, result }, ref) => {
+  ({ patientNo, handle, cycle, worst, result }, ref) => {
     const isClean = result.band === 'UNTOUCHED'
     const isDegraded = result.band === 'TERMINAL' || result.band === 'OVER_9000'
     const accentColor = getPrimaryClusterColor(result.clusterScores)
@@ -30,7 +28,6 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(
           isDegraded && styles.tierDegraded,
           result.band === 'OVER_9000' && styles.tierDegradedExtreme,
           !isClean && !isDegraded && styles.tierStandard,
-          !isDegraded && chromeStyles.chartGrid,
         )}
         style={{ boxShadow: `0 0 0 1px ${accentColor}26, 0 20px 40px rgba(0,0,0,0.4)` }}
       >
@@ -81,9 +78,6 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(
         <div className="my-5 h-px w-full bg-white/10" />
 
         <div className="space-y-1.5">
-          <p className="font-mono text-[11px] uppercase tracking-widest text-white/50">
-            Infected by: <span className="text-white/80">{referredBy || 'Self-referred'}</span>
-          </p>
           <div className="flex justify-between">
             <p className="font-mono text-[11px] uppercase tracking-widest text-white/50">
               Worst: <span className="text-white/80">{worst}</span>

@@ -8,7 +8,7 @@ interface SubscaleBarsProps {
   clusterScores: Record<ClusterId, number>
 }
 
-const MAX_CLUSTER_SCORE = 20
+const MAX_CLUSTER_SCORE = 8
 
 export const SubscaleBars = ({ clusterScores }: SubscaleBarsProps) => {
   const [animated, setAnimated] = useState(false)

@@ -59,48 +59,33 @@ export const CLUSTER_TEXT_CLASS: Record<ClusterId, string> = {
 export const CLUSTER_ORDER: ClusterId[] = ['A', 'B', 'C', 'D', 'E']
 
 export const RESPONSE_SCALE: string[] = [
-  'Never',
-  'Once or twice',
-  'Some weeks',
-  'Most days',
-  "I'm doing it right now",
+  'Not true at all',
+  'Rarely true',
+  'Sometimes true',
+  'Mostly true',
+  'Completely true',
 ]
 
 export const ITEMS: ItemStep[] = [
   // Cluster A — Intrusion
   { type: 'item', cluster: 'A', reverse: false, text: "A specific candle, wick, or chart formation appears in your mind while you're doing something completely unrelated." },
-  { type: 'item', cluster: 'A', reverse: false, text: "You calculate what a bag would be worth today if you'd held. Nobody asked you to. You just did it." },
-  { type: 'item', cluster: 'A', reverse: false, text: 'You have dreamt about the price of something you own, or used to own.' },
-  { type: 'item', cluster: 'A', reverse: false, text: "A number surfaces unprompted — an entry, a floor, a price you didn't take — with no trigger you can identify." },
-  { type: 'item', cluster: 'A', reverse: false, text: 'Your body reacts before your brain does: a notification sound, a color, a certain shade of red.' },
+  { type: 'item', cluster: 'A', reverse: false, text: "You calculate what a bag would be worth today if you'd held. Nobody asked you to." },
 
   // Cluster B — Avoidance
   { type: 'item', cluster: 'B', reverse: false, text: "You deliberately don't open your portfolio, because you already know." },
-  { type: 'item', cluster: 'B', reverse: false, text: 'You muted or left a group chat because of where the conversation was heading.' },
-  { type: 'item', cluster: 'B', reverse: false, text: 'Someone outside crypto asks how "the crypto thing" is going and you change the subject.' },
-  { type: 'item', cluster: 'B', reverse: false, text: "There is a ticker, a project, or a founder's name you avoid entirely. You know which one." },
   { type: 'item', cluster: 'B', reverse: true, text: 'You can open your wallet without bracing first.' },
 
   // Cluster C — Negative Cognition & Mood
-  { type: 'item', cluster: 'C', reverse: false, text: 'You assume every new project is a rug until proven otherwise, including ones run by people you like.' },
-  { type: 'item', cluster: 'C', reverse: false, text: 'You blame yourself specifically — not the market, not the team. You saw it. You did it anyway.' },
-  { type: 'item', cluster: 'C', reverse: false, text: "Something goes right and you feel nothing. The green doesn't land anymore." },
-  { type: 'item', cluster: 'C', reverse: false, text: "You don't trust your own research even when the research is good." },
-  { type: 'item', cluster: 'C', reverse: false, text: 'You feel permanently, structurally behind people who got in before you.' },
+  { type: 'item', cluster: 'C', reverse: false, text: 'You assume every new project is a rug until proven otherwise.' },
+  { type: 'item', cluster: 'C', reverse: false, text: 'You blame yourself specifically — not the market, not the team — when it goes wrong.' },
 
   // Cluster D — Hypervigilance
   { type: 'item', cluster: 'D', reverse: false, text: 'You have checked a price between 2am and 5am.' },
-  { type: 'item', cluster: 'D', reverse: false, text: 'Your phone vibrates and something in your chest moves first.' },
-  { type: 'item', cluster: 'D', reverse: false, text: "You're short with people who have nothing to do with any of this." },
-  { type: 'item', cluster: 'D', reverse: false, text: 'You read every announcement looking for the bad news hidden in the good news.' },
   { type: 'item', cluster: 'D', reverse: true, text: 'You sleep through the night regardless of what your positions are doing.' },
 
   // Cluster E — Dissociation
   { type: 'item', cluster: 'E', reverse: false, text: "The numbers don't feel like money. They're just numbers on a screen now." },
-  { type: 'item', cluster: 'E', reverse: false, text: 'You have watched yourself make a decision you knew was bad, from somewhere slightly outside your own body.' },
   { type: 'item', cluster: 'E', reverse: false, text: "Hours have disappeared. You were scrolling. You can't recall a single thing you read." },
-  { type: 'item', cluster: 'E', reverse: false, text: 'None of it feels real — the jpegs, the tokens, the profile picture, the person behind it.' },
-  { type: 'item', cluster: 'E', reverse: false, text: "The person who made your first buy would not recognize you, and you're not sure they'd be glad." },
 ]
 
 export const INTAKE_QUESTIONS: IntakeStep[] = [
@@ -121,12 +106,12 @@ export const INTAKE_QUESTIONS: IntakeStep[] = [
 export const STEPS: Step[] = [...INTAKE_QUESTIONS, ...ITEMS]
 
 export const BANDS: Band[] = [
-  { id: 'UNTOUCHED', label: 'UNTOUCHED', copy: 'Clean scan. You have never actually been in it.', minRaw: 0, maxRaw: 15 },
-  { id: 'EXPOSED', label: 'EXPOSED', copy: "Early symptoms. It's started.", minRaw: 16, maxRaw: 35 },
-  { id: 'SYMPTOMATIC', label: 'SYMPTOMATIC', copy: "You're in it. You know you're in it.", minRaw: 36, maxRaw: 55 },
-  { id: 'CHRONIC', label: 'CHRONIC', copy: 'This is load-bearing now.', minRaw: 56, maxRaw: 75 },
-  { id: 'TERMINAL', label: 'TERMINAL', copy: 'There is no version of you without this.', minRaw: 76, maxRaw: 95 },
-  { id: 'OVER_9000', label: 'OVER 9000', copy: 'PATIENT ZERO. Do not attempt treatment.', minRaw: 96, maxRaw: 100 },
+  { id: 'UNTOUCHED', label: 'UNTOUCHED', copy: 'Clean scan. You have never actually been in it.', minRaw: 0, maxRaw: 6 },
+  { id: 'EXPOSED', label: 'EXPOSED', copy: "Early symptoms. It's started.", minRaw: 7, maxRaw: 14 },
+  { id: 'SYMPTOMATIC', label: 'SYMPTOMATIC', copy: "You're in it. You know you're in it.", minRaw: 15, maxRaw: 22 },
+  { id: 'CHRONIC', label: 'CHRONIC', copy: 'This is load-bearing now.', minRaw: 23, maxRaw: 30 },
+  { id: 'TERMINAL', label: 'TERMINAL', copy: 'There is no version of you without this.', minRaw: 31, maxRaw: 38 },
+  { id: 'OVER_9000', label: 'OVER 9000', copy: 'PATIENT ZERO. Do not attempt treatment.', minRaw: 39, maxRaw: 40 },
 ]
 
 export const OFF_RAMP_TEXT =
