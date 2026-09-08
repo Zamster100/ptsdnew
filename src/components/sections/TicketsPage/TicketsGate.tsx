@@ -47,7 +47,7 @@ export function TicketsGate({ children }: { children: ReactNode }) {
 
         <div className="text-center">
           <h1 className="text-white text-2xl font-bold tracking-tight">Private Access Only</h1>
-          <p className="text-white/50 text-sm mt-2">Phase 1 of Presale Closed.</p>
+          <p className="text-white/50 text-sm mt-2">Access is limited.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="w-full flex flex-col gap-3">

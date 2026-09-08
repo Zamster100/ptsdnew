@@ -1,18 +1,20 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { getTypeAccent } from '@/lib/getTested/data'
+import { getTypeAccent, SpreadTaskId } from '@/lib/getTested/data'
 import { DiagnosisResult } from '@/lib/getTested/types'
 import { loadFlowState, saveFlowState } from '@/lib/getTested/storage'
 import { IntroStep } from './IntroStep'
 import { WaitStep } from './WaitStep'
 import { ResultStep } from './ResultStep'
+import { SpreadStep } from './SpreadStep'
 import { ClaimStep } from './ClaimStep'
 import { ConfirmationStep } from './ConfirmationStep'
 import { EkgStrip } from './EkgStrip'
 import { Masthead } from './Masthead'
+import { Stepper } from './Stepper'
 
-type Stage = 'intake' | 'wait' | 'result' | 'claim' | 'confirmation'
+type Stage = 'intake' | 'wait' | 'result' | 'spread' | 'claim' | 'confirmation'
 
 const DEFAULT_EKG_COLOR = 'var(--color-main-red)'
 
@@ -22,6 +24,8 @@ export const DiagnosisFlow = () => {
   const [apiError, setApiError] = useState<string | null>(null)
   const [shared, setShared] = useState(false)
   const [hydrated, setHydrated] = useState(false)
+  const [handle, setHandle] = useState('')
+  const [openedTasks, setOpenedTasks] = useState<SpreadTaskId[]>([])
 
   const cardRef = useRef<HTMLDivElement>(null)
   const apiDone = result !== null || apiError !== null
@@ -34,6 +38,7 @@ export const DiagnosisFlow = () => {
     if (saved) {
       setResult(saved.result)
       setShared(saved.shared)
+      setOpenedTasks(saved.openedTasks)
       setStage(saved.stage)
     }
     setHydrated(true)
@@ -41,14 +46,15 @@ export const DiagnosisFlow = () => {
 
   useEffect(() => {
     if (!hydrated || !result) return
-    if (stage === 'result' || stage === 'claim' || stage === 'confirmation') {
-      saveFlowState({ stage, result, shared })
+    if (stage === 'result' || stage === 'spread' || stage === 'claim' || stage === 'confirmation') {
+      saveFlowState({ stage, result, shared, openedTasks })
     }
-  }, [hydrated, stage, result, shared])
+  }, [hydrated, stage, result, shared, openedTasks])
 
   async function handleBegin(h: string) {
     setResult(null)
     setApiError(null)
+    setHandle(h)
     setStage('wait')
 
     try {
@@ -75,7 +81,15 @@ export const DiagnosisFlow = () => {
     setStage(apiError ? 'intake' : 'result')
   }
 
-  function handleShared() {
+  function handleContinueFromResult() {
+    setStage('spread')
+  }
+
+  function handleTaskOpened(taskId: SpreadTaskId) {
+    setOpenedTasks(prev => (prev.includes(taskId) ? prev : [...prev, taskId]))
+  }
+
+  function handleSpreadComplete() {
     setShared(true)
     setStage('claim')
   }
@@ -94,15 +108,18 @@ export const DiagnosisFlow = () => {
         ? 'Reading the chart. This part is not simulated.'
         : stage === 'result'
           ? 'Diagnosis confirmed. Chart closed.'
-          : stage === 'claim'
-            ? 'Last step before your spot is locked in.'
-            : 'Processed. Filed. Pending review.'
+          : stage === 'spread'
+            ? 'Every diagnosis is contagious. Spread yours before you claim your spot.'
+            : stage === 'claim'
+              ? 'Last step before your spot is locked in.'
+              : 'Processed. Filed. Pending review.'
 
   if (!hydrated) return null
 
   return (
     <div className="mx-auto w-full max-w-5xl px-[15px] pb-24 pt-28 md:px-[60px]">
       <Masthead deck={deck} />
+      <Stepper currentStage={stage} />
       <EkgStrip color={ekgColor} speedSeconds={ekgSpeed} />
 
       <div className="mt-10">
@@ -115,10 +132,16 @@ export const DiagnosisFlow = () => {
           </div>
         )}
 
-        {stage === 'wait' && <WaitStep apiDone={apiDone} onComplete={handleWaitComplete} />}
+        {stage === 'wait' && (
+          <WaitStep apiDone={apiDone} handle={handle} onComplete={handleWaitComplete} />
+        )}
 
         {stage === 'result' && result && (
-          <ResultStep result={result} cardRef={cardRef} onShared={handleShared} />
+          <ResultStep result={result} cardRef={cardRef} onContinue={handleContinueFromResult} />
+        )}
+
+        {stage === 'spread' && result && (
+          <SpreadStep openedTasks={openedTasks} onTaskOpened={handleTaskOpened} onContinue={handleSpreadComplete} />
         )}
 
         {stage === 'claim' && result && (

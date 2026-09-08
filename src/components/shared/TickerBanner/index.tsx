@@ -4,7 +4,7 @@ const ITEMS = [
   { text: '100x MAX TOKEN MULTIPLIER', cls: 'text-ticket-gold' },
   { text: 'PUBLIC MINT · DATE TBD', cls: 'text-main-yellow' },
   { text: '5 RARITY TIERS', cls: 'text-white/70' },
-  { text: 'PRE-TOKEN ACCESS ROUND', cls: 'text-main-cyan' },
+  { text: 'TICKET SYSTEM LIVE', cls: 'text-main-cyan' },
   { text: 'SAME PRICE · RANDOM GOLDEN REVEAL', cls: 'text-ticket-gold' },
   { text: 'NOT AN NFT · A TICKET IN', cls: 'text-ticket-red' },
   { text: 'EVERY TICKET = FUTURE PTSD TOKEN ACCESS', cls: 'text-white/70' },

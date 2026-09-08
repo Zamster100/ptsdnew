@@ -72,7 +72,7 @@ export const GoldenTicketSection = () => {
             Five in the world. Same mint, same price, same random chance as everyone else.
           </p>
           <p className="font-manrope text-sm font-bold text-ticket-gold">
-            If you pull Gold, you weren't just early. You were stupid early.
+            Pulling Gold means landing the highest multiplier in the entire collection, at 1-in-889 odds.
           </p>
         </div>
       </div>

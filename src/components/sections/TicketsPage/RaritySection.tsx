@@ -58,7 +58,7 @@ export const RaritySection = () => {
               Rarity is random, assigned at mint. You can't choose, only roll.
             </p>
             <p className="font-manrope text-base leading-[1.75] text-white">
-              Even a Common ticket gets you in early. The multiplier is the upside. Getting in at all is the floor.
+              Even a Common ticket carries a real multiplier. The rarity tier just decides how much.
             </p>
           </div>
         </div>

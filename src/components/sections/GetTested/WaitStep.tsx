@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 
 interface WaitStepProps {
   apiDone: boolean
+  handle: string
   onComplete: () => void
 }
 
@@ -18,7 +19,7 @@ const STATUS_MESSAGES = [
 const STATUS_INTERVAL_MS = 4000
 const SLOW_WARNING_MS = 60_000
 
-export const WaitStep = ({ apiDone, onComplete }: WaitStepProps) => {
+export const WaitStep = ({ apiDone, handle, onComplete }: WaitStepProps) => {
   const [videoEnded, setVideoEnded] = useState(false)
   const [skipClicked, setSkipClicked] = useState(false)
   const [statusIndex, setStatusIndex] = useState(0)
@@ -104,6 +105,23 @@ export const WaitStep = ({ apiDone, onComplete }: WaitStepProps) => {
             </div>
           )}
 
+          {/* Red analysis overlay — tint + border to make it unmistakable
+              that a live scan is running over the footage. */}
+          <div className="pointer-events-none absolute inset-0">
+            <div className="absolute inset-0 bg-ticket-red/15 mix-blend-multiply" />
+            <div className="absolute inset-0 border-4 border-ticket-red/40" />
+          </div>
+
+          <div className="pointer-events-none absolute left-3 top-3 flex items-center gap-2 rounded-lg border border-ticket-red/50 bg-black/70 px-3 py-1.5">
+            <span className="relative flex h-2 w-2 shrink-0">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-ticket-red opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-ticket-red" />
+            </span>
+            <p className="font-mono text-[10px] uppercase tracking-widest text-white md:text-xs">
+              Analyzing{handle ? ` @${handle}` : ' profile'}...
+            </p>
+          </div>
+
           <button
             type="button"
             onClick={() => setSkipClicked(true)}
@@ -115,7 +133,7 @@ export const WaitStep = ({ apiDone, onComplete }: WaitStepProps) => {
           {!waitingForApi && (
             <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent px-5 pb-4 pt-12 md:px-8">
               <p className="font-mono text-xs uppercase tracking-widest text-white md:text-sm">
-                Enjoy this while you wait for the results
+                Grok is reading your posts — enjoy this while you wait
               </p>
             </div>
           )}

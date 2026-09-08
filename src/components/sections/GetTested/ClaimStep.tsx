@@ -52,7 +52,7 @@ export const ClaimStep = ({ diagnosisId, onClaimed }: ClaimStepProps) => {
         <div className="absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-ticket-red via-main-yellow to-ticket-red" />
         <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-ticket-red/20 blur-3xl" />
 
-        <CornerStamp label="One last thing" />
+        <CornerStamp label="Step 3 / 3" />
 
         <h2 className="font-manrope mb-3 text-2xl font-black uppercase leading-tight text-white md:text-3xl">
           Claim Your Spot
@@ -61,7 +61,7 @@ export const ClaimStep = ({ diagnosisId, onClaimed }: ClaimStepProps) => {
           Enter your wallet to lock in your entry.
         </p>
 
-        <form onSubmit={handleSubmit} className="flex max-w-md flex-col gap-3">
+        <form onSubmit={handleSubmit} className="flex w-full flex-col gap-3">
           <div>
             <label className="mb-2 block font-mono text-xs uppercase tracking-widest text-white/50">
               Wallet address

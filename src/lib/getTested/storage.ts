@@ -1,20 +1,26 @@
+import { SpreadTaskId } from './data'
 import { DiagnosisResult } from './types'
 
 const STORAGE_KEY = 'ptsd25_diagnosis_flow'
 
-export type ResumableStage = 'result' | 'claim' | 'confirmation'
+const SPREAD_TASK_IDS: SpreadTaskId[] = ['follow', 'like', 'repost', 'reply']
+
+export type ResumableStage = 'result' | 'spread' | 'claim' | 'confirmation'
+
+const RESUMABLE_STAGES: ResumableStage[] = ['result', 'spread', 'claim', 'confirmation']
 
 export interface StoredFlowState {
   stage: ResumableStage
   result: DiagnosisResult
   shared: boolean
+  openedTasks: SpreadTaskId[]
 }
 
 /**
- * Only 'result' | 'claim' | 'confirmation' are worth resuming — those are
- * the stages reached AFTER the paid Grok call already completed. A refresh
- * during 'intake' or 'wait' just restarts, since the in-flight request from
- * the old page context is gone either way.
+ * Only 'result' | 'spread' | 'claim' | 'confirmation' are worth resuming —
+ * those are the stages reached AFTER the paid Grok call already completed. A
+ * refresh during 'intake' or 'wait' just restarts, since the in-flight
+ * request from the old page context is gone either way.
  */
 export function saveFlowState(state: StoredFlowState): void {
   if (typeof window === 'undefined') return
@@ -32,15 +38,20 @@ export function loadFlowState(): StoredFlowState | null {
     if (!raw) return null
 
     const parsed = JSON.parse(raw) as Partial<StoredFlowState>
-    if (
-      (parsed.stage !== 'result' && parsed.stage !== 'claim' && parsed.stage !== 'confirmation') ||
-      !parsed.result ||
-      typeof parsed.result.id !== 'number'
-    ) {
+    const stage = parsed.stage
+    const isValidStage = (s: unknown): s is ResumableStage => RESUMABLE_STAGES.includes(s as ResumableStage)
+
+    if (!isValidStage(stage) || !parsed.result || typeof parsed.result.id !== 'number') {
       return null
     }
 
-    return parsed as StoredFlowState
+    // Entries saved before the spread-tasks feature existed won't have this
+    // field at all — default to none-opened rather than rejecting the record.
+    const openedTasks = Array.isArray(parsed.openedTasks)
+      ? parsed.openedTasks.filter((id): id is SpreadTaskId => SPREAD_TASK_IDS.includes(id as SpreadTaskId))
+      : []
+
+    return { stage, result: parsed.result, shared: Boolean(parsed.shared), openedTasks }
   } catch {
     return null
   }

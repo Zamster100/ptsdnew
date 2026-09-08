@@ -2,7 +2,6 @@
 
 import { RefObject, useState } from 'react'
 import { toBlob } from 'html-to-image'
-import { cn } from '@/lib/utils'
 import { DiagnosisResult } from '@/lib/getTested/types'
 import { ResultCard } from './ResultCard'
 import { DownloadButton } from './DownloadButton'
@@ -11,19 +10,13 @@ import { OffRampNotice } from './OffRampNotice'
 interface ResultStepProps {
   result: DiagnosisResult
   cardRef: RefObject<HTMLDivElement | null>
-  onShared: () => void
-}
-
-function buildShareText(result: DiagnosisResult): string {
-  const url = typeof window !== 'undefined' ? window.location.href : ''
-
-  return `I just got tested at PTSD and I'm ${result.type}. ${url}`.trim()
+  onContinue: () => void
 }
 
 const buttonClass =
   'font-manrope flex-1 rounded-xl border border-white/20 bg-white/5 px-4 py-3 text-xs font-bold text-white transition-colors duration-150 hover:border-white/40 disabled:cursor-not-allowed disabled:opacity-50'
 
-export const ResultStep = ({ result, cardRef, onShared }: ResultStepProps) => {
+export const ResultStep = ({ result, cardRef, onContinue }: ResultStepProps) => {
   const [copyState, setCopyState] = useState<'idle' | 'busy' | 'copied' | 'failed'>('idle')
 
   async function handleCopyImage() {
@@ -49,13 +42,6 @@ export const ResultStep = ({ result, cardRef, onShared }: ResultStepProps) => {
     }
   }
 
-  function handlePostToX() {
-    const text = buildShareText(result)
-    const intentUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`
-    window.open(intentUrl, '_blank', 'noopener,noreferrer')
-    onShared()
-  }
-
   return (
     <div className="flex flex-col items-center">
       <ResultCard
@@ -67,7 +53,7 @@ export const ResultStep = ({ result, cardRef, onShared }: ResultStepProps) => {
       />
 
       <p className="font-manrope mt-8 text-center text-sm font-bold uppercase tracking-wide text-main-yellow">
-        Post your diagnosis to be eligible for WL
+        Chart&apos;s open. Next: spread it.
       </p>
 
       <div className="mt-4 flex w-full max-w-lg gap-3">
@@ -77,10 +63,6 @@ export const ResultStep = ({ result, cardRef, onShared }: ResultStepProps) => {
           className={buttonClass}
         />
 
-        <button type="button" onClick={handlePostToX} className={cn(buttonClass, 'border-ticket-red')}>
-          Post to X
-        </button>
-
         <button type="button" onClick={handleCopyImage} disabled={copyState === 'busy'} className={buttonClass}>
           {copyState === 'busy' && 'Copying…'}
           {copyState === 'copied' && 'Copied!'}
@@ -88,6 +70,14 @@ export const ResultStep = ({ result, cardRef, onShared }: ResultStepProps) => {
           {copyState === 'idle' && 'Copy Image'}
         </button>
       </div>
+
+      <button
+        type="button"
+        onClick={onContinue}
+        className="font-manrope mt-6 w-full max-w-lg rounded-xl bg-ticket-red px-6 py-3 text-sm font-bold text-white transition-opacity hover:opacity-90"
+      >
+        Continue to Spread the Signal
+      </button>
 
       <OffRampNotice />
     </div>

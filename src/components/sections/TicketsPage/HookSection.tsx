@@ -1,11 +1,12 @@
 import Image from 'next/image'
+import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 
 const stats = [
-  { value: '1,333', label: 'Guaranteed spots', gold: false },
+  { value: '4,444', label: 'Total tickets', gold: false },
   { value: '5', label: 'Golden tickets', gold: true },
   { value: '100x', label: 'Max multiplier', gold: true },
-  { value: '30%', label: 'Of collection presold', gold: false },
+  { value: '5', label: 'Rarity tiers', gold: false },
 ]
 
 export const HookSection = () => {
@@ -16,7 +17,7 @@ export const HookSection = () => {
         {/* Left: text ~45% */}
         <div className="flex-shrink-0 lg:w-[45%]">
           <p className="mb-6 font-mono text-xs uppercase tracking-widest text-main-yellow">
-            PTSD Show · Pre-token access round
+            PTSD Show · Ticket System
           </p>
 
           <div className="mb-6">
@@ -29,18 +30,21 @@ export const HookSection = () => {
           </div>
 
           <p className="font-manrope mb-3 text-base font-bold text-white md:text-xl">
-            <span className="text-ticket-red">GUARANTEED. PAY NOW. MINT FREE ON OPENSEA.</span>
+            <span className="text-ticket-red">EVERY TICKET MAPS TO A PTSD TOKEN MULTIPLIER.</span>
           </p>
 
           <p className="font-manrope mb-10 text-base leading-[1.75] text-light-text md:text-lg">
-            Your community got you in early. Pay now, mint free on OpenSea
-            (date TBD). Your rarity determines your PTSD token multiplier, locked
-            in at reveal.
+            4,444 tickets. 5 rarity tiers. Every ticket you hold determines a
+            multiplier on future PTSD token access, locked in at reveal.
+            Here&apos;s how the system works — and how to get considered for one.
           </p>
 
-          <a href="#purchase-section">
-            <Button className="px-10">Secure Your Guaranteed Spot</Button>
-          </a>
+          <Link href="/get-tested" className="inline-block">
+            <Button className="px-10">Get Diagnosed</Button>
+          </Link>
+          <p className="font-mono mt-3 text-xs uppercase tracking-widest text-light-text">
+            For whitelist
+          </p>
 
         </div>
 

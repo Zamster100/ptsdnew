@@ -1,18 +1,19 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, ReactNode } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { ChevronIcon } from '@/components/icons'
 
-const faqs = [
+const faqs: { q: string; a: ReactNode }[] = [
   {
     q: 'Why is this different from a normal NFT?',
     a: "Because it has a specific, stated purpose beyond the art. Every ticket has a direct function - it maps to a future PTSD token allocation. It's not a JPEG. It's a position in something that hasn't fully launched yet.",
   },
   {
     q: 'What if I pull Common?',
-    a: "You're still in. Common = 1x PTSD token allocation. That's the same early-access position that won't exist once the token opens to the public. The multiplier is the upside. The allocation is the floor.",
+    a: "You're still holding a real position. Common = 1x PTSD token multiplier — the multiplier is the upside, holding any ticket at all is the floor.",
   },
   {
     q: 'What does a Golden Ticket get me?',
@@ -20,23 +21,27 @@ const faqs = [
   },
   {
     q: 'What is the PTSD token?',
-    a: 'PTSD Show is building a token economy around the brand and community. These tickets are the first and only pre-launch access path. Ticket holders are the first wave, before any public round.',
+    a: 'PTSD Show is building a token economy around the brand and community. Ticket holders are positioned first, ahead of the wider token launch.',
   },
   {
-    q: 'What exactly am I paying for right now?',
-    a: "You're prepaying your mint. When PTSD Tickets launches on OpenSea (date TBD), guaranteed spot holders mint for free. Your payment today is your ticket in. Everyone else pays mint price on the day.",
+    q: 'What is a PTSD Ticket, exactly?',
+    a: "A PTSD Ticket is an NFT that maps to a rarity tier and a token multiplier for the upcoming PTSD token economy. It's not the token itself — it's your position ahead of it.",
   },
   {
-    q: 'Is there a limit on how many I can mint?',
-    a: '5 tickets per wallet. The guaranteed pool is capped at 30% of the collection (~1,333 tickets total). More tickets mean more rarity rolls and more total allocation stacking across tiers.',
+    q: 'How do I get considered for one?',
+    a: (
+      <>
+        Right now, the path in is the PTSD-25 diagnostic.{' '}
+        <Link href="/get-tested" className="text-ticket-red underline underline-offset-2">
+          Get Diagnosed
+        </Link>
+        , and you&apos;ll find out where you stand.
+      </>
+    ),
   },
   {
-    q: "What happens if I don't get in during the guaranteed round?",
-    a: "The guaranteed window closes when the ~1,333 spots are gone, or when the public mint opens (date TBD). After that, you'd need to mint in the public round on OpenSea. No guaranteed pricing, no guaranteed spot. Secondary market is the only other option.",
-  },
-  {
-    q: 'Why should I mint more than one?',
-    a: 'Each mint is an independent rarity roll. Multiple tickets mean multiple allocation tiers stacking together. You also materially improve your odds of pulling a high-tier or Golden ticket.',
+    q: 'When does the PTSD token launch?',
+    a: 'Date TBD. Tickets are the access layer that exists ahead of it — rarity and multiplier are locked in at reveal, well before any token event.',
   },
 ]
 

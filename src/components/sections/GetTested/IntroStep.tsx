@@ -28,13 +28,14 @@ export const IntroStep = ({ onBegin }: IntroStepProps) => {
         <div className="absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-ticket-red via-main-yellow to-ticket-red" />
         <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-ticket-red/20 blur-3xl" />
 
-        <CornerStamp label="Intake" />
+        <CornerStamp label="Step 1 / 3" />
 
         <h2 className="font-manrope mb-3 text-3xl font-black uppercase leading-tight text-white md:text-4xl">
           Begin Diagnosis
         </h2>
         <p className="font-manrope mb-8 max-w-xl text-sm leading-[1.7] text-light-text md:text-base">
-          Get the wrong diagnosis, get nothing. Get the right one, get whitelisted.
+          Every diagnosis qualifies. Finish the intake, spread it, and lock in your wallet — that&apos;s the whole
+          whitelist.
         </p>
 
         <form onSubmit={handleSubmit} className="w-full">

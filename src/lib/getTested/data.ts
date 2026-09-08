@@ -39,3 +39,49 @@ export function placeholderTraumaIndex(handle: string): number {
 
 export const OFF_RAMP_TEXT =
   'This is satire, not a clinical instrument. If financial loss is genuinely affecting you, help is real and it\'s free — 988 (US) or your local equivalent, any time.'
+
+export const PROJECT_X_HANDLE = 'PTSDshow'
+
+/**
+ * TODO(launch): there is no live campaign tweet yet. Once the announcement
+ * post goes out from @PTSDshow, replace this ID (and nothing else) — every
+ * Like/Repost/Reply task link below is built from it.
+ */
+export const CAMPAIGN_TWEET_ID = 'REPLACE_WITH_REAL_TWEET_ID'
+export const CAMPAIGN_TWEET_URL = `https://x.com/${PROJECT_X_HANDLE}/status/${CAMPAIGN_TWEET_ID}`
+
+export type SpreadTaskId = 'follow' | 'like' | 'repost' | 'reply'
+
+export interface SpreadTask {
+  id: SpreadTaskId
+  label: string
+  description: string
+  href: () => string
+}
+
+export const SPREAD_TASKS: SpreadTask[] = [
+  {
+    id: 'follow',
+    label: 'Follow PTSD',
+    description: `Follow @${PROJECT_X_HANDLE} on X.`,
+    href: () => `https://x.com/intent/follow?screen_name=${PROJECT_X_HANDLE}`,
+  },
+  {
+    id: 'like',
+    label: 'Like the Post',
+    description: 'Like the diagnosis post.',
+    href: () => `https://x.com/intent/like?tweet_id=${CAMPAIGN_TWEET_ID}`,
+  },
+  {
+    id: 'repost',
+    label: 'Retweet the Post',
+    description: 'Retweet it so more people get diagnosed.',
+    href: () => `https://x.com/intent/retweet?tweet_id=${CAMPAIGN_TWEET_ID}`,
+  },
+  {
+    id: 'reply',
+    label: 'Help Diagnose 2 Friends',
+    description: 'Reply and tag two friends who need this diagnosis.',
+    href: () => `https://x.com/intent/tweet?in_reply_to=${CAMPAIGN_TWEET_ID}`,
+  },
+]

@@ -80,7 +80,7 @@ export const WhyNowSection = () => {
             textShadow: '0 0 40px #FF4422, 0 0 80px rgba(255,68,34,0.3)',
           }}
         >
-          THE TICKET IS HOW YOU GET IN.
+          THE TICKET IS HOW YOU&apos;RE POSITIONED.
         </span>
       </h2>
 
@@ -95,7 +95,7 @@ export const WhyNowSection = () => {
           className="font-manrope text-base leading-[1.75]"
           style={{ color: '#88ccff' }}
         >
-          When the 1,333 spots are gone, you&apos;re in the public queue like everyone else. The people who got in here got in before the queue existed.
+          Every ticket&apos;s rarity tier maps directly to your token multiplier at launch. Holding one is how your position gets set before the token exists.
         </p>
       </div>
     </section>

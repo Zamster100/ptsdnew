@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 
 export const FinalCTASection = () => {
@@ -14,22 +15,24 @@ export const FinalCTASection = () => {
           <br />
           <span className="text-ticket-gold">5 GOLDEN.</span>
           <br />
-          <span className="text-ticket-red">1,333 GUARANTEED SPOTS.</span>
+          <span className="text-ticket-red">5 RARITY TIERS.</span>
         </h2>
 
         <p className="font-manrope mx-auto mb-3 max-w-xl text-base leading-[1.75] text-light-text md:text-lg">
-          Guaranteed spot holders pay now and mint free on OpenSea (date TBD). The
-          guaranteed window is 30% of the collection. When those 1,333 spots are
-          gone, this price and this access level are gone with them.
+          Every PTSD Ticket maps to a rarity tier and a token multiplier,
+          locked in at reveal. This is the beginning of the PTSD token
+          economy — the ticket is how you get in.
         </p>
         <p className="font-manrope mx-auto mb-12 max-w-xl text-base font-medium leading-[1.75] text-white">
-          This is the beginning of the PTSD token economy. The ticket is how you
-          get in early.
+          Want to be considered for one? Start with the PTSD-25 diagnostic.
         </p>
 
-        <a href="#purchase-section">
-          <Button className="px-14">Secure Your Guaranteed Spot</Button>
-        </a>
+        <Link href="/get-tested" className="inline-block">
+          <Button className="px-14">Get Diagnosed</Button>
+        </Link>
+        <p className="font-mono mt-3 text-xs uppercase tracking-widest text-light-text">
+          For whitelist
+        </p>
       </div>
     </section>
   )
