@@ -1,33 +1,26 @@
 import { forwardRef } from 'react'
 import { cn } from '@/lib/utils'
-import { SubscaleBars } from './SubscaleBars'
-import { getPrimaryClusterColor } from '@/lib/getTested/scoring'
-import { ScoreResult } from '@/lib/getTested/types'
+import { getTypeAccent } from '@/lib/getTested/data'
+import { GrokProfile } from '@/lib/getTested/types'
 import styles from './ResultCard.module.css'
 
 interface ResultCardProps {
   patientNo: string
   handle: string
-  cycle: string
-  worst: string
-  result: ScoreResult
+  traumaIndex: number
+  profile: GrokProfile
 }
 
 export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(
-  ({ patientNo, handle, cycle, worst, result }, ref) => {
-    const isClean = result.band === 'UNTOUCHED'
-    const isDegraded = result.band === 'TERMINAL' || result.band === 'OVER_9000'
-    const accentColor = getPrimaryClusterColor(result.clusterScores)
+  ({ patientNo, handle, traumaIndex, profile }, ref) => {
+    const accentColor = getTypeAccent(profile.type)
 
     return (
       <div
         ref={ref}
         className={cn(
           'font-sans relative w-full max-w-lg overflow-hidden rounded-2xl border p-8',
-          isClean && styles.tierClean,
-          isDegraded && styles.tierDegraded,
-          result.band === 'OVER_9000' && styles.tierDegradedExtreme,
-          !isClean && !isDegraded && styles.tierStandard,
+          styles.tierStandard,
         )}
         style={{ boxShadow: `0 0 0 1px ${accentColor}26, 0 20px 40px rgba(0,0,0,0.4)` }}
       >
@@ -36,8 +29,6 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(
           className="pointer-events-none absolute -right-12 -top-12 h-48 w-48 rounded-full blur-3xl"
           style={{ backgroundColor: accentColor, opacity: 0.15 }}
         />
-
-        {isDegraded && <div className={styles.grime} />}
 
         <div className="mb-5 flex items-baseline justify-between">
           <span
@@ -53,40 +44,21 @@ export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(
 
         <div className="mb-5 h-px w-full bg-white/10" />
 
-        <h3 className="font-manrope mb-4 truncate text-2xl font-black text-white">{handle}</h3>
+        <h3 className="font-manrope mb-4 truncate text-2xl font-black text-white">@{handle}</h3>
 
         <div className="mb-5 space-y-1.5">
           <p className="font-mono text-xs uppercase tracking-widest text-white/60">
             Trauma Index:{' '}
-            <span className="text-base font-bold text-white">
-              {result.traumaIndex.toLocaleString()}
-            </span>{' '}
-            / 9001
+            <span className="text-base font-bold text-white">{traumaIndex.toLocaleString()}</span> / 9001
           </p>
           <p className="font-mono text-xs uppercase tracking-widest text-white/60">
-            Band: <span className="font-bold text-white">{result.bandLabel}</span>
-          </p>
-          <p className="font-mono text-xs uppercase tracking-widest text-white/60">
-            Type: <span className="font-bold text-white">{result.resultType}</span>
+            Type: <span className="font-bold text-white">{profile.type}</span>
           </p>
         </div>
 
         <div className="mb-5 h-px w-full bg-white/10" />
 
-        <SubscaleBars clusterScores={result.clusterScores} />
-
-        <div className="my-5 h-px w-full bg-white/10" />
-
-        <div className="space-y-1.5">
-          <div className="flex justify-between">
-            <p className="font-mono text-[11px] uppercase tracking-widest text-white/50">
-              Worst: <span className="text-white/80">{worst}</span>
-            </p>
-            <p className="font-mono text-[11px] uppercase tracking-widest text-white/50">
-              Cycle: <span className="text-white/80">{cycle}</span>
-            </p>
-          </div>
-        </div>
+        <p className="font-manrope text-sm italic leading-[1.7] text-light-text">&ldquo;{profile.note}&rdquo;</p>
       </div>
     )
   },
