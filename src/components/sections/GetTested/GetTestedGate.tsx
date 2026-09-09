@@ -11,6 +11,7 @@ export function GetTestedGate({ children }: { children: ReactNode }) {
   const [input, setInput] = useState('')
   const [error, setError] = useState(false)
   const [checked, setChecked] = useState(false)
+  const [showPasswordForm, setShowPasswordForm] = useState(false)
 
   useEffect(() => {
     if (window.sessionStorage.getItem(STORAGE_KEY) === '1') {
@@ -47,28 +48,39 @@ export function GetTestedGate({ children }: { children: ReactNode }) {
 
         <div className="text-center">
           <h1 className="text-white text-2xl font-bold tracking-tight">Private Access Only</h1>
-          <p className="text-white/50 text-sm mt-2">Enter the access password to continue.</p>
+          <p className="text-white/70 text-base font-semibold mt-3">Officially Open</p>
+          <p className="text-white/50 text-sm mt-1">September 10, 2026</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="w-full flex flex-col gap-3">
-          <input
-            type="password"
-            value={input}
-            onChange={e => { setInput(e.target.value); setError(false) }}
-            placeholder="Password"
-            autoFocus
-            className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-white/30 text-sm outline-none focus:border-white/30 transition-colors"
-          />
-          {error && (
-            <p className="text-red-400 text-xs text-center">Incorrect password. Try again.</p>
-          )}
+        {showPasswordForm ? (
+          <form onSubmit={handleSubmit} className="w-full flex flex-col gap-3">
+            <input
+              type="password"
+              value={input}
+              onChange={e => { setInput(e.target.value); setError(false) }}
+              placeholder="Password"
+              autoFocus
+              className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-white/30 text-sm outline-none focus:border-white/30 transition-colors"
+            />
+            {error && (
+              <p className="text-red-400 text-xs text-center">Incorrect password. Try again.</p>
+            )}
+            <button
+              type="submit"
+              className="w-full bg-white text-black font-semibold text-sm rounded-lg py-3 hover:bg-white/90 transition-colors"
+            >
+              Enter
+            </button>
+          </form>
+        ) : (
           <button
-            type="submit"
-            className="w-full bg-white text-black font-semibold text-sm rounded-lg py-3 hover:bg-white/90 transition-colors"
+            type="button"
+            onClick={() => setShowPasswordForm(true)}
+            className="text-white/40 text-xs underline underline-offset-2 hover:text-white/70 transition-colors"
           >
-            Enter
+            Password link
           </button>
-        </form>
+        )}
       </div>
     </div>
   )

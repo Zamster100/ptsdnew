@@ -3,6 +3,7 @@
 import { RefObject, useState } from 'react'
 import { toBlob } from 'html-to-image'
 import { DiagnosisResult } from '@/lib/getTested/types'
+import { getBandLabel } from '@/lib/getTested/scoring'
 import { ResultCard } from './ResultCard'
 import { DownloadButton } from './DownloadButton'
 import { OffRampNotice } from './OffRampNotice'
@@ -42,15 +43,16 @@ export const ResultStep = ({ result, cardRef, onContinue }: ResultStepProps) => 
     }
   }
 
+  function handlePostToX() {
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://ptsdshow.com'
+    const text = `I just got diagnosed on PTSD-25: ${result.type}. Trauma Index ${result.traumaIndex.toLocaleString()}/9001 (${getBandLabel(result.band)}). Get tested:`
+    const intent = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(`${siteUrl}/get-tested`)}`
+    window.open(intent, '_blank', 'noopener,noreferrer')
+  }
+
   return (
     <div className="flex flex-col items-center">
-      <ResultCard
-        ref={cardRef}
-        patientNo={result.patientNo}
-        handle={result.handle}
-        traumaIndex={result.traumaIndex}
-        profile={result}
-      />
+      <ResultCard ref={cardRef} result={result} />
 
       <p className="font-manrope mt-8 text-center text-sm font-bold uppercase tracking-wide text-main-yellow">
         Chart&apos;s open. Next: spread it.
@@ -62,6 +64,10 @@ export const ResultStep = ({ result, cardRef, onContinue }: ResultStepProps) => 
           filename={`ptsd25-${result.handle}.png`}
           className={buttonClass}
         />
+
+        <button type="button" onClick={handlePostToX} className={buttonClass}>
+          Post to X
+        </button>
 
         <button type="button" onClick={handleCopyImage} disabled={copyState === 'busy'} className={buttonClass}>
           {copyState === 'busy' && 'Copying…'}

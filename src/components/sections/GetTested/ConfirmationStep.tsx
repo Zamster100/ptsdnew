@@ -1,3 +1,5 @@
+import Link from 'next/link'
+import { Button } from '@/components/ui/Button'
 import { CornerStamp } from './CornerStamp'
 
 interface ConfirmationStepProps {
@@ -19,9 +21,13 @@ export const ConfirmationStep = ({ patientNo }: ConfirmationStepProps) => (
         Winners announced in 72 hours.
       </p>
 
-      <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-white/40">
+      <p className="font-mono mb-8 text-[10px] uppercase tracking-[0.2em] text-white/40">
         Patient No. {patientNo}
       </p>
+
+      <Link href="/" className="inline-block">
+        <Button variant="outline">Back to Home</Button>
+      </Link>
     </div>
   </div>
 )

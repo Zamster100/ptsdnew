@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { rateLimit } from '@/lib/rateLimit'
 import { analyzeHandle } from '@/lib/grok'
-import { placeholderTraumaIndex } from '@/lib/getTested/data'
+import { getMemberSinceYear } from '@/lib/xApi'
+import { computeFromScores } from '@/lib/getTested/scoring'
 import { supabase } from '@/lib/supabase'
 
 const HANDLE_RE = /^[A-Za-z0-9_]{1,15}$/
@@ -33,16 +34,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid handle' }, { status: 400 })
   }
 
-  const profile = await analyzeHandle(rawHandle)
-  const traumaIndex = placeholderTraumaIndex(rawHandle)
+  const analysis = await analyzeHandle(rawHandle)
+  const computed = computeFromScores(analysis.scores)
+  const memberSince = await getMemberSinceYear(rawHandle)
 
   const { data, error } = await supabase
     .from('diagnoses')
     .insert({
       handle: rawHandle,
-      type: profile.type,
-      note: profile.note,
-      trauma_index: traumaIndex,
+      type: computed.type,
+      note: analysis.note,
+      worst: analysis.worst,
+      cluster_scores: analysis.scores,
+      trauma_index: computed.index,
+      member_since: memberSince,
     })
     .select('id')
     .single()
@@ -57,8 +62,12 @@ export async function POST(req: NextRequest) {
     id: data.id,
     patientNo: String(data.id).padStart(6, '0'),
     handle: rawHandle,
-    type: profile.type,
-    note: profile.note,
-    traumaIndex,
+    type: computed.type,
+    note: analysis.note,
+    worst: analysis.worst,
+    scores: analysis.scores,
+    traumaIndex: computed.index,
+    band: computed.band,
+    memberSince,
   })
 }

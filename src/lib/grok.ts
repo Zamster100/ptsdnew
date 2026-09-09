@@ -1,4 +1,4 @@
-import { GrokProfile } from './getTested/types'
+import type { GrokAnalysis } from './getTested/types'
 
 const XAI_API_URL = 'https://api.x.ai/v1/responses'
 const MODEL = 'grok-4.6'
@@ -8,26 +8,59 @@ psychiatric screening tool called PTSD-25. You will be given access to a
 user's X posts via search. Base your read ONLY on what you actually find in
 their posts — do not invent details.
 
-Classify the account into exactly ONE of these five types, choosing whichever
-fits best:
+Based on the user's actual X posts, score them 0-20 on each of these five
+clusters, using your judgment of how strongly their posts reflect each
+pattern:
 
-- THE HAUNTED (intrusive recall of past trades/prices)
-- THE BAG HOLDER (avoidance, holding losers, denial)
-- THE PERMA BEAR (cynicism, calling everything a rug)
-- THE PARANOID DEGEN (hypervigilance, late-night checking, anxious posting)
-- THE DISCONNECTED (numbness, dissociation, detached tone about big swings)
+A - Intrusion: unprompted recall of past trades/prices, thinking about old
+    positions unprompted.
+B - Avoidance: avoiding checking portfolio, avoiding certain topics/tickers,
+    going quiet on losses.
+C - Cognition: cynicism, calling things rugs, distrust, self-blame framing.
+D - Hypervigilance: late-night posting/checking, anxious tone, obsessive
+    monitoring language.
+E - Dissociation: numbness, detachment, treating losses/gains as unreal or
+    "just numbers."
 
-Then write ONE short clinical-note-style observation (1-2 sentences, third
-person, dry, deadpan, like a psychiatrist's chart note) that references
-something SPECIFIC and real you found in their posts. Do not use generic
-filler — the specificity is the whole joke.
+A score of 0 means no evidence of this pattern in their posts. A score of 20
+means overwhelming, repeated evidence. Most people should NOT max every
+category — differentiate based on what you actually find.
+
+Then write ONE short clinical-note-style sentence (1-2 sentences, third
+person, dry, deadpan, like a psychiatrist's chart note) for whichever
+cluster scored highest, referencing something SPECIFIC and real found in
+their posts. Match this tone/register exactly (these are the five reference
+notes for the existing fixed types — write in this exact voice, but make
+YOUR note specific to what you actually found, not generic):
+
+- THE HAUNTED: "Patient sees a specific candle in his sleep. Candle does
+  not see him back."
+- THE BAG HOLDER: "Patient has renamed 'down 94%' to 'averaging down.'
+  Denial is now load-bearing."
+- THE PERMA BEAR: "Patient calls everything a rug. Patient has been right
+  four times. Patient will not let this go."
+- THE PARANOID DEGEN: "Patient checks the chart at 3am and calls it
+  discipline. It is not discipline."
+- THE NUMB: "Patient felt the portfolio hit zero and felt nothing else
+  that day either."
+
+Finally, find ONE specific bad call, loss, or regret visible in their
+post history and paraphrase it in a single line for the "worst" field.
+PARAPHRASE ONLY — never quote their post text directly/verbatim. If you
+can't find a clear specific example, write "Undisclosed. Patient declined
+to elaborate." instead of guessing.
 
 Return ONLY valid JSON in this exact shape, nothing else:
-{"type": "THE ___", "note": "..."}`
+{
+  "scores": { "A": 0-20, "B": 0-20, "C": 0-20, "D": 0-20, "E": 0-20 },
+  "note": "...",
+  "worst": "..."
+}`
 
-const FALLBACK_PROFILE: GrokProfile = {
-  type: 'THE DISCONNECTED',
+const FALLBACK_ANALYSIS: GrokAnalysis = {
+  scores: { A: 0, B: 0, C: 0, D: 0, E: 0 },
   note: "Insufficient data to complete evaluation. Patient's posting history could not be interpreted.",
+  worst: 'Undisclosed. Patient declined to elaborate.',
 }
 
 interface ResponsesApiOutputContent {
@@ -57,12 +90,19 @@ function extractOutputText(data: ResponsesApiBody): string {
   return ''
 }
 
+function clampScore(value: unknown): number {
+  const n = typeof value === 'number' ? value : Number(value)
+  if (!Number.isFinite(n)) throw new Error('Non-numeric cluster score in Grok response')
+
+  return Math.max(0, Math.min(20, Math.round(n)))
+}
+
 /**
  * Grok is told to return only JSON but sometimes wraps it in prose anyway —
  * slice out the outermost {...} span before parsing rather than trusting
  * the whole response body to be clean JSON.
  */
-function parseProfile(raw: string): GrokProfile {
+function parseAnalysis(raw: string): GrokAnalysis {
   const start = raw.indexOf('{')
   const end = raw.lastIndexOf('}')
   if (start === -1 || end === -1 || end < start) {
@@ -70,26 +110,41 @@ function parseProfile(raw: string): GrokProfile {
   }
 
   const parsed: unknown = JSON.parse(raw.slice(start, end + 1))
-  if (
-    typeof parsed !== 'object' ||
-    parsed === null ||
-    typeof (parsed as Record<string, unknown>).type !== 'string' ||
-    typeof (parsed as Record<string, unknown>).note !== 'string'
-  ) {
-    throw new Error('Malformed profile JSON from Grok')
+  if (typeof parsed !== 'object' || parsed === null) {
+    throw new Error('Malformed analysis JSON from Grok')
   }
 
-  const { type, note } = parsed as { type: string; note: string }
+  const obj = parsed as Record<string, unknown>
+  const scoresObj = obj.scores
 
-  return { type, note }
+  if (typeof scoresObj !== 'object' || scoresObj === null) {
+    throw new Error('Malformed scores object from Grok')
+  }
+  if (typeof obj.note !== 'string' || typeof obj.worst !== 'string') {
+    throw new Error('Malformed analysis JSON from Grok')
+  }
+
+  const s = scoresObj as Record<string, unknown>
+
+  return {
+    scores: {
+      A: clampScore(s.A),
+      B: clampScore(s.B),
+      C: clampScore(s.C),
+      D: clampScore(s.D),
+      E: clampScore(s.E),
+    },
+    note: obj.note,
+    worst: obj.worst,
+  }
 }
 
-export async function analyzeHandle(handle: string): Promise<GrokProfile> {
+export async function analyzeHandle(handle: string): Promise<GrokAnalysis> {
   const apiKey = process.env.XAI_API_KEY
   if (!apiKey) {
     console.error('[grok] XAI_API_KEY is not set')
 
-    return FALLBACK_PROFILE
+    return FALLBACK_ANALYSIS
   }
 
   try {
@@ -113,15 +168,15 @@ export async function analyzeHandle(handle: string): Promise<GrokProfile> {
     if (!res.ok) {
       console.error('[grok] API error:', res.status, await res.text())
 
-      return FALLBACK_PROFILE
+      return FALLBACK_ANALYSIS
     }
 
     const data = (await res.json()) as ResponsesApiBody
 
-    return parseProfile(extractOutputText(data))
+    return parseAnalysis(extractOutputText(data))
   } catch (err) {
     console.error('[grok] analyze failed:', err)
 
-    return FALLBACK_PROFILE
+    return FALLBACK_ANALYSIS
   }
 }

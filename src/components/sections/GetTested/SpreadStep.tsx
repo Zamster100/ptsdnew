@@ -13,8 +13,9 @@ interface SpreadStepProps {
 export const SpreadStep = ({ openedTasks, onTaskOpened, onContinue }: SpreadStepProps) => {
   const allOpened = SPREAD_TASKS.every(t => openedTasks.includes(t.id))
 
-  function handleOpen(taskId: SpreadTaskId, href: string) {
+  function handleOpen(taskId: SpreadTaskId, href: string, secondaryHref?: string) {
     window.open(href, '_blank', 'noopener,noreferrer')
+    if (secondaryHref) window.open(secondaryHref, '_blank', 'noopener,noreferrer')
     onTaskOpened(taskId)
   }
 
@@ -42,7 +43,7 @@ export const SpreadStep = ({ openedTasks, onTaskOpened, onContinue }: SpreadStep
               <li key={task.id}>
                 <button
                   type="button"
-                  onClick={() => handleOpen(task.id, task.href())}
+                  onClick={() => handleOpen(task.id, task.href(), task.secondaryHref?.())}
                   className={cn(
                     'flex w-full items-center gap-4 rounded-xl border px-4 py-3 text-left transition-colors',
                     opened ? 'border-ticket-red/40 bg-ticket-red/5' : 'border-white/10 bg-white/[0.02] hover:border-white/25',
