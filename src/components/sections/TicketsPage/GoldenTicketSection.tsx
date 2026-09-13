@@ -40,7 +40,7 @@ export const GoldenTicketSection = () => {
         </p>
 
         <h2 className="font-manrope relative mb-10 text-[36px] font-black leading-[1.0] text-ticket-gold md:text-[56px] lg:text-[68px]">
-          ONLY 5 EXIST.
+          ONLY 3 EXIST.
           <br />
           ONE MINT.
           <br />
