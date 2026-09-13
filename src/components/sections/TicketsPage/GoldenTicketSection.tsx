@@ -49,7 +49,7 @@ export const GoldenTicketSection = () => {
 
         <div className="relative mb-8 grid grid-cols-1 gap-6 md:grid-cols-3">
           {[
-            { val: '5', label: 'Golden tickets in existence' },
+            { val: '3', label: 'Golden tickets in existence' },
             { val: '100x', label: 'PTSD token multiplier' },
             { val: 'Same price.', label: 'No premium. Pure chance.' },
           ].map((item) => (

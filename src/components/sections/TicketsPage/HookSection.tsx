@@ -3,8 +3,8 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 
 const stats = [
-  { value: '4,444', label: 'Total tickets', gold: false },
-  { value: '5', label: 'Golden tickets', gold: true },
+  { value: '3,333', label: 'Total tickets', gold: false },
+  { value: '3', label: 'Golden tickets', gold: true },
   { value: '100x', label: 'Max multiplier', gold: true },
   { value: '5', label: 'Rarity tiers', gold: false },
 ]
@@ -34,7 +34,7 @@ export const HookSection = () => {
           </p>
 
           <p className="font-manrope mb-10 text-base leading-[1.75] text-light-text md:text-lg">
-            4,444 tickets. 5 rarity tiers. Every ticket you hold determines a
+            3,333 tickets. 5 rarity tiers. Every ticket you hold determines a
             multiplier on future PTSD token access, locked in at reveal.
             Here&apos;s how the system works — and how to get considered for one.
           </p>

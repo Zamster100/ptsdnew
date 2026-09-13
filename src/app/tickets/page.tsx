@@ -11,7 +11,7 @@ import { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'PTSD | The Ticket System',
-  description: 'Not an NFT. A ticket in. 4,444 PTSD Tickets across 5 rarity tiers, each mapped to a future PTSD token multiplier. See how the system works.',
+  description: 'Not an NFT. A ticket in. 3,333 PTSD Tickets across 5 rarity tiers, each mapped to a future PTSD token multiplier. See how the system works.',
 }
 
 export default function TicketsPage() {

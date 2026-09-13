@@ -4,11 +4,11 @@ import Image from 'next/image'
 import { useEffect, useRef, useState } from 'react'
 
 const rarities = [
-  { name: 'Common',    count: 3000, multiplier: '1x',    color: '#f97316', pct: '67%' },
-  { name: 'Rare',      count: 1000, multiplier: '2x',    color: '#ef4444', pct: '22%' },
-  { name: 'Epic',      count: 300,  multiplier: '3x',    color: '#22c55e', pct: '7%'  },
-  { name: 'Legendary', count: 139,  multiplier: '5x',    color: '#3b82f6', pct: '3%'  },
-  { name: 'Golden',    count: 5,    multiplier: '100x+', color: '#c9a227', pct: '1%'  },
+  { name: 'Common',    count: 2500, multiplier: '1x',    color: '#f97316', pct: '75%' },
+  { name: 'Rare',      count: 650,  multiplier: '2x',    color: '#ef4444', pct: '19%' },
+  { name: 'Epic',      count: 100,  multiplier: '3x',    color: '#22c55e', pct: '3%'  },
+  { name: 'Legendary', count: 80,   multiplier: '5x',    color: '#3b82f6', pct: '2%'  },
+  { name: 'Golden',    count: 3,    multiplier: '100x+', color: '#c9a227', pct: '1%'  },
 ]
 
 const steps = [
@@ -54,7 +54,7 @@ export const RaritySection = () => {
 
           <div className="max-w-2xl space-y-3">
             <p className="font-manrope text-base leading-[1.75] text-light-text md:text-lg">
-              4,444 tickets. 5 rarity tiers. Every ticket maps to a future PTSD token multiplier.
+              3,333 tickets. 5 rarity tiers. Every ticket maps to a future PTSD token multiplier.
               Rarity is random, assigned at mint. You can't choose, only roll.
             </p>
             <p className="font-manrope text-base leading-[1.75] text-white">

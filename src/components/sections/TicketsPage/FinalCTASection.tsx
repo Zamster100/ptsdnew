@@ -11,9 +11,9 @@ export const FinalCTASection = () => {
 
       <div className="relative z-10 mx-auto max-w-3xl text-center">
         <h2 className="font-manrope mb-6 text-[44px] font-black leading-[1.0] md:text-[64px] lg:text-[80px]">
-          4,444 TICKETS.
+          3,333 TICKETS.
           <br />
-          <span className="text-ticket-gold">5 GOLDEN.</span>
+          <span className="text-ticket-gold">3 GOLDEN.</span>
           <br />
           <span className="text-ticket-red">5 RARITY TIERS.</span>
         </h2>

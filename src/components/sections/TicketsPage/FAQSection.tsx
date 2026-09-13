@@ -17,7 +17,7 @@ const faqs: { q: string; a: ReactNode }[] = [
   },
   {
     q: 'What does a Golden Ticket get me?',
-    a: "A 100x PTSD token multiplier, the highest in the entire collection. Only 5 Golden Tickets exist across all 4,444 mints. Same price as every other ticket, same random reveal. No way to choose it, no premium to pay for it. If you pull one, you were simply in before almost everyone else.",
+    a: "A 100x PTSD token multiplier, the highest in the entire collection. Only 3 Golden Tickets exist across all 3,333 mints. Same price as every other ticket, same random reveal. No way to choose it, no premium to pay for it. If you pull one, you were simply in before almost everyone else.",
   },
   {
     q: 'What is the PTSD token?',

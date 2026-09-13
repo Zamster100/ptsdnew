@@ -89,7 +89,7 @@ export const WhyNowSection = () => {
           className="font-manrope text-base leading-[1.75]"
           style={{ color: '#aaffcc' }}
         >
-          The PTSD token is the next chapter. These 4,444 tickets are the only early-access layer before it opens to the wider market.
+          The PTSD token is the next chapter. These 3,333 tickets are the only early-access layer before it opens to the wider market.
         </p>
         <p
           className="font-manrope text-base leading-[1.75]"
