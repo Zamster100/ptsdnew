@@ -10,7 +10,8 @@ export interface ClusterScores {
 
 export interface GrokAnalysis {
   scores: ClusterScores
-  note: string
+  /** Short addendum only — the fixed base note per type is added separately, see getBaseNote. */
+  detail: string
   worst: string
 }
 
@@ -25,4 +26,6 @@ export interface DiagnosisResult {
   traumaIndex: number
   band: BandId
   memberSince: number | null
+  /** Client-only: picked once at diagnosis time via getRandomPatientPhoto, not sent by the API. */
+  photoUrl?: string
 }

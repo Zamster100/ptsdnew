@@ -22,16 +22,6 @@ export function getBandLabel(band: BandId): string {
   return BANDS.find(b => b.id === band)?.label ?? band
 }
 
-export type BandTier = 'clean' | 'standard' | 'degraded' | 'degradedExtreme'
-
-export function getBandTier(band: BandId): BandTier {
-  if (band === 'untouched') return 'clean'
-  if (band === 'terminal') return 'degraded'
-  if (band === 'over9000') return 'degradedExtreme'
-
-  return 'standard'
-}
-
 function bandFromRaw(raw: number): BandId {
   return (BANDS.find(b => raw <= b.max) ?? BANDS[BANDS.length - 1]).id
 }
@@ -44,6 +34,8 @@ export interface ClusterMeta {
   emoji: string
   typeName: string
   color: string
+  /** Fixed clinical-note line for this type — Grok only supplies a short addendum on top of this. */
+  baseNote: string
 }
 
 /**
@@ -53,11 +45,26 @@ export interface ClusterMeta {
  * color and the matching cluster's bar are always the same color.
  */
 export const CLUSTERS: ClusterMeta[] = [
-  { id: 'A', label: 'Intrusion', emoji: '🕯️', typeName: 'THE HAUNTED', color: '#ff4545' },
-  { id: 'B', label: 'Avoidance', emoji: '👻', typeName: 'THE BAG HOLDER', color: '#5aa9ff' },
-  { id: 'C', label: 'Cognition', emoji: '🐻', typeName: 'THE PERMA BEAR', color: '#b06bff' },
-  { id: 'D', label: 'Hypervigilance', emoji: '👁️', typeName: 'THE PARANOID DEGEN', color: '#ffb020' },
-  { id: 'E', label: 'Dissociation', emoji: '💀', typeName: 'THE NUMB', color: '#9aa393' },
+  {
+    id: 'A', label: 'Intrusion', emoji: '🕯️', typeName: 'THE HAUNTED', color: '#ff4545',
+    baseNote: 'Patient still sees the exact candle that liquidated him whenever he closes his eyes. Sleep has been delisted.',
+  },
+  {
+    id: 'B', label: 'Avoidance', emoji: '👻', typeName: 'THE BAG HOLDER', color: '#5aa9ff',
+    baseNote: "Patient is down 94% but insists he hasn't lost because he hasn't sold. Mathematics has left the session.",
+  },
+  {
+    id: 'C', label: 'Cognition', emoji: '🐻', typeName: 'THE PERMA BEAR', color: '#b06bff',
+    baseNote: 'Patient has predicted 37 of the last four crashes. Refuses treatment while the market remains above zero.',
+  },
+  {
+    id: 'D', label: 'Hypervigilance', emoji: '👁️', typeName: 'THE PARANOID DEGEN', color: '#ffb020',
+    baseNote: 'Patient checks the chart at 3:17 a.m. to “manage risk.” Total position size: $42.',
+  },
+  {
+    id: 'E', label: 'Dissociation', emoji: '💀', typeName: 'THE NUMB', color: '#9aa393',
+    baseNote: 'Patient watched the portfolio hit zero, whispered “fair,” and opened another trade.',
+  },
 ]
 
 // Tie-break priority when multiple clusters share the top score (highest wins): E > D > C > B > A.

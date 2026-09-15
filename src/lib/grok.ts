@@ -26,23 +26,31 @@ A score of 0 means no evidence of this pattern in their posts. A score of 20
 means overwhelming, repeated evidence. Most people should NOT max every
 category — differentiate based on what you actually find.
 
-Then write ONE short clinical-note-style sentence (1-2 sentences, third
-person, dry, deadpan, like a psychiatrist's chart note) for whichever
-cluster scored highest, referencing something SPECIFIC and real found in
-their posts. Match this tone/register exactly (these are the five reference
-notes for the existing fixed types — write in this exact voice, but make
-YOUR note specific to what you actually found, not generic):
+Each of the five diagnosis types already has a FIXED base clinical note —
+shown below for voice reference only. Do NOT write this note yourself, do
+not repeat it, and do not paraphrase it — it gets added automatically after
+your response:
 
-- THE HAUNTED: "Patient sees a specific candle in his sleep. Candle does
-  not see him back."
-- THE BAG HOLDER: "Patient has renamed 'down 94%' to 'averaging down.'
-  Denial is now load-bearing."
-- THE PERMA BEAR: "Patient calls everything a rug. Patient has been right
-  four times. Patient will not let this go."
-- THE PARANOID DEGEN: "Patient checks the chart at 3am and calls it
-  discipline. It is not discipline."
-- THE NUMB: "Patient felt the portfolio hit zero and felt nothing else
-  that day either."
+- THE HAUNTED: "Patient still sees the exact candle that liquidated him
+  whenever he closes his eyes. Sleep has been delisted."
+- THE BAG HOLDER: "Patient is down 94% but insists he hasn't lost because
+  he hasn't sold. Mathematics has left the session."
+- THE PERMA BEAR: "Patient has predicted 37 of the last four crashes.
+  Refuses treatment while the market remains above zero."
+- THE PARANOID DEGEN: "Patient checks the chart at 3:17 a.m. to “manage
+  risk.” Total position size: $42."
+- THE NUMB: "Patient watched the portfolio hit zero, whispered “fair,”
+  and opened another trade."
+
+Your only job for the "detail" field is to write a SHORT ADDENDUM — just a
+few words, one short clause, no more than about 10 words, in the exact same
+dry deadpan clinical voice — adding ONE specific, real detail you actually
+found in their posts for whichever cluster scored highest (a ticker, a
+dollar amount, an event, a timeframe — anything concrete). This gets
+appended directly after the fixed note above, so it must NOT restate or
+rephrase the fixed note, and must read as a natural continuation of it. If
+you can't find anything specific and real, write "Case otherwise
+unremarkable." instead of inventing something.
 
 Finally, find ONE specific bad call, loss, or regret visible in their
 post history and paraphrase it in a single line for the "worst" field.
@@ -53,13 +61,13 @@ to elaborate." instead of guessing.
 Return ONLY valid JSON in this exact shape, nothing else:
 {
   "scores": { "A": 0-20, "B": 0-20, "C": 0-20, "D": 0-20, "E": 0-20 },
-  "note": "...",
+  "detail": "...",
   "worst": "..."
 }`
 
 const FALLBACK_ANALYSIS: GrokAnalysis = {
   scores: { A: 0, B: 0, C: 0, D: 0, E: 0 },
-  note: "Insufficient data to complete evaluation. Patient's posting history could not be interpreted.",
+  detail: "Insufficient data to complete evaluation. Patient's posting history could not be interpreted.",
   worst: 'Undisclosed. Patient declined to elaborate.',
 }
 
@@ -120,7 +128,7 @@ function parseAnalysis(raw: string): GrokAnalysis {
   if (typeof scoresObj !== 'object' || scoresObj === null) {
     throw new Error('Malformed scores object from Grok')
   }
-  if (typeof obj.note !== 'string' || typeof obj.worst !== 'string') {
+  if (typeof obj.detail !== 'string' || typeof obj.worst !== 'string') {
     throw new Error('Malformed analysis JSON from Grok')
   }
 
@@ -134,7 +142,7 @@ function parseAnalysis(raw: string): GrokAnalysis {
       D: clampScore(s.D),
       E: clampScore(s.E),
     },
-    note: obj.note,
+    detail: obj.detail,
     worst: obj.worst,
   }
 }

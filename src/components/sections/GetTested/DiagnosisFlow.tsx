@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { getTypeAccent, SpreadTaskId } from '@/lib/getTested/data'
+import { getRandomPatientPhoto } from '@/lib/getTested/photos'
 import { DiagnosisResult } from '@/lib/getTested/types'
 import { loadFlowState, saveFlowState } from '@/lib/getTested/storage'
 import { IntroStep } from './IntroStep'
@@ -71,7 +72,7 @@ export const DiagnosisFlow = () => {
         return
       }
 
-      setResult(json)
+      setResult({ ...json, photoUrl: getRandomPatientPhoto(json.type) })
     } catch {
       setApiError('Network error — please try again.')
     }

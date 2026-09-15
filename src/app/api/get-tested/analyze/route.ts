@@ -3,6 +3,7 @@ import { rateLimit } from '@/lib/rateLimit'
 import { analyzeHandle } from '@/lib/grok'
 import { getMemberSinceYear } from '@/lib/xApi'
 import { computeFromScores } from '@/lib/getTested/scoring'
+import { getBaseNote } from '@/lib/getTested/data'
 import { supabase } from '@/lib/supabase'
 
 const HANDLE_RE = /^[A-Za-z0-9_]{1,15}$/
@@ -36,6 +37,7 @@ export async function POST(req: NextRequest) {
 
   const analysis = await analyzeHandle(rawHandle)
   const computed = computeFromScores(analysis.scores)
+  const note = `${getBaseNote(computed.type)} ${analysis.detail}`.trim()
   const memberSince = await getMemberSinceYear(rawHandle)
 
   const { data, error } = await supabase
@@ -43,7 +45,7 @@ export async function POST(req: NextRequest) {
     .insert({
       handle: rawHandle,
       type: computed.type,
-      note: analysis.note,
+      note,
       worst: analysis.worst,
       cluster_scores: analysis.scores,
       trauma_index: computed.index,
@@ -63,7 +65,7 @@ export async function POST(req: NextRequest) {
     patientNo: String(data.id).padStart(6, '0'),
     handle: rawHandle,
     type: computed.type,
-    note: analysis.note,
+    note,
     worst: analysis.worst,
     scores: analysis.scores,
     traumaIndex: computed.index,

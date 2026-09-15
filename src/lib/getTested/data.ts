@@ -16,6 +16,21 @@ export function getTypeAccent(type: string): string {
   return TYPE_ACCENTS[type] ?? DEFAULT_ACCENT
 }
 
+/**
+ * Fixed base note per type — Grok only supplies a short addendum appended
+ * after this (see analyzeHandle in lib/grok.ts and its use in the analyze
+ * route), so the core diagnosis line never drifts between patients.
+ */
+export const TYPE_BASE_NOTES: Record<string, string> = Object.fromEntries(
+  CLUSTERS.map(c => [c.typeName, c.baseNote]),
+)
+
+const DEFAULT_BASE_NOTE = CLUSTERS[0].baseNote
+
+export function getBaseNote(type: string): string {
+  return TYPE_BASE_NOTES[type] ?? DEFAULT_BASE_NOTE
+}
+
 export const OFF_RAMP_TEXT =
   'This is satire, not a clinical instrument. If financial loss is genuinely affecting you, help is real and it\'s free — 988 (US) or your local equivalent, any time.'
 
