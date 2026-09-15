@@ -104,7 +104,7 @@ export const DiagnosisFlow = () => {
 
   const deck =
     stage === 'intake'
-      ? 'One handle. Grok reads your actual posts and tells you exactly how held, hunted, and haunted you really are.'
+      ? 'One handle. We analyze your actual posts and tell you exactly how held, hunted, and haunted you really are.'
       : stage === 'wait'
         ? 'Reading the chart. This part is not simulated.'
         : stage === 'result'

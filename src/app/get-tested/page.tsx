@@ -6,7 +6,7 @@ import { GetTestedGate } from '@/components/sections/GetTested/GetTestedGate'
 export const metadata: Metadata = {
   title: 'PTSD | Get Tested',
   description:
-    'PTSD-25 — hand over your X handle and Grok reads your actual posts to diagnose exactly how held, hunted, and haunted you really are.',
+    'PTSD-25 — hand over your X handle and we analyze your actual posts to diagnose exactly how held, hunted, and haunted you really are.',
 }
 
 export default function GetTestedPage() {

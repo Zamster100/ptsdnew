@@ -48,7 +48,7 @@ export function GetTestedGate({ children }: { children: ReactNode }) {
 
         <div className="text-center">
           <h1 className="text-white text-2xl font-bold tracking-tight">Private Access Only</h1>
-          <p className="text-white/70 text-base font-semibold mt-3">Official Open: TBD</p>
+          <p className="text-white/70 text-base font-semibold mt-3">Officially Open: September 15</p>
         </div>
 
         {showPasswordForm ? (

@@ -133,7 +133,7 @@ export const WaitStep = ({ apiDone, handle, onComplete }: WaitStepProps) => {
           {!waitingForApi && (
             <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent px-5 pb-4 pt-12 md:px-8">
               <p className="font-mono text-xs uppercase tracking-widest text-white md:text-sm">
-                Grok is reading your posts — enjoy this while you wait
+                Analyzing posts and preparing diagnosis — enjoy this while you wait
               </p>
             </div>
           )}
