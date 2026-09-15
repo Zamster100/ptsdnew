@@ -36,7 +36,7 @@ export const IntroStep = ({ onBegin, defaultHandle = '' }: IntroStepProps) => {
         </h2>
         <p className="font-manrope mb-8 max-w-xl text-sm leading-[1.7] text-light-text md:text-base">
           Every diagnosis qualifies. Finish the intake, spread it, and lock in your wallet — that&apos;s the whole
-          whitelist.
+          whitelist. Drop your X handle and get diagnosed.
         </p>
 
         <form onSubmit={handleSubmit} className="w-full">
@@ -46,7 +46,7 @@ export const IntroStep = ({ onBegin, defaultHandle = '' }: IntroStepProps) => {
               type="text"
               value={handle}
               onChange={e => setHandle(e.target.value)}
-              placeholder="yourname"
+              placeholder="xhandle"
               maxLength={16}
               autoFocus
               className="min-w-0 flex-1 bg-transparent text-lg text-white placeholder-white/20 outline-none md:text-2xl"
