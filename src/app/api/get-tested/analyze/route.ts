@@ -8,6 +8,9 @@ import { supabase } from '@/lib/supabase'
 
 const HANDLE_RE = /^[A-Za-z0-9_]{1,15}$/
 
+// Each analysis costs a real Grok API call — cap retests per handle regardless of IP.
+const RETEST_COOLDOWN_MS = 24 * 60 * 60 * 1000
+
 function getIp(req: NextRequest): string {
   return (
     req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
@@ -33,6 +36,24 @@ export async function POST(req: NextRequest) {
   const rawHandle = typeof body.handle === 'string' ? body.handle.trim().replace(/^@/, '') : ''
   if (!HANDLE_RE.test(rawHandle)) {
     return NextResponse.json({ error: 'Invalid handle' }, { status: 400 })
+  }
+
+  const { data: lastDiagnosis, error: cooldownLookupError } = await supabase
+    .from('diagnoses')
+    .select('created_at')
+    .ilike('handle', rawHandle)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (cooldownLookupError) {
+    // Don't let a transient DB hiccup permanently block a legitimate retest — log and proceed.
+    console.error('[get-tested/analyze] cooldown lookup error:', cooldownLookupError)
+  } else if (lastDiagnosis) {
+    const retryAt = new Date(lastDiagnosis.created_at).getTime() + RETEST_COOLDOWN_MS
+    if (Date.now() < retryAt) {
+      return NextResponse.json({ error: 'Retest cooldown active', retryAt }, { status: 429 })
+    }
   }
 
   const analysis = await analyzeHandle(rawHandle)

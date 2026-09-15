@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { getTypeAccent, SpreadTaskId } from '@/lib/getTested/data'
 import { getRandomPatientPhoto } from '@/lib/getTested/photos'
 import { DiagnosisResult } from '@/lib/getTested/types'
-import { loadFlowState, saveFlowState } from '@/lib/getTested/storage'
+import { clearFlowState, loadFlowState, saveFlowState } from '@/lib/getTested/storage'
 import { IntroStep } from './IntroStep'
 import { WaitStep } from './WaitStep'
 import { ResultStep } from './ResultStep'
@@ -67,7 +67,12 @@ export const DiagnosisFlow = () => {
       const json = await res.json()
 
       if (!res.ok) {
-        setApiError(json.error ?? 'Something went wrong. Try again.')
+        if (typeof json.retryAt === 'number') {
+          const hoursLeft = Math.max(1, Math.ceil((json.retryAt - Date.now()) / (60 * 60 * 1000)))
+          setApiError(`You already ran this diagnosis recently. Retest available in about ${hoursLeft}h.`)
+        } else {
+          setApiError(json.error ?? 'Something went wrong. Try again.')
+        }
 
         return
       }
@@ -99,6 +104,15 @@ export const DiagnosisFlow = () => {
     setStage('confirmation')
   }
 
+  function handleRestart() {
+    clearFlowState()
+    setResult(null)
+    setApiError(null)
+    setShared(false)
+    setOpenedTasks([])
+    setStage('intake')
+  }
+
   const ekgColor = result && stage !== 'intake' && stage !== 'wait' ? getTypeAccent(result.type) : DEFAULT_EKG_COLOR
   const ekgSpeed = stage === 'wait' ? 0.6 : 1.7
 
@@ -126,7 +140,7 @@ export const DiagnosisFlow = () => {
       <div className="mt-10">
         {stage === 'intake' && (
           <div>
-            <IntroStep onBegin={handleBegin} />
+            <IntroStep onBegin={handleBegin} defaultHandle={handle} />
             {apiError && (
               <p className="mt-6 text-center font-mono text-xs text-ticket-red">{apiError}</p>
             )}
@@ -149,7 +163,9 @@ export const DiagnosisFlow = () => {
           <ClaimStep diagnosisId={result.id} onClaimed={handleClaimed} />
         )}
 
-        {stage === 'confirmation' && result && <ConfirmationStep patientNo={result.patientNo} />}
+        {stage === 'confirmation' && result && (
+          <ConfirmationStep patientNo={result.patientNo} onRestart={handleRestart} />
+        )}
       </div>
     </div>
   )

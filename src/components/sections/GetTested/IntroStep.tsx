@@ -6,12 +6,13 @@ import { CornerStamp } from './CornerStamp'
 
 interface IntroStepProps {
   onBegin: (handle: string) => void
+  defaultHandle?: string
 }
 
 const HANDLE_RE = /^[A-Za-z0-9_]{1,15}$/
 
-export const IntroStep = ({ onBegin }: IntroStepProps) => {
-  const [handle, setHandle] = useState('')
+export const IntroStep = ({ onBegin, defaultHandle = '' }: IntroStepProps) => {
+  const [handle, setHandle] = useState(defaultHandle)
 
   const trimmedHandle = handle.trim().replace(/^@/, '')
   const isValid = HANDLE_RE.test(trimmedHandle)

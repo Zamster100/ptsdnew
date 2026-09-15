@@ -4,9 +4,10 @@ import { CornerStamp } from './CornerStamp'
 
 interface ConfirmationStepProps {
   patientNo: string
+  onRestart: () => void
 }
 
-export const ConfirmationStep = ({ patientNo }: ConfirmationStepProps) => (
+export const ConfirmationStep = ({ patientNo, onRestart }: ConfirmationStepProps) => (
   <div className="mx-auto w-full max-w-3xl">
     <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] p-6 text-center md:p-10">
       <div className="absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-ticket-red via-main-yellow to-ticket-red" />
@@ -25,9 +26,21 @@ export const ConfirmationStep = ({ patientNo }: ConfirmationStepProps) => (
         Patient No. {patientNo}
       </p>
 
-      <Link href="/" className="inline-block">
-        <Button variant="outline">Back to Home</Button>
-      </Link>
+      <div className="flex flex-wrap items-center justify-center gap-3">
+        <Link href="/" className="inline-block">
+          <Button variant="outline">Back to Home</Button>
+        </Link>
+        <button
+          type="button"
+          onClick={onRestart}
+          className="font-manrope text-sm font-bold text-white/50 underline underline-offset-2 transition-colors hover:text-white"
+        >
+          Retest
+        </button>
+      </div>
+      <p className="font-mono mt-4 text-[10px] uppercase tracking-[0.15em] text-white/30">
+        One retest per handle every 24 hours
+      </p>
     </div>
   </div>
 )
