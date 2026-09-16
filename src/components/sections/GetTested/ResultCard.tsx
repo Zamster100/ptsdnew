@@ -1,6 +1,6 @@
 import { forwardRef, CSSProperties } from 'react'
 import { cn } from '@/lib/utils'
-import { getTypeAccent, getTypeAccentLight, PROJECT_X_HANDLE } from '@/lib/getTested/data'
+import { getTypeAccent, getTypeAccentLight } from '@/lib/getTested/data'
 import { DiagnosisResult } from '@/lib/getTested/types'
 import { CLUSTERS, getBandLabel } from '@/lib/getTested/scoring'
 import styles from './ResultCard.module.css'
