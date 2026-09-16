@@ -16,6 +16,17 @@ export function getTypeAccent(type: string): string {
   return TYPE_ACCENTS[type] ?? DEFAULT_ACCENT
 }
 
+/** Lighter tint per type, for text/badges on a near-black background (trading-card slab). */
+export const TYPE_ACCENTS_LIGHT: Record<string, string> = Object.fromEntries(
+  CLUSTERS.map(c => [c.typeName, c.colorLight]),
+)
+
+const DEFAULT_ACCENT_LIGHT = CLUSTERS[0].colorLight
+
+export function getTypeAccentLight(type: string): string {
+  return TYPE_ACCENTS_LIGHT[type] ?? DEFAULT_ACCENT_LIGHT
+}
+
 /**
  * Fixed base note per type — Grok only supplies a short addendum appended
  * after this (see analyzeHandle in lib/grok.ts and its use in the analyze

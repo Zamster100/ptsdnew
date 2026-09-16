@@ -4,7 +4,7 @@ const XAI_API_URL = 'https://api.x.ai/v1/responses'
 const MODEL = 'grok-4.6'
 
 const SYSTEM_PROMPT = `You are writing a single clinical-style chart note for a satirical crypto
-psychiatric screening tool called PTSD-25. You will be given access to a
+psychiatric screening tool called PTSD. You will be given access to a
 user's X posts via search. Base your read ONLY on what you actually find in
 their posts — do not invent details.
 
@@ -65,8 +65,13 @@ Return ONLY valid JSON in this exact shape, nothing else:
   "worst": "..."
 }`
 
+/**
+ * Used whenever the Grok call fails outright (timeout, API error, malformed
+ * response) — scores are seeded so Hypervigilance (D) wins, landing on
+ * THE PARANOID DEGEN, so a failure never renders as a blank/all-zero card.
+ */
 const FALLBACK_ANALYSIS: GrokAnalysis = {
-  scores: { A: 0, B: 0, C: 0, D: 0, E: 0 },
+  scores: { A: 4, B: 4, C: 4, D: 13, E: 4 },
   detail: "Insufficient data to complete evaluation. Patient's posting history could not be interpreted.",
   worst: 'Undisclosed. Patient declined to elaborate.',
 }

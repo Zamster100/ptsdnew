@@ -13,7 +13,7 @@ export const Masthead = ({ deck }: MastheadProps) => (
         Degens Anonymous Institute
       </p>
       <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.15em] text-white/40">
-        PTSD-25 · Clinical Screening Instrument
+        PTSD · Clinical Screening Instrument
       </p>
     </div>
 

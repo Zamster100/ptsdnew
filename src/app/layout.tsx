@@ -1,6 +1,6 @@
 import React from 'react'
 import '../styles/global.css'
-import { Rubik_Glitch, Manrope } from 'next/font/google'
+import { Rubik_Glitch, Manrope, Archivo_Black } from 'next/font/google'
 import { cn } from '@/lib/utils'
 import { Metadata } from 'next'
 import { TickerBanner } from '@/components/shared/TickerBanner'
@@ -15,6 +15,12 @@ const manrope = Manrope({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700', '800'],
   variable: '--font-manrope',
+})
+
+const archivoBlack = Archivo_Black({
+  subsets: ['latin'],
+  weight: ['400'],
+  variable: '--font-archivo-black',
 })
 
 export const metadata: Metadata = {
@@ -62,6 +68,7 @@ export default function RootLayout({
         className={cn(
           rubikGlitch.variable,
           manrope.variable,
+          archivoBlack.variable,
           manrope.className,
         )}
       >

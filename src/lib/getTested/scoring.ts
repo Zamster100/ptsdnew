@@ -8,7 +8,7 @@ interface BandDef {
   max: number
 }
 
-/** Thresholds on the 0-100 raw score — same as the original 25-question version. */
+/** Thresholds on the 0-100 raw score. */
 const BANDS: BandDef[] = [
   { id: 'untouched', label: 'Untouched', max: 15 },
   { id: 'exposed', label: 'Exposed', max: 35 },
@@ -34,6 +34,8 @@ export interface ClusterMeta {
   emoji: string
   typeName: string
   color: string
+  /** Lighter tint of `color`, used for text/badges sitting on a near-black background (trading-card slab). */
+  colorLight: string
   /** Fixed clinical-note line for this type — Grok only supplies a short addendum on top of this. */
   baseNote: string
 }
@@ -46,23 +48,23 @@ export interface ClusterMeta {
  */
 export const CLUSTERS: ClusterMeta[] = [
   {
-    id: 'A', label: 'Intrusion', emoji: '🕯️', typeName: 'THE HAUNTED', color: '#ff4545',
+    id: 'A', label: 'Intrusion', emoji: '🕯️', typeName: 'THE HAUNTED', color: '#ff4545', colorLight: '#ff8a8a',
     baseNote: 'Patient still sees the exact candle that liquidated him whenever he closes his eyes. Sleep has been delisted.',
   },
   {
-    id: 'B', label: 'Avoidance', emoji: '👻', typeName: 'THE BAG HOLDER', color: '#5aa9ff',
+    id: 'B', label: 'Avoidance', emoji: '👻', typeName: 'THE BAG HOLDER', color: '#5aa9ff', colorLight: '#a8d4ff',
     baseNote: "Patient is down 94% but insists he hasn't lost because he hasn't sold. Mathematics has left the session.",
   },
   {
-    id: 'C', label: 'Cognition', emoji: '🐻', typeName: 'THE PERMA BEAR', color: '#b06bff',
+    id: 'C', label: 'Cognition', emoji: '🐻', typeName: 'THE PERMA BEAR', color: '#b06bff', colorLight: '#d9b3ff',
     baseNote: 'Patient has predicted 37 of the last four crashes. Refuses treatment while the market remains above zero.',
   },
   {
-    id: 'D', label: 'Hypervigilance', emoji: '👁️', typeName: 'THE PARANOID DEGEN', color: '#ffb020',
+    id: 'D', label: 'Hypervigilance', emoji: '👁️', typeName: 'THE PARANOID DEGEN', color: '#ffb020', colorLight: '#ffd27a',
     baseNote: 'Patient checks the chart at 3:17 a.m. to “manage risk.” Total position size: $42.',
   },
   {
-    id: 'E', label: 'Dissociation', emoji: '💀', typeName: 'THE NUMB', color: '#9aa393',
+    id: 'E', label: 'Dissociation', emoji: '💀', typeName: 'THE NUMB', color: '#9aa393', colorLight: '#c9d1bd',
     baseNote: 'Patient watched the portfolio hit zero, whispered “fair,” and opened another trade.',
   },
 ]

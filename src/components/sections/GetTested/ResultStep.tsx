@@ -45,7 +45,7 @@ export const ResultStep = ({ result, cardRef, onContinue }: ResultStepProps) => 
 
   function handlePostToX() {
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://ptsdshow.com'
-    const text = `I just got diagnosed on PTSD-25: ${result.type}. Trauma Index ${result.traumaIndex.toLocaleString()}/9001 (${getBandLabel(result.band)}). Get tested:`
+    const text = `I just got diagnosed on PTSD: ${result.type}. Trauma Index ${result.traumaIndex.toLocaleString()}/9001 (${getBandLabel(result.band)}). Get tested:`
     const intent = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(`${siteUrl}/get-tested`)}`
     window.open(intent, '_blank', 'noopener,noreferrer')
   }
@@ -61,7 +61,7 @@ export const ResultStep = ({ result, cardRef, onContinue }: ResultStepProps) => 
       <div className="mt-4 flex w-full max-w-lg gap-3">
         <DownloadButton
           targetRef={cardRef}
-          filename={`ptsd25-${result.handle}.png`}
+          filename={`ptsd-${result.handle}.png`}
           className={buttonClass}
         />
 

@@ -24,7 +24,7 @@ export const FinalCTASection = () => {
           economy — the ticket is how you get in.
         </p>
         <p className="font-manrope mx-auto mb-12 max-w-xl text-base font-medium leading-[1.75] text-white">
-          Want to be considered for one? Start with the PTSD-25 diagnostic.
+          Want to be considered for one? Start with the PTSD diagnostic.
         </p>
 
         <Link href="/get-tested" className="inline-block">

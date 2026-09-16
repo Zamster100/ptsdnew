@@ -31,7 +31,7 @@ const faqs: { q: string; a: ReactNode }[] = [
     q: 'How do I get considered for one?',
     a: (
       <>
-        Right now, the path in is the PTSD-25 diagnostic.{' '}
+        Right now, the path in is the PTSD diagnostic.{' '}
         <Link href="/get-tested" className="text-ticket-red underline underline-offset-2">
           Get Diagnosed
         </Link>
