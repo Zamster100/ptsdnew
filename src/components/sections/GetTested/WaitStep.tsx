@@ -98,7 +98,7 @@ export const WaitStep = ({ apiDone, handle, onComplete }: WaitStepProps) => {
 
           {waitingForApi && (
             <div className="flex h-full w-full flex-col items-center justify-center gap-3">
-              <img src="/images/animation.gif" alt="" className="h-32 w-32 object-contain" />
+              <img src="/images/animation.gif" alt="" className="h-48 w-48 object-contain" />
               <p className="font-mono text-xs uppercase tracking-widest text-white/50">
                 Almost there...
               </p>
