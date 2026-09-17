@@ -1,6 +1,7 @@
 import { Metadata } from 'next'
 import { TicketsHeader } from '@/components/sections/TicketsPage/TicketsHeader'
 import { DiagnosisFlow } from '@/components/sections/GetTested/DiagnosisFlow'
+import { GetTestedGate } from '@/components/sections/GetTested/GetTestedGate'
 
 export const metadata: Metadata = {
   title: 'PTSD | Get Tested',
@@ -10,9 +11,11 @@ export const metadata: Metadata = {
 
 export default function GetTestedPage() {
   return (
-    <div className="min-h-screen bg-black">
-      <TicketsHeader />
-      <DiagnosisFlow />
-    </div>
+    <GetTestedGate>
+      <div className="min-h-screen bg-black">
+        <TicketsHeader />
+        <DiagnosisFlow />
+      </div>
+    </GetTestedGate>
   )
 }
