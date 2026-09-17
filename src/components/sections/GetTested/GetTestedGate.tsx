@@ -17,6 +17,7 @@ type TimeLeft = {
 function getTimeLeft(): TimeLeft {
   const diff = Math.max(0, UNLOCK_AT.getTime() - Date.now())
   const totalSeconds = Math.floor(diff / 1000)
+
   return {
     days: Math.floor(totalSeconds / 86400),
     hours: Math.floor((totalSeconds % 86400) / 3600),
@@ -35,6 +36,7 @@ export function GetTestedGate({ children }: { children: ReactNode }) {
   useEffect(() => {
     setTimeLeft(getTimeLeft())
     const id = setInterval(() => setTimeLeft(getTimeLeft()), 1000)
+
     return () => clearInterval(id)
   }, [])
 
