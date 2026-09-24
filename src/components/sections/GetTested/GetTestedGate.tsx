@@ -5,7 +5,7 @@ import Image from 'next/image'
 
 // Fixed instant in time (ISO with explicit UTC offset), so every viewer
 // counts down to the same moment regardless of their local timezone.
-const UNLOCK_AT = new Date('2026-09-21T09:00:00-04:00')
+const UNLOCK_AT = new Date('2026-09-24T12:00:00-04:00')
 
 type TimeLeft = {
   days: number
@@ -75,7 +75,7 @@ export function GetTestedGate({ children }: { children: ReactNode }) {
             Not Open Yet
           </h1>
           <p className="mt-3 text-base font-semibold text-light-text">
-            Opens September 21, 9:00 AM ET
+            Opens September 24, 12:00 PM ET
           </p>
         </div>
 
