@@ -42,7 +42,7 @@ export const DownloadButton = ({ targetRef, filename, className }: DownloadButto
         className,
       )}
     >
-      {busy ? 'Preparing…' : 'Download Chart'}
+      {busy ? 'Preparing…' : 'Download Card'}
     </button>
   )
 }
