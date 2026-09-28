@@ -1,12 +1,29 @@
 import type { GrokAnalysis } from './getTested/types'
 
 const XAI_API_URL = 'https://api.x.ai/v1/responses'
-const MODEL = 'grok-4.6'
+// grok-4.3 supports x_search and is priced well below the 4.5/4.6/4.7 line
+// (confirmed against the live API) — token cost is a minor slice of the
+// per-diagnosis bill next to X Search's per-post/per-profile fetch pricing,
+// but it's a free savings on top of the fetch-side constraints below.
+const MODEL = 'grok-4.3'
+
+// X Search bills $5/1k posts fetched and $10/1k profiles fetched, and fetches
+// are NOT deduplicated across search calls within a single request — an
+// unconstrained agent that re-searches or follows threads pays for the same
+// post multiple times. Cap it hard: one search, no threads, no profile
+// lookups, a bounded recent post count.
+const MAX_POSTS = 15
+const SEARCH_WINDOW_DAYS = 90
 
 const SYSTEM_PROMPT = `You are writing a single clinical-style chart note for a satirical crypto
 psychiatric screening tool called PTSD. You will be given access to a
 user's X posts via search. Base your read ONLY on what you actually find in
 their posts — do not invent details.
+
+COST CONSTRAINT — follow exactly: call the X search tool AT MOST ONCE for
+this analysis. Do not fetch threads, parent posts, quoted posts, or replies,
+and do not perform any user/profile lookups. Base your entire analysis on at
+most the ${MAX_POSTS} most recent original posts from the account.
 
 Based on the user's actual X posts, score them 0-20 on each of these five
 clusters, using your judgment of how strongly their posts reflect each
@@ -86,9 +103,33 @@ interface ResponsesApiOutputItem {
   content?: ResponsesApiOutputContent[]
 }
 
+interface ResponsesApiUsage {
+  cost_in_usd_ticks?: number
+  server_side_tool_usage_details?: {
+    x_search_calls?: number
+    x_posts_fetched?: number
+    x_users_fetched?: number
+  }
+}
+
 interface ResponsesApiBody {
   output_text?: string
   output?: ResponsesApiOutputItem[]
+  usage?: ResponsesApiUsage
+}
+
+function logUsage(handle: string, usage?: ResponsesApiUsage) {
+  if (!usage) return
+  const t = usage.server_side_tool_usage_details
+  // cost_in_usd_ticks isn't documented; empirically it's ~1e-10 USD per tick
+  // (verified against known token/fetch pricing) — treat as an estimate.
+  const costUsd = typeof usage.cost_in_usd_ticks === 'number' ? usage.cost_in_usd_ticks / 1e10 : null
+
+  console.log(
+    `[grok] usage handle=${handle} searches=${t?.x_search_calls ?? '?'} ` +
+      `postsFetched=${t?.x_posts_fetched ?? '?'} usersFetched=${t?.x_users_fetched ?? '?'} ` +
+      `costUsd=${costUsd !== null ? costUsd.toFixed(4) : '?'}`
+  )
 }
 
 function extractOutputText(data: ResponsesApiBody): string {
@@ -161,6 +202,8 @@ export async function analyzeHandle(handle: string): Promise<GrokAnalysis> {
   }
 
   try {
+    const fromDate = new Date(Date.now() - SEARCH_WINDOW_DAYS * 86400_000).toISOString().slice(0, 10)
+
     const res = await fetch(XAI_API_URL, {
       method: 'POST',
       headers: {
@@ -173,7 +216,7 @@ export async function analyzeHandle(handle: string): Promise<GrokAnalysis> {
           { role: 'system', content: SYSTEM_PROMPT },
           { role: 'user', content: `Analyze @${handle}'s recent posts and return the JSON result.` },
         ],
-        tools: [{ type: 'x_search', allowed_x_handles: [handle] }],
+        tools: [{ type: 'x_search', allowed_x_handles: [handle], from_date: fromDate }],
       }),
       signal: AbortSignal.timeout(120_000),
     })
@@ -185,6 +228,7 @@ export async function analyzeHandle(handle: string): Promise<GrokAnalysis> {
     }
 
     const data = (await res.json()) as ResponsesApiBody
+    logUsage(handle, data.usage)
 
     return parseAnalysis(extractOutputText(data))
   } catch (err) {
