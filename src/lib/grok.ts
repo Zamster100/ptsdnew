@@ -1,4 +1,4 @@
-import type { GrokAnalysis } from './getTested/types'
+import type { ClusterScores, GrokAnalysis } from './getTested/types'
 
 const XAI_API_URL = 'https://api.x.ai/v1/responses'
 // grok-4.3 supports x_search and is priced well below the 4.5/4.6/4.7 line
@@ -82,15 +82,33 @@ Return ONLY valid JSON in this exact shape, nothing else:
   "worst": "..."
 }`
 
+const CLUSTER_IDS: (keyof ClusterScores)[] = ['A', 'B', 'C', 'D', 'E']
+
+function randInt(min: number, max: number): number {
+  return Math.floor(Math.random() * (max - min + 1)) + min
+}
+
 /**
- * Used whenever the Grok call fails outright (timeout, API error, malformed
- * response) — scores are seeded so Hypervigilance (D) wins, landing on
- * THE PARANOID DEGEN, so a failure never renders as a blank/all-zero card.
+ * Used whenever the Grok call fails outright (timeout, API error, hard
+ * budget cutoff, bot-traffic spike, malformed response) so a failure never
+ * renders as a blank/all-zero card. The winning cluster is randomized per
+ * call — a fixed default would mean every diagnosis during an outage or a
+ * bot pile-on comes back as the exact same type, which is both a giveaway
+ * and a bad look if people compare results. The 11-18 vs 1-9 score gap
+ * guarantees the chosen cluster wins outright, no tie-break involved.
  */
-const FALLBACK_ANALYSIS: GrokAnalysis = {
-  scores: { A: 4, B: 4, C: 4, D: 13, E: 4 },
-  detail: "Insufficient data to complete evaluation. Patient's posting history could not be interpreted.",
-  worst: 'Undisclosed. Patient declined to elaborate.',
+function fallbackAnalysis(): GrokAnalysis {
+  const winner = CLUSTER_IDS[randInt(0, CLUSTER_IDS.length - 1)]
+  const scores = {} as ClusterScores
+  for (const id of CLUSTER_IDS) {
+    scores[id] = id === winner ? randInt(11, 18) : randInt(1, 9)
+  }
+
+  return {
+    scores,
+    detail: "Insufficient data to complete evaluation. Patient's posting history could not be interpreted.",
+    worst: 'Undisclosed. Patient declined to elaborate.',
+  }
 }
 
 interface ResponsesApiOutputContent {
@@ -198,7 +216,7 @@ export async function analyzeHandle(handle: string): Promise<GrokAnalysis> {
   if (!apiKey) {
     console.error('[grok] XAI_API_KEY is not set')
 
-    return FALLBACK_ANALYSIS
+    return fallbackAnalysis()
   }
 
   try {
@@ -224,7 +242,7 @@ export async function analyzeHandle(handle: string): Promise<GrokAnalysis> {
     if (!res.ok) {
       console.error('[grok] API error:', res.status, await res.text())
 
-      return FALLBACK_ANALYSIS
+      return fallbackAnalysis()
     }
 
     const data = (await res.json()) as ResponsesApiBody
@@ -234,6 +252,6 @@ export async function analyzeHandle(handle: string): Promise<GrokAnalysis> {
   } catch (err) {
     console.error('[grok] analyze failed:', err)
 
-    return FALLBACK_ANALYSIS
+    return fallbackAnalysis()
   }
 }
