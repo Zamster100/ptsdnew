@@ -248,7 +248,21 @@ export async function analyzeHandle(handle: string): Promise<GrokAnalysis> {
     const data = (await res.json()) as ResponsesApiBody
     logUsage(handle, data.usage)
 
-    return parseAnalysis(extractOutputText(data))
+    const parsed = parseAnalysis(extractOutputText(data))
+
+    // All five clusters at 0 isn't a genuine "clean" diagnosis — it's Grok
+    // finding no usable posts to score (empty/inactive account, everything
+    // outside the 90-day window, etc). Ties there fall to THE NUMB by
+    // tie-break order, which reads as a real result instead of a miss.
+    // Treat it like any other failure to analyze.
+    const allZero = Object.values(parsed.scores).every(s => s === 0)
+    if (allZero) {
+      console.warn('[grok] all-zero scores for handle, no usable post data:', handle)
+
+      return fallbackAnalysis()
+    }
+
+    return parsed
   } catch (err) {
     console.error('[grok] analyze failed:', err)
 
