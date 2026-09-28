@@ -70,12 +70,15 @@ export const CLUSTERS: ClusterMeta[] = [
 ]
 
 // Tie-break priority when multiple clusters share the top score (highest wins): E > D > C > B > A.
+// D (Hypervigilance -> THE PARANOID DEGEN) is also the safe fallback below when scores can't be
+// read at all, so a NaN/undefined comparison (max is never equal to NaN) lands here instead of A.
 const TIE_BREAK_ORDER: ClusterId[] = ['E', 'D', 'C', 'B', 'A']
+const FALLBACK_CLUSTER: ClusterId = 'D'
 
 function winningCluster(scores: ClusterScores): ClusterId {
   const max = Math.max(scores.A, scores.B, scores.C, scores.D, scores.E)
 
-  return TIE_BREAK_ORDER.find(id => scores[id] === max) ?? 'A'
+  return TIE_BREAK_ORDER.find(id => scores[id] === max) ?? FALLBACK_CLUSTER
 }
 
 export interface ComputedResult {
@@ -85,7 +88,24 @@ export interface ComputedResult {
   type: string
 }
 
-export function computeFromScores(scores: ClusterScores): ComputedResult {
+/** Never let a missing/malformed diagnosis render as a blank card — degrade to THE PARANOID DEGEN instead. */
+const SAFE_DEFAULT_RESULT: ComputedResult = {
+  raw: 20,
+  index: 1800,
+  band: 'symptomatic',
+  type: CLUSTERS.find(c => c.id === FALLBACK_CLUSTER)!.typeName,
+}
+
+function isValidScores(scores: unknown): scores is ClusterScores {
+  if (typeof scores !== 'object' || scores === null) return false
+  const s = scores as Record<string, unknown>
+
+  return (['A', 'B', 'C', 'D', 'E'] as const).every(k => typeof s[k] === 'number' && Number.isFinite(s[k]))
+}
+
+export function computeFromScores(scores: ClusterScores | null | undefined): ComputedResult {
+  if (!isValidScores(scores)) return SAFE_DEFAULT_RESULT
+
   const raw = scores.A + scores.B + scores.C + scores.D + scores.E
   const index = Math.min(9001, Math.round(raw * 90.01))
   const band = bandFromRaw(raw)

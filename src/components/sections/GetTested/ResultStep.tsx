@@ -3,7 +3,6 @@
 import { RefObject, useState } from 'react'
 import { toBlob } from 'html-to-image'
 import { DiagnosisResult } from '@/lib/getTested/types'
-import { getBandLabel } from '@/lib/getTested/scoring'
 import { ResultCard } from './ResultCard'
 import { DownloadButton } from './DownloadButton'
 import { OffRampNotice } from './OffRampNotice'
@@ -43,9 +42,15 @@ export const ResultStep = ({ result, cardRef, onContinue }: ResultStepProps) => 
     }
   }
 
+  const SHARE_TEXTS = [
+    'I just took the PTSD diagnosis from @ptsdshow. The doctor said "how long have you been like this?" I said "since the top."',
+    '@ptsdshow diagnosed me. Symptoms include checking charts at 3am and calling it research. Prognosis: more of the same.',
+    'Took the PTSD test from @ptsdshow. It read my whole personality off my portfolio. Rude, but accurate.',
+  ]
+
   function handlePostToX() {
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://ptsdshow.com'
-    const text = `I just got diagnosed on PTSD: ${result.type}. Trauma Index ${result.traumaIndex.toLocaleString()}/9001 (${getBandLabel(result.band)}). Get tested:`
+    const text = SHARE_TEXTS[Math.floor(Math.random() * SHARE_TEXTS.length)]
     const intent = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(`${siteUrl}/get-tested`)}`
     window.open(intent, '_blank', 'noopener,noreferrer')
   }

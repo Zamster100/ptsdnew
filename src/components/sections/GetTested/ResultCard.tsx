@@ -15,7 +15,7 @@ const GRIME_BANDS = new Set(['terminal', 'over9000'])
 export const ResultCard = forwardRef<HTMLDivElement, ResultCardProps>(({ result }, ref) => {
   const accent = getTypeAccent(result.type)
   const accentLight = getTypeAccentLight(result.type)
-  const winningCluster = CLUSTERS.find(c => c.typeName === result.type) ?? CLUSTERS[0]
+  const winningCluster = CLUSTERS.find(c => c.typeName === result.type) ?? CLUSTERS.find(c => c.id === 'D')!
   const bandLabel = getBandLabel(result.band)
   const isGrimed = GRIME_BANDS.has(result.band)
 

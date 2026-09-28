@@ -10,7 +10,10 @@ export const TYPE_ACCENTS: Record<string, string> = Object.fromEntries(
   CLUSTERS.map(c => [c.typeName, c.color]),
 )
 
-const DEFAULT_ACCENT = CLUSTERS[0].color
+// An unrecognized/missing type should never render blank — fall back to THE PARANOID DEGEN
+// everywhere, matching the same fallback computeFromScores uses (scoring.ts).
+const DEFAULT_CLUSTER = CLUSTERS.find(c => c.id === 'D')!
+const DEFAULT_ACCENT = DEFAULT_CLUSTER.color
 
 export function getTypeAccent(type: string): string {
   return TYPE_ACCENTS[type] ?? DEFAULT_ACCENT
@@ -21,7 +24,7 @@ export const TYPE_ACCENTS_LIGHT: Record<string, string> = Object.fromEntries(
   CLUSTERS.map(c => [c.typeName, c.colorLight]),
 )
 
-const DEFAULT_ACCENT_LIGHT = CLUSTERS[0].colorLight
+const DEFAULT_ACCENT_LIGHT = DEFAULT_CLUSTER.colorLight
 
 export function getTypeAccentLight(type: string): string {
   return TYPE_ACCENTS_LIGHT[type] ?? DEFAULT_ACCENT_LIGHT
@@ -36,7 +39,7 @@ export const TYPE_BASE_NOTES: Record<string, string> = Object.fromEntries(
   CLUSTERS.map(c => [c.typeName, c.baseNote]),
 )
 
-const DEFAULT_BASE_NOTE = CLUSTERS[0].baseNote
+const DEFAULT_BASE_NOTE = DEFAULT_CLUSTER.baseNote
 
 export function getBaseNote(type: string): string {
   return TYPE_BASE_NOTES[type] ?? DEFAULT_BASE_NOTE
@@ -55,11 +58,7 @@ export const PROJECT_X_HANDLE = 'PTSDshow'
 export const CAMPAIGN_TWEET_ID = 'REPLACE_WITH_REAL_TWEET_ID'
 export const CAMPAIGN_TWEET_URL = `https://x.com/${PROJECT_X_HANDLE}/status/${CAMPAIGN_TWEET_ID}`
 
-/**
- * TODO(launch): no article exists yet — replace with the real URL once
- * written, then swap this one constant.
- */
-export const ARTICLE_URL = 'https://ptsdshow.com/REPLACE_WITH_REAL_ARTICLE_URL'
+export const ARTICLE_URL = 'https://x.com/ptsdshow/status/2103600924769796512'
 
 export type SpreadTaskId = 'follow' | 'likeRetweet' | 'shareArticle' | 'reply'
 
