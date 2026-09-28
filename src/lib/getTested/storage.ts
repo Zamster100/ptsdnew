@@ -3,7 +3,7 @@ import { DiagnosisResult } from './types'
 
 const STORAGE_KEY = 'ptsd25_diagnosis_flow'
 
-const SPREAD_TASK_IDS: SpreadTaskId[] = ['follow', 'likeRetweet', 'shareArticle', 'reply']
+const SPREAD_TASK_IDS: SpreadTaskId[] = ['follow', 'likeRetweet', 'shareArticle']
 
 export type ResumableStage = 'result' | 'spread' | 'claim' | 'confirmation'
 

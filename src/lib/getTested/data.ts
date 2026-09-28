@@ -60,7 +60,7 @@ export const CAMPAIGN_TWEET_URL = `https://x.com/${PROJECT_X_HANDLE}/status/${CA
 
 export const ARTICLE_URL = 'https://x.com/ptsdshow/status/2103600924769796512'
 
-export type SpreadTaskId = 'follow' | 'likeRetweet' | 'shareArticle' | 'reply'
+export type SpreadTaskId = 'follow' | 'likeRetweet' | 'shareArticle'
 
 export interface SpreadTask {
   id: SpreadTaskId
@@ -91,11 +91,5 @@ export const SPREAD_TASKS: SpreadTask[] = [
     description: 'Share the article so more people get diagnosed.',
     href: () =>
       `https://x.com/intent/tweet?url=${encodeURIComponent(ARTICLE_URL)}&text=${encodeURIComponent('This explains everything —')}`,
-  },
-  {
-    id: 'reply',
-    label: 'Help Diagnose 2 Friends',
-    description: 'Reply and tag two friends who need this diagnosis.',
-    href: () => `https://x.com/intent/tweet?in_reply_to=${CAMPAIGN_TWEET_ID}`,
   },
 ]

@@ -71,8 +71,7 @@ export const SpreadStep = ({ openedTasks, onTaskOpened, onContinue }: SpreadStep
         </ul>
 
         <p className="font-mono mb-8 text-[10px] uppercase leading-relaxed tracking-widest text-white/30">
-          Opening a task marks the link as opened, not the action as verified. Tag two real accounts in your reply —
-          bots don&apos;t count as friends.
+          Opening a task marks the link as opened, not the action as verified.
         </p>
 
         <button
