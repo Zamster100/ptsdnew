@@ -1,11 +1,17 @@
 'use client'
 
-import { useState, useEffect, ReactNode } from 'react'
+import { useState, useEffect, ReactNode, FormEvent } from 'react'
 import Image from 'next/image'
 
 // Fixed instant in time (ISO with explicit UTC offset), so every viewer
 // counts down to the same moment regardless of their local timezone.
 const UNLOCK_AT = new Date('2026-09-28T12:00:00-04:00')
+
+// Lets the team preview the page early for manual testing without moving
+// UNLOCK_AT. Client-side only (same pattern as TicketsGate) — fine for a
+// soft testing bypass, not meant to be a real secret.
+const BYPASS_STORAGE_KEY = 'ptsd_get_tested_test_access'
+const BYPASS_PASSWORD = 'trauma2026'
 
 type TimeLeft = {
   days: number
@@ -32,8 +38,12 @@ function pad(n: number) {
 
 export function GetTestedGate({ children }: { children: ReactNode }) {
   const [timeLeft, setTimeLeft] = useState<TimeLeft | null>(null)
+  const [bypassed, setBypassed] = useState(false)
+  const [passwordInput, setPasswordInput] = useState('')
+  const [passwordError, setPasswordError] = useState(false)
 
   useEffect(() => {
+    if (window.sessionStorage.getItem(BYPASS_STORAGE_KEY) === '1') setBypassed(true)
     setTimeLeft(getTimeLeft())
     const id = setInterval(() => setTimeLeft(getTimeLeft()), 1000)
 
@@ -44,10 +54,21 @@ export function GetTestedGate({ children }: { children: ReactNode }) {
   // the real countdown from its own clock.
   if (!timeLeft) return null
 
-  const unlocked =
+  const timeUnlocked =
     timeLeft.days === 0 && timeLeft.hours === 0 && timeLeft.minutes === 0 && timeLeft.seconds === 0
 
-  if (unlocked) return <>{children}</>
+  if (timeUnlocked || bypassed) return <>{children}</>
+
+  function handlePasswordSubmit(e: FormEvent) {
+    e.preventDefault()
+    if (passwordInput === BYPASS_PASSWORD) {
+      window.sessionStorage.setItem(BYPASS_STORAGE_KEY, '1')
+      setBypassed(true)
+    } else {
+      setPasswordError(true)
+      setPasswordInput('')
+    }
+  }
 
   const units: { label: string; value: number }[] = [
     { label: 'Days', value: timeLeft.days },
@@ -94,6 +115,28 @@ export function GetTestedGate({ children }: { children: ReactNode }) {
             </div>
           ))}
         </div>
+
+        <form onSubmit={handlePasswordSubmit} className="flex w-full flex-col gap-2">
+          <input
+            type="password"
+            value={passwordInput}
+            onChange={e => {
+              setPasswordInput(e.target.value)
+              setPasswordError(false)
+            }}
+            placeholder="Testing password"
+            className="w-full rounded-lg border border-white/10 bg-light-bg px-4 py-3 text-sm text-white placeholder-white/30 outline-none transition-colors focus:border-white/30"
+          />
+          {passwordError && (
+            <p className="text-center text-xs text-ticket-red">Incorrect password.</p>
+          )}
+          <button
+            type="submit"
+            className="w-full rounded-lg bg-ticket-red py-3 text-sm font-bold text-white transition-opacity hover:opacity-90"
+          >
+            Unlock Early
+          </button>
+        </form>
       </div>
     </div>
   )
