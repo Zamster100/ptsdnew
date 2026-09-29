@@ -50,12 +50,8 @@ export const OFF_RAMP_TEXT =
 
 export const PROJECT_X_HANDLE = 'PTSDshow'
 
-/**
- * TODO(launch): there is no live campaign tweet yet. Once the announcement
- * post goes out from @PTSDshow, replace this ID (and nothing else) — the
- * Like & Retweet and Help Diagnose task links below are built from it.
- */
-export const CAMPAIGN_TWEET_ID = 'REPLACE_WITH_REAL_TWEET_ID'
+/** The live campaign post from @PTSDshow — the Like & Retweet task links are built from it. */
+export const CAMPAIGN_TWEET_ID = '2104927368641233384'
 export const CAMPAIGN_TWEET_URL = `https://x.com/${PROJECT_X_HANDLE}/status/${CAMPAIGN_TWEET_ID}`
 
 export const ARTICLE_URL = 'https://x.com/ptsdshow/status/2103600924769796512'
