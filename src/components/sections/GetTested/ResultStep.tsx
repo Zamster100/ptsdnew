@@ -95,7 +95,7 @@ return () => {
         disabled={qrtDone}
         className="font-manrope mt-5 w-full max-w-lg rounded-xl bg-ticket-red px-6 py-4 text-sm font-black uppercase tracking-wide text-white transition-opacity hover:opacity-90 disabled:cursor-default disabled:opacity-40"
       >
-        𝕏 Quote Retweet on X
+        𝕏 Share on X
       </button>
 
       <button
