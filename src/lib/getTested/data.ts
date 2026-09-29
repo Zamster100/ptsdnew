@@ -89,7 +89,6 @@ export const SPREAD_TASKS: SpreadTask[] = [
     id: 'shareArticle',
     label: 'Share Article',
     description: 'Share the article so more people get diagnosed.',
-    href: () =>
-      `https://x.com/intent/tweet?url=${encodeURIComponent(ARTICLE_URL)}&text=${encodeURIComponent('This explains everything —')}`,
+    href: () => ARTICLE_URL,
   },
 ]
