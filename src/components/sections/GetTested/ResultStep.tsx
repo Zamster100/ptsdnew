@@ -1,7 +1,9 @@
 'use client'
 
-import { RefObject, useState } from 'react'
+import { RefObject, useEffect, useState } from 'react'
 import { toBlob } from 'html-to-image'
+import { cn } from '@/lib/utils'
+import { CAMPAIGN_TWEET_URL } from '@/lib/getTested/data'
 import { DiagnosisResult } from '@/lib/getTested/types'
 import { ResultCard } from './ResultCard'
 import { DownloadButton } from './DownloadButton'
@@ -13,11 +15,10 @@ interface ResultStepProps {
   onContinue: () => void
 }
 
-const buttonClass =
-  'font-manrope flex-1 rounded-xl border border-white/20 bg-white/5 px-4 py-3 text-xs font-bold text-white transition-colors duration-150 hover:border-white/40 disabled:cursor-not-allowed disabled:opacity-50'
-
 export const ResultStep = ({ result, cardRef, onContinue }: ResultStepProps) => {
   const [copyState, setCopyState] = useState<'idle' | 'busy' | 'copied' | 'failed'>('idle')
+  const [qrtOpened, setQrtOpened] = useState(false)
+  const [qrtDone, setQrtDone] = useState(false)
 
   async function handleCopyImage() {
     if (!cardRef.current || copyState === 'busy') return
@@ -48,47 +49,91 @@ export const ResultStep = ({ result, cardRef, onContinue }: ResultStepProps) => 
     'Took the PTSD test from @ptsdshow. It read my whole personality off my portfolio. Rude, but accurate.',
   ]
 
-  function handlePostToX() {
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://ptsdshow.com'
+  function handleQuoteRetweet() {
     const text = SHARE_TEXTS[Math.floor(Math.random() * SHARE_TEXTS.length)]
-    const intent = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(`${siteUrl}/get-tested`)}`
+    const intent = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(CAMPAIGN_TWEET_URL)}`
     window.open(intent, '_blank', 'noopener,noreferrer')
+    setQrtOpened(true)
   }
+
+  // X can't confirm the post from here, so like the spread tasks this is honor-system: the
+  // gate opens once the user comes back to this tab after opening the quote-retweet window.
+  useEffect(() => {
+    if (!qrtOpened || qrtDone) return
+    function handleReturn() {
+      if (document.visibilityState === 'visible') setQrtDone(true)
+    }
+    document.addEventListener('visibilitychange', handleReturn)
+    window.addEventListener('focus', handleReturn)
+    
+return () => {
+      document.removeEventListener('visibilitychange', handleReturn)
+      window.removeEventListener('focus', handleReturn)
+    }
+  }, [qrtOpened, qrtDone])
+
+  const secondaryClass =
+    'font-manrope text-xs font-bold text-white/60 underline-offset-4 transition-colors hover:text-white hover:underline disabled:cursor-not-allowed disabled:opacity-50'
 
   return (
     <div className="flex flex-col items-center">
       <ResultCard ref={cardRef} result={result} />
 
-      <p className="font-manrope mt-8 text-center text-sm font-bold uppercase tracking-wide text-main-yellow">
-        Chart&apos;s open. Next: spread it.
+      <div className="mt-8 h-px w-full max-w-lg bg-white/10" />
+
+      <p className="font-mono mt-6 text-[10px] font-bold uppercase tracking-widest text-main-yellow">Next step</p>
+      <h3 className="font-manrope mt-2 max-w-lg text-center text-xl font-black uppercase leading-tight text-white md:text-2xl">
+        Quote-retweet your diagnosis on X
+      </h3>
+      <p className="font-manrope mt-2 max-w-lg text-center text-sm leading-[1.7] text-light-text">
+        Quote-retweet your diagnosis to continue and join the whitelist.
       </p>
 
-      <div className="mt-4 flex w-full max-w-lg gap-3">
+      <button
+        type="button"
+        onClick={handleQuoteRetweet}
+        disabled={qrtDone}
+        className="font-manrope mt-5 w-full max-w-lg rounded-xl bg-ticket-red px-6 py-4 text-sm font-black uppercase tracking-wide text-white transition-opacity hover:opacity-90 disabled:cursor-default disabled:opacity-40"
+      >
+        𝕏 Quote Retweet on X
+      </button>
+
+      <button
+        type="button"
+        onClick={onContinue}
+        disabled={!qrtDone}
+        className={cn(
+          'font-manrope mt-3 w-full max-w-lg rounded-xl border px-6 py-4 text-sm font-black uppercase tracking-wide transition-colors',
+          qrtDone
+            ? 'border-main-yellow bg-main-yellow text-black hover:opacity-90'
+            : 'cursor-not-allowed border-white/10 bg-white/5 text-white/30',
+        )}
+      >
+        {qrtDone ? 'Continue →' : '🔒 Continue'}
+      </button>
+      <p
+        className={cn(
+          'font-mono mt-2 text-[10px] uppercase tracking-widest',
+          qrtDone ? 'text-main-yellow' : 'text-white/40',
+        )}
+      >
+        {qrtDone ? '✓ Signal received' : 'Quote-retweet to unlock'}
+      </p>
+
+      <div className="mt-6 flex items-center gap-3">
         <DownloadButton
           targetRef={cardRef}
           filename={`ptsd-${result.handle}.png`}
-          className={buttonClass}
+          className={`${secondaryClass} !w-auto !border-0 !bg-transparent !px-0 !py-0 !font-bold !text-xs`}
         />
-
-        <button type="button" onClick={handlePostToX} className={buttonClass}>
-          Post to X
-        </button>
-
-        <button type="button" onClick={handleCopyImage} disabled={copyState === 'busy'} className={buttonClass}>
+        <span className="text-white/20">·</span>
+        <button type="button" onClick={handleCopyImage} disabled={copyState === 'busy'} className={secondaryClass}>
           {copyState === 'busy' && 'Copying…'}
           {copyState === 'copied' && 'Copied!'}
           {copyState === 'failed' && "Couldn't copy"}
           {copyState === 'idle' && 'Copy Image'}
         </button>
       </div>
-
-      <button
-        type="button"
-        onClick={onContinue}
-        className="font-manrope mt-6 w-full max-w-lg rounded-xl bg-ticket-red px-6 py-3 text-sm font-bold text-white transition-opacity hover:opacity-90"
-      >
-        Continue to Spread the Signal
-      </button>
 
       <OffRampNotice />
     </div>
