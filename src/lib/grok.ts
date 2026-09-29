@@ -66,8 +66,8 @@ found in their posts for whichever cluster scored highest (a ticker, a
 dollar amount, an event, a timeframe — anything concrete). This gets
 appended directly after the fixed note above, so it must NOT restate or
 rephrase the fixed note, and must read as a natural continuation of it. If
-you can't find anything specific and real, write "Case otherwise
-unremarkable." instead of inventing something.
+you can't find anything specific and real, return an empty string ""
+for "detail" instead of inventing something.
 
 Finally, find ONE specific bad call, loss, or regret visible in their
 post history and paraphrase it in a single line for the "worst" field.
@@ -106,7 +106,7 @@ function fallbackAnalysis(): GrokAnalysis {
 
   return {
     scores,
-    detail: "Insufficient data to complete evaluation. Patient's posting history could not be interpreted.",
+    detail: '',
     worst: 'Undisclosed. Patient declined to elaborate.',
   }
 }
@@ -206,7 +206,7 @@ function parseAnalysis(raw: string): GrokAnalysis {
       D: clampScore(s.D),
       E: clampScore(s.E),
     },
-    detail: obj.detail,
+    detail: obj.detail.trim(),
     worst: obj.worst,
   }
 }
