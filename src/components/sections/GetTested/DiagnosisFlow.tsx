@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { getTypeAccent, SpreadTaskId } from '@/lib/getTested/data'
 import { getRandomPatientPhoto } from '@/lib/getTested/photos'
 import { DiagnosisResult } from '@/lib/getTested/types'
-import { clearFlowState, loadFlowState, saveFlowState } from '@/lib/getTested/storage'
+import { loadFlowState, saveFlowState } from '@/lib/getTested/storage'
 import { IntroStep } from './IntroStep'
 import { WaitStep } from './WaitStep'
 import { ResultStep } from './ResultStep'
@@ -104,15 +104,6 @@ export const DiagnosisFlow = () => {
     setStage('confirmation')
   }
 
-  function handleRestart() {
-    clearFlowState()
-    setResult(null)
-    setApiError(null)
-    setShared(false)
-    setOpenedTasks([])
-    setStage('intake')
-  }
-
   const ekgColor = result && stage !== 'intake' && stage !== 'wait' ? getTypeAccent(result.type) : DEFAULT_EKG_COLOR
   const ekgSpeed = stage === 'wait' ? 0.6 : 1.7
 
@@ -164,7 +155,7 @@ export const DiagnosisFlow = () => {
         )}
 
         {stage === 'confirmation' && result && (
-          <ConfirmationStep patientNo={result.patientNo} onRestart={handleRestart} />
+          <ConfirmationStep result={result} />
         )}
       </div>
     </div>
