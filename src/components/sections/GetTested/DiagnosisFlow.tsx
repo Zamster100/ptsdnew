@@ -24,6 +24,7 @@ export const DiagnosisFlow = () => {
   const [result, setResult] = useState<DiagnosisResult | null>(null)
   const [apiError, setApiError] = useState<string | null>(null)
   const [shared, setShared] = useState(false)
+  const [alreadyClaimed, setAlreadyClaimed] = useState(false)
   const [hydrated, setHydrated] = useState(false)
   const [handle, setHandle] = useState('')
   const [openedTasks, setOpenedTasks] = useState<SpreadTaskId[]>([])
@@ -55,6 +56,7 @@ export const DiagnosisFlow = () => {
   async function handleBegin(h: string) {
     setResult(null)
     setApiError(null)
+    setAlreadyClaimed(false)
     setHandle(h)
     setStage('wait')
 
@@ -67,24 +69,22 @@ export const DiagnosisFlow = () => {
       const json = await res.json()
 
       if (!res.ok) {
-        if (typeof json.retryAt === 'number') {
-          const hoursLeft = Math.max(1, Math.ceil((json.retryAt - Date.now()) / (60 * 60 * 1000)))
-          setApiError(`You already ran this diagnosis recently. Retest available in about ${hoursLeft}h.`)
-        } else {
-          setApiError(json.error ?? 'Something went wrong. Try again.')
-        }
+        setApiError(json.error ?? 'Something went wrong. Try again.')
 
         return
       }
 
-      setResult({ ...json, photoUrl: getRandomPatientPhoto(json.type) })
+      // Returning handle whose whitelist spot is already claimed: skip the share/claim steps.
+      const { claimed, ...diagnosis } = json
+      setAlreadyClaimed(Boolean(claimed))
+      setResult({ ...diagnosis, photoUrl: getRandomPatientPhoto(json.type) })
     } catch {
       setApiError('Network error — please try again.')
     }
   }
 
   function handleWaitComplete() {
-    setStage(apiError ? 'intake' : 'result')
+    setStage(apiError ? 'intake' : alreadyClaimed ? 'confirmation' : 'result')
   }
 
   function handleContinueFromResult() {

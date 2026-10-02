@@ -3,13 +3,10 @@ import { rateLimit } from '@/lib/rateLimit'
 import { analyzeHandle } from '@/lib/grok'
 import { getMemberSinceYear } from '@/lib/xApi'
 import { computeFromScores } from '@/lib/getTested/scoring'
-import { getBaseNote } from '@/lib/getTested/data'
+import { CONTEST_CLOSED, getBaseNote } from '@/lib/getTested/data'
 import { supabase } from '@/lib/supabase'
 
 const HANDLE_RE = /^[A-Za-z0-9_]{1,15}$/
-
-// Each analysis costs a real Grok API call — cap retests per handle regardless of IP.
-const RETEST_COOLDOWN_MS = 24 * 60 * 60 * 1000
 
 function getIp(req: NextRequest): string {
   return (
@@ -20,6 +17,10 @@ function getIp(req: NextRequest): string {
 }
 
 export async function POST(req: NextRequest) {
+  if (CONTEST_CLOSED) {
+    return NextResponse.json({ error: 'Testing is closed' }, { status: 410 })
+  }
+
   // Rate limit: 5 analyses per IP per hour (x_search calls are slow and costly)
   const ip = getIp(req)
   if (!rateLimit(`get-tested-analyze:${ip}`, 5, 60 * 60 * 1000)) {
@@ -38,22 +39,33 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid handle' }, { status: 400 })
   }
 
-  const { data: lastDiagnosis, error: cooldownLookupError } = await supabase
+  // Returning handle: serve the stored diagnosis instead of paying for another Grok run.
+  // `_` is a single-char wildcard in ilike, and handles can contain it — escape so it only matches itself.
+  const { data: existing, error: lookupError } = await supabase
     .from('diagnoses')
-    .select('created_at')
-    .ilike('handle', rawHandle)
+    .select('id, handle, type, note, worst, cluster_scores, trauma_index, member_since, claimed_at')
+    .ilike('handle', rawHandle.replace(/_/g, '\\_'))
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle()
 
-  if (cooldownLookupError) {
-    // Don't let a transient DB hiccup permanently block a legitimate retest — log and proceed.
-    console.error('[get-tested/analyze] cooldown lookup error:', cooldownLookupError)
-  } else if (lastDiagnosis) {
-    const retryAt = new Date(lastDiagnosis.created_at).getTime() + RETEST_COOLDOWN_MS
-    if (Date.now() < retryAt) {
-      return NextResponse.json({ error: 'Retest cooldown active', retryAt }, { status: 429 })
-    }
+  if (lookupError) {
+    // Don't let a transient DB hiccup block a legitimate first-time diagnosis — log and proceed.
+    console.error('[get-tested/analyze] existing-diagnosis lookup error:', lookupError)
+  } else if (existing) {
+    return NextResponse.json({
+      id: existing.id,
+      patientNo: String(existing.id).padStart(6, '0'),
+      handle: existing.handle,
+      type: existing.type,
+      note: existing.note,
+      worst: existing.worst,
+      scores: existing.cluster_scores,
+      traumaIndex: existing.trauma_index,
+      band: computeFromScores(existing.cluster_scores).band,
+      memberSince: existing.member_since,
+      claimed: Boolean(existing.claimed_at),
+    })
   }
 
   const analysis = await analyzeHandle(rawHandle)

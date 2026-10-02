@@ -88,3 +88,6 @@ export const SPREAD_TASKS: SpreadTask[] = [
     href: () => ARTICLE_URL,
   },
 ]
+
+/** Flip to false to reopen the diagnosis contest — locks the page and both API routes. */
+export const CONTEST_CLOSED = true

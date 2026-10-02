@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { rateLimit } from '@/lib/rateLimit'
 import { supabase } from '@/lib/supabase'
+import { CONTEST_CLOSED } from '@/lib/getTested/data'
 
 const ETH_RE = /^0x[a-fA-F0-9]{40}$/
 
@@ -13,6 +14,10 @@ function getIp(req: NextRequest): string {
 }
 
 export async function POST(req: NextRequest) {
+  if (CONTEST_CLOSED) {
+    return NextResponse.json({ error: 'Testing is closed' }, { status: 410 })
+  }
+
   const ip = getIp(req)
   if (!rateLimit(`get-tested-claim:${ip}`, 10, 60 * 60 * 1000)) {
     return NextResponse.json({ error: 'Too many requests' }, { status: 429 })

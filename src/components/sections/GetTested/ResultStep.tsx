@@ -83,11 +83,8 @@ return () => {
 
       <p className="font-mono mt-6 text-[10px] font-bold uppercase tracking-widest text-main-yellow">Next step</p>
       <h3 className="font-manrope mt-2 max-w-lg text-center text-xl font-black uppercase leading-tight text-white md:text-2xl">
-        Quote-retweet your diagnosis on X
+        Share your diagnosis on X to continue
       </h3>
-      <p className="font-manrope mt-2 max-w-lg text-center text-sm leading-[1.7] text-light-text">
-        Quote-retweet your diagnosis to continue and join the whitelist.
-      </p>
 
       <button
         type="button"
@@ -117,7 +114,7 @@ return () => {
           qrtDone ? 'text-main-yellow' : 'text-white/40',
         )}
       >
-        {qrtDone ? '✓ Signal received' : 'Quote-retweet to unlock'}
+        {qrtDone ? '✓ Signal received' : 'Share to unlock'}
       </p>
 
       <div className="mt-6 flex items-center gap-3">
