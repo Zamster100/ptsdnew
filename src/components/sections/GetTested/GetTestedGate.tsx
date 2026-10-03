@@ -27,19 +27,24 @@ export function GetTestedGate() {
           </p>
         </div>
 
-        <div className="w-full rounded-xl border border-main-yellow/30 bg-main-yellow/[0.06] px-5 py-5">
-          <p className="font-mono text-[10px] uppercase tracking-widest text-main-yellow">Results day</p>
-          <p className="font-manrope mt-2 text-lg font-black leading-snug text-white">
-            Guaranteed winners of the 500 WL spots will be disclosed on October 3, 2026.
+        <div className="flex w-full flex-col items-center gap-3">
+          <p className="text-base leading-[1.7] text-light-text">
+            Dying to know who won the 500 guaranteed spots? The evaluators won&apos;t say, and honestly, they
+            can&apos;t look you in the eye. Smash the big green button and find out.
           </p>
+          <Link
+            href="/whitelist"
+            className="w-full rounded-lg bg-emerald-500 py-4 text-base font-black uppercase tracking-wide text-black transition-opacity hover:opacity-90"
+          >
+            Did I Win?
+          </Link>
+          <Link
+            href="/"
+            className="font-manrope text-xs font-bold text-white/50 underline underline-offset-4 transition-colors hover:text-white"
+          >
+            Back to Home
+          </Link>
         </div>
-
-        <Link
-          href="/"
-          className="w-full rounded-lg bg-ticket-red py-3 text-sm font-bold text-white transition-opacity hover:opacity-90"
-        >
-          Back to Home
-        </Link>
 
         <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-white/30">
           Results are final. Please do not ask the evaluators how they&apos;re feeling.

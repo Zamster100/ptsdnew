@@ -63,7 +63,9 @@ function keepBest(map: Map<string, WhitelistEntry>, key: string, entry: Whitelis
 async function fetchWhitelist(): Promise<WhitelistCache> {
   const sheetId = process.env.GOOGLE_SHEETS_ID
   const apiKey = process.env.GOOGLE_SHEETS_API_KEY
-  const range = process.env.GOOGLE_SHEETS_RANGE ?? 'Sheet1!A:D'
+  // No tab name on purpose: Sheets reads the first tab, so renaming it (or a stale GOOGLE_SHEETS_RANGE env
+  // var left over from the old sheet) can't break lookups. Only GOOGLE_SHEETS_ID has to be right.
+  const range = 'A:D'
 
   if (!sheetId || !apiKey) {
     throw new Error(

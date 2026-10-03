@@ -40,9 +40,9 @@ export const TicketsHeader = () => {
           <DiscordIcon className="h-5 w-5" />
         </a>
         <Link
-          href="/profile"
+          href="/whitelist"
           className="text-white/60 transition-colors duration-200 hover:text-white"
-          aria-label="Look up your mint"
+          aria-label="Check your whitelist status"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="11" cy="11" r="8" />
