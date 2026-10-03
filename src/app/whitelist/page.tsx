@@ -1,26 +1,59 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
 import { TicketsHeader } from '@/components/sections/TicketsPage/TicketsHeader'
+import { TicketRain } from '@/components/shared/TicketRain'
 
 const ETH_RE = /^0x[a-fA-F0-9]{40}$/
 const SOL_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/
 
-type Status = 'idle' | 'loading' | 'whitelisted' | 'not-whitelisted' | 'error'
+type Category = 'presale' | 'guaranteed' | 'fcfs'
+type BackgroundKey = 'idle' | 'notfound' | Category
+
+interface Entry {
+  category: Category
+  price: number
+  quantity: number
+}
+
+type Status = 'idle' | 'loading' | 'found' | 'not-found' | 'error'
+
+/** Desktop is the wide art, mobile the portrait art. 'idle' on desktop is the looping video instead. */
+const BACKGROUNDS: Record<BackgroundKey, { desktop: string; mobile: string }> = {
+  idle: { desktop: '/images/raffle/raffle-poster.jpg', mobile: '/images/raffle/mraffle.jpg' },
+  notfound: { desktop: '/images/raffle/notwl.jpg', mobile: '/images/raffle/mnotw.jpg' },
+  presale: { desktop: '/images/raffle/presale.jpg', mobile: '/images/raffle/mpreslae.jpg' },
+  guaranteed: { desktop: '/images/raffle/gtw.jpg', mobile: '/images/raffle/mgtw.jpg' },
+  fcfs: { desktop: '/images/raffle/fcfs.jpg', mobile: '/images/raffle/mfcfs.jpg' },
+}
+
+const CATEGORY_LABELS: Record<Category, string> = {
+  presale: 'Presale',
+  guaranteed: 'Guaranteed WL',
+  fcfs: 'FCFS',
+}
+
+const RAIN_IMAGES = ['blue', 'gold', 'green', 'orange', 'red'].map(c => `/images/Tickets/small/${c}.png`)
+
+const usd = (n: number) => `$${n.toLocaleString('en-US', { maximumFractionDigits: 2 })}`
 
 export default function WhitelistPage() {
   const [input, setInput] = useState('')
   const [status, setStatus] = useState<Status>('idle')
-  const [quantity, setQuantity] = useState(0)
+  const [entry, setEntry] = useState<Entry | null>(null)
   const [error, setError] = useState('')
+  // Bumped on every successful find so the rain remounts and replays, even for the same wallet.
+  const [rainKey, setRainKey] = useState(0)
 
   const isValid = ETH_RE.test(input.trim()) || SOL_RE.test(input.trim())
+
+  const activeBackground: BackgroundKey =
+    status === 'found' && entry ? entry.category : status === 'not-found' ? 'notfound' : 'idle'
 
   async function handleCheck(e: React.FormEvent) {
     e.preventDefault()
     const wallet = input.trim()
-    if (!isValid) return
+    if (!isValid || status === 'loading') return
     setStatus('loading')
     setError('')
     try {
@@ -29,9 +62,13 @@ export default function WhitelistPage() {
       if (!res.ok) {
         setError(json.error ?? 'Lookup failed')
         setStatus('error')
-      } else {
-        setQuantity(json.quantity ?? 0)
-        setStatus(json.whitelisted ? 'whitelisted' : 'not-whitelisted')
+
+        return
+      }
+      setEntry(json.entry ?? null)
+      setStatus(json.whitelisted ? 'found' : 'not-found')
+      if (json.whitelisted && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        setRainKey(k => k + 1)
       }
     } catch {
       setError('Network error — please try again')
@@ -40,103 +77,106 @@ export default function WhitelistPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#0a0a0a] font-sans text-white">
+    <div className="relative h-dvh min-h-[560px] w-full overflow-hidden bg-black font-sans text-white">
+      {/* Background stack — every layer stays mounted so swaps are an instant crossfade, no loading flash. */}
+      {(Object.keys(BACKGROUNDS) as BackgroundKey[]).map(key => (
+        <div
+          key={key}
+          aria-hidden="true"
+          className="absolute inset-0 transition-opacity duration-700"
+          style={{ opacity: activeBackground === key ? 1 : 0 }}
+        >
+          {key === 'idle' ? (
+            <video
+              src="/videos/ptsdraffle-web.mp4"
+              poster={BACKGROUNDS.idle.desktop}
+              autoPlay
+              muted
+              loop
+              playsInline
+              className="hidden h-full w-full object-cover md:block"
+            />
+          ) : (
+            <img src={BACKGROUNDS[key].desktop} alt="" className="hidden h-full w-full object-cover md:block" />
+          )}
+          <img src={BACKGROUNDS[key].mobile} alt="" className="h-full w-full object-cover md:hidden" />
+        </div>
+      ))}
+
+      {/* Soft fade so the box and results stay readable over any artwork. */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/80 to-transparent" />
+
+      {rainKey > 0 && (
+        <TicketRain
+          key={rainKey}
+          images={RAIN_IMAGES}
+          count={90}
+          staggerMs={40}
+          baseWidth={72}
+          speed={1.5}
+          keepAspect
+        />
+      )}
+
       <TicketsHeader />
 
-      <div className="flex flex-1 flex-col justify-center px-[15px] pb-16 pt-32 md:px-[60px]">
-        <div className="mx-auto w-full max-w-2xl">
+      {/* Box sits ~20% above the page bottom; results fill the strip beneath it. */}
+      <div className="absolute inset-x-0 bottom-0 z-10 flex flex-col items-center px-[15px] md:px-[60px]">
+        <form onSubmit={handleCheck} className="w-full max-w-2xl">
+          <div className="flex w-full items-center gap-2 rounded-full border border-white/20 bg-black/60 py-2 pl-5 pr-2 backdrop-blur-md transition-colors focus-within:border-ticket-red/70 md:py-3 md:pl-7">
+            <input
+              type="text"
+              value={input}
+              onChange={e => {
+                setInput(e.target.value)
+                setStatus('idle')
+              }}
+              placeholder="Enter wallet"
+              spellCheck={false}
+              autoComplete="off"
+              aria-label="Wallet address"
+              className="min-w-0 flex-1 bg-transparent font-mono text-base text-white placeholder-white/40 outline-none md:text-xl"
+            />
+            <button
+              type="submit"
+              disabled={!isValid || status === 'loading'}
+              className="shrink-0 rounded-full bg-ticket-red px-5 py-3 font-manrope text-sm font-bold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-30 md:px-8 md:py-4 md:text-base"
+            >
+              {status === 'loading' ? 'Checking…' : 'Check'}
+            </button>
+          </div>
+        </form>
 
-          {/* Back */}
-          <Link
-            href="/tickets"
-            className="mb-8 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-white/40 transition-colors hover:text-white/70"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M19 12H5M12 19l-7-7 7-7" />
-            </svg>
-            Back to tickets
-          </Link>
+        <div className="flex h-[20dvh] min-h-[130px] w-full max-w-2xl items-start justify-center pt-4">
+          {status === 'error' && <p className="font-mono text-xs text-ticket-red">{error}</p>}
 
-          {/* Heading */}
-          <p className="mb-4 font-mono text-xs uppercase tracking-widest text-main-yellow">
-            Whitelist Check
-          </p>
-          <h1 className="font-manrope mb-3 text-[32px] font-black leading-[1.1] md:text-[48px]">
-            AM I ON THE
-            <br />
-            <span className="text-ticket-red">WHITELIST?</span>
-          </h1>
-          <p className="mb-10 max-w-lg text-base leading-[1.75] text-light-text">
-            Enter your Solana or Ethereum wallet address to check your
-            whitelist status.
-          </p>
-
-          {/* Form */}
-          <form onSubmit={handleCheck} className="mb-10">
-            <label className="mb-2 block font-mono text-xs uppercase tracking-widest text-white/50">
-              Wallet Address
-            </label>
-            <div className="flex gap-3">
-              <input
-                type="text"
-                value={input}
-                onChange={(e) => {
-                  setInput(e.target.value)
-                  setStatus('idle')
-                }}
-                placeholder="0x... or Solana address"
-                spellCheck={false}
-                className="flex-1 rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-mono text-sm text-white placeholder-white/20 outline-none transition-colors focus:border-white/30"
-              />
-              <button
-                type="submit"
-                disabled={!isValid || status === 'loading'}
-                className="flex items-center gap-2 rounded-xl bg-ticket-red px-6 py-3 font-sans text-sm font-bold text-white transition-opacity hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-30"
-              >
-                {status === 'loading' ? (
-                  'Checking…'
-                ) : (
-                  <>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="11" cy="11" r="8" />
-                      <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                    </svg>
-                    Check
-                  </>
-                )}
-              </button>
-            </div>
-          </form>
-
-          {/* Result */}
-          {status === 'error' && (
-            <p className="font-mono text-xs text-ticket-red">{error}</p>
-          )}
-
-          {status === 'whitelisted' && (
-            <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-6 py-10 text-center">
-              <p className="font-manrope text-2xl font-black text-emerald-400">
-                YOU&apos;RE WHITELISTED
+          {status === 'found' && entry && (
+            <div className="w-full rounded-2xl border border-white/15 bg-black/65 px-5 py-3 backdrop-blur-md">
+              <p className="font-mono text-[10px] font-bold uppercase tracking-widest text-main-yellow">
+                {CATEGORY_LABELS[entry.category]}
               </p>
-              <p className="mt-2 text-sm text-white/50">
-                {quantity} spot{quantity === 1 ? '' : 's'} reserved for this wallet.
-              </p>
+              <div className="mt-2 grid grid-cols-3 gap-3">
+                <Stat label="Mints" value={String(entry.quantity)} />
+                <Stat label="Price each" value={entry.price > 0 ? usd(entry.price) : 'Paid'} />
+                <Stat label="Total" value={entry.price > 0 ? usd(entry.price * entry.quantity) : 'Paid'} />
+              </div>
             </div>
           )}
 
-          {status === 'not-whitelisted' && (
-            <div className="rounded-xl border border-white/5 bg-white/[0.02] px-6 py-10 text-center">
-              <p className="font-manrope text-2xl font-black text-white/60">
-                NOT WHITELISTED
-              </p>
-              <p className="mt-2 text-sm text-white/30">
-                This wallet isn&apos;t on the whitelist yet.
-              </p>
-            </div>
+          {status === 'not-found' && (
+            <p className="font-mono text-xs uppercase tracking-widest text-white/60">
+              This wallet isn&apos;t on the whitelist.
+            </p>
           )}
-
         </div>
       </div>
     </div>
   )
 }
+
+const Stat = ({ label, value }: { label: string; value: string }) => (
+  <div>
+    <p className="font-mono text-[10px] uppercase tracking-widest text-white/40">{label}</p>
+    <p className="font-manrope text-xl font-black tabular-nums text-white md:text-2xl">{value}</p>
+  </div>
+)

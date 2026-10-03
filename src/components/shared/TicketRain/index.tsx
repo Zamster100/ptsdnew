@@ -13,17 +13,40 @@ interface Ticket {
   opacity: number
   delay: number
   started: boolean
+  img: number
 }
 
 const TICKET_COUNT = 28
 const TICKET_W = 90
 const TICKET_H = 56
+const DEFAULT_IMAGES = ['/images/gold-ticket.png']
 
-export const TicketRain = () => {
+interface TicketRainProps {
+  /** Ticket artwork; each ticket picks one at random. */
+  images?: string[]
+  count?: number
+  /** Gap between successive ticket spawns. */
+  staggerMs?: number
+  /** Ticket width at scale 1, in px. */
+  baseWidth?: number
+  /** Multiplies fall speed. */
+  speed?: number
+  /** Size tickets from each image's own proportions instead of the fixed 90x56 box. */
+  keepAspect?: boolean
+}
+
+export const TicketRain = ({
+  images = DEFAULT_IMAGES,
+  count = TICKET_COUNT,
+  staggerMs = 55,
+  baseWidth = TICKET_W,
+  speed = 1,
+  keepAspect = false,
+}: TicketRainProps = {}) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const rafRef = useRef<number>(0)
   const ticketsRef = useRef<Ticket[]>([])
-  const imgRef = useRef<HTMLImageElement | null>(null)
+  const imgsRef = useRef<HTMLImageElement[]>([])
   const startTimeRef = useRef<number>(0)
 
   useEffect(() => {
@@ -32,9 +55,12 @@ export const TicketRain = () => {
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    const img = new window.Image()
-    img.src = '/images/gold-ticket.png'
-    imgRef.current = img
+    imgsRef.current = images.map(src => {
+      const img = new window.Image()
+      img.src = src
+
+      return img
+    })
 
     const resize = () => {
       canvas.width = canvas.offsetWidth
@@ -44,17 +70,18 @@ export const TicketRain = () => {
     window.addEventListener('resize', resize)
 
     const spawnTickets = (w: number) => {
-      ticketsRef.current = Array.from({ length: TICKET_COUNT }, (_, i) => ({
+      ticketsRef.current = Array.from({ length: count }, (_, i) => ({
         x: Math.random() * (w + 200) - 100,
-        y: -TICKET_H - Math.random() * 60,
-        speed: 1.8 + Math.random() * 2.4,
+        y: -baseWidth - Math.random() * 60,
+        speed: (1.8 + Math.random() * 2.4) * speed,
         drift: (Math.random() - 0.5) * 0.7,
         rotation: Math.random() * Math.PI * 2,
         rotationSpeed: (Math.random() - 0.5) * 0.045,
         scale: 0.4 + Math.random() * 0.5,
         opacity: 0.75 + Math.random() * 0.25,
-        delay: i * 55,
+        delay: i * staggerMs,
         started: false,
+        img: Math.floor(Math.random() * images.length),
       }))
     }
     spawnTickets(canvas.offsetWidth)
@@ -94,7 +121,7 @@ export const TicketRain = () => {
         t.rotation += t.rotationSpeed
 
         const fadeStart = canvas.height * 0.75
-        const fadeEnd = canvas.height + TICKET_H
+        const fadeEnd = canvas.height + baseWidth
         const alpha =
           t.y > fadeStart
             ? t.opacity * (1 - (t.y - fadeStart) / (fadeEnd - fadeStart))
@@ -103,16 +130,17 @@ export const TicketRain = () => {
         if (t.y < fadeEnd) allDone = false
         if (alpha <= 0) continue
 
-        const w = TICKET_W * t.scale
-        const h = TICKET_H * t.scale
+        const img = imgsRef.current[t.img]
+        if (!img?.complete || !img.naturalWidth) continue
+
+        const w = baseWidth * t.scale
+        const h = keepAspect ? w * (img.naturalHeight / img.naturalWidth) : TICKET_H * t.scale
 
         ctx.save()
         ctx.globalAlpha = Math.max(0, alpha)
         ctx.translate(t.x, t.y)
         ctx.rotate(t.rotation)
-        if (imgRef.current?.complete) {
-          ctx.drawImage(imgRef.current, -w / 2, -h / 2, w, h)
-        }
+        ctx.drawImage(img, -w / 2, -h / 2, w, h)
         ctx.restore()
       }
 
@@ -121,16 +149,12 @@ export const TicketRain = () => {
       }
     }
 
-    img.onload = () => {
-      // image ready; animation starts via observer
-    }
-
     return () => {
       window.removeEventListener('resize', resize)
       window.cancelAnimationFrame(rafRef.current)
       observer.disconnect()
     }
-  }, [])
+  }, [images, count, staggerMs, baseWidth, speed, keepAspect])
 
   return (
     <canvas
