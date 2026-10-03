@@ -40,7 +40,7 @@ const usd = (n: number) => `$${n.toLocaleString('en-US', { maximumFractionDigits
 export default function WhitelistPage() {
   const [input, setInput] = useState('')
   const [status, setStatus] = useState<Status>('idle')
-  const [entry, setEntry] = useState<Entry | null>(null)
+  const [entries, setEntries] = useState<Entry[]>([])
   const [error, setError] = useState('')
   // Bumped on every successful find so the rain remounts and replays, even for the same wallet.
   const [rainKey, setRainKey] = useState(0)
@@ -48,7 +48,7 @@ export default function WhitelistPage() {
   const isValid = ETH_RE.test(input.trim()) || SOL_RE.test(input.trim())
 
   const activeBackground: BackgroundKey =
-    status === 'found' && entry ? entry.category : status === 'not-found' ? 'notfound' : 'idle'
+    status === 'found' && entries[0] ? entries[0].category : status === 'not-found' ? 'notfound' : 'idle'
 
   async function handleCheck(e: React.FormEvent) {
     e.preventDefault()
@@ -65,7 +65,7 @@ export default function WhitelistPage() {
 
         return
       }
-      setEntry(json.entry ?? null)
+      setEntries(json.entries ?? [])
       setStatus(json.whitelisted ? 'found' : 'not-found')
       if (json.whitelisted && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
         setRainKey(k => k + 1)
@@ -147,19 +147,34 @@ export default function WhitelistPage() {
           </div>
         </form>
 
-        <div className="flex h-[20dvh] min-h-[130px] w-full max-w-2xl items-start justify-center pt-4">
+        <div className="flex h-[20dvh] min-h-[150px] w-full max-w-2xl items-start justify-center pt-4">
           {status === 'error' && <p className="font-mono text-xs text-ticket-red">{error}</p>}
 
-          {status === 'found' && entry && (
-            <div className="w-full rounded-2xl border border-white/15 bg-black/65 px-5 py-3 backdrop-blur-md">
-              <p className="font-mono text-[10px] font-bold uppercase tracking-widest text-main-yellow">
-                {CATEGORY_LABELS[entry.category]}
-              </p>
-              <div className="mt-2 grid grid-cols-3 gap-3">
-                <Stat label="Mints" value={String(entry.quantity)} />
-                <Stat label="Price each" value={entry.price > 0 ? usd(entry.price) : 'Paid'} />
-                <Stat label="Total" value={entry.price > 0 ? usd(entry.price * entry.quantity) : 'Paid'} />
+          {status === 'found' && entries.length > 0 && (
+            <div className="max-h-full w-full overflow-y-auto rounded-2xl border border-white/15 bg-black/65 px-5 py-3 backdrop-blur-md">
+              <div className="grid grid-cols-[1.4fr_1fr_1fr_1fr] gap-x-3 font-mono text-[10px] uppercase tracking-widest text-white/40">
+                <span />
+                <span>Mints</span>
+                <span>Each</span>
+                <span>Total</span>
               </div>
+              {entries.map(e => (
+                <div
+                  key={e.category}
+                  className="mt-1.5 grid grid-cols-[1.4fr_1fr_1fr_1fr] items-baseline gap-x-3 border-t border-white/10 pt-1.5 first:border-t-0 first:pt-0"
+                >
+                  <span className="font-mono text-xs font-bold uppercase tracking-widest text-main-yellow">
+                    {CATEGORY_LABELS[e.category]}
+                  </span>
+                  <span className="font-manrope text-lg font-black tabular-nums md:text-xl">{e.quantity}</span>
+                  <span className="font-manrope text-lg font-black tabular-nums md:text-xl">
+                    {e.price > 0 ? usd(e.price) : 'Paid'}
+                  </span>
+                  <span className="font-manrope text-lg font-black tabular-nums md:text-xl">
+                    {e.price > 0 ? usd(e.price * e.quantity) : 'Paid'}
+                  </span>
+                </div>
+              ))}
             </div>
           )}
 
@@ -173,10 +188,3 @@ export default function WhitelistPage() {
     </div>
   )
 }
-
-const Stat = ({ label, value }: { label: string; value: string }) => (
-  <div>
-    <p className="font-mono text-[10px] uppercase tracking-widest text-white/40">{label}</p>
-    <p className="font-manrope text-xl font-black tabular-nums text-white md:text-2xl">{value}</p>
-  </div>
-)

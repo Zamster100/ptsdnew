@@ -11,13 +11,13 @@ export interface WhitelistEntry {
 
 export interface WhitelistResult {
   whitelisted: boolean
-  /** Highest-priority entry for the wallet (presale > guaranteed > fcfs); null when not found. */
-  entry: WhitelistEntry | null
+  /** One entry per category the wallet is in, best category first (presale > guaranteed > fcfs). */
+  entries: WhitelistEntry[]
 }
 
 interface WhitelistCache {
-  ethMap: Map<string, WhitelistEntry>
-  rawMap: Map<string, WhitelistEntry>
+  ethMap: Map<string, WhitelistEntry[]>
+  rawMap: Map<string, WhitelistEntry[]>
   fetchedAt: number
 }
 
@@ -48,16 +48,22 @@ function priorityOf(entry: WhitelistEntry): number {
 }
 
 /**
- * A wallet can have several rows. The best category wins; rows in that same category are separate
- * purchases/allocations, so their quantities add up (price is uniform within a category).
+ * A wallet can have several rows. Rows in the same category are separate purchases/allocations, so their
+ * quantities add up (price is uniform within a category); different categories stay as separate entries,
+ * kept sorted best-first.
  */
-function keepBest(map: Map<string, WhitelistEntry>, key: string, entry: WhitelistEntry) {
-  const current = map.get(key)
-  if (!current || priorityOf(entry) < priorityOf(current)) {
-    map.set(key, entry)
-  } else if (entry.category === current.category) {
-    map.set(key, { ...current, quantity: current.quantity + entry.quantity })
+function addEntry(map: Map<string, WhitelistEntry[]>, key: string, entry: WhitelistEntry) {
+  const list = map.get(key) ?? []
+  const same = list.find(e => e.category === entry.category)
+
+  if (same) {
+    same.quantity += entry.quantity
+  } else {
+    list.push({ ...entry })
+    list.sort((a, b) => priorityOf(a) - priorityOf(b))
   }
+
+  map.set(key, list)
 }
 
 async function fetchWhitelist(): Promise<WhitelistCache> {
@@ -95,8 +101,8 @@ async function fetchWhitelist(): Promise<WhitelistCache> {
   const priceCol = col('price', 2)
   const quantityCol = col('quantity', 3)
 
-  const ethMap = new Map<string, WhitelistEntry>()
-  const rawMap = new Map<string, WhitelistEntry>()
+  const ethMap = new Map<string, WhitelistEntry[]>()
+  const rawMap = new Map<string, WhitelistEntry[]>()
 
   for (const row of rows) {
     const wallet = row[walletCol]?.trim()
@@ -110,8 +116,8 @@ async function fetchWhitelist(): Promise<WhitelistCache> {
       quantity: quantity !== null && quantity > 0 ? quantity : 1,
     }
 
-    keepBest(rawMap, wallet, entry)
-    if (ETH_RE.test(wallet)) keepBest(ethMap, wallet.toLowerCase(), entry)
+    addEntry(rawMap, wallet, entry)
+    if (ETH_RE.test(wallet)) addEntry(ethMap, wallet.toLowerCase(), entry)
   }
 
   return { ethMap, rawMap, fetchedAt: Date.now() }
@@ -131,7 +137,7 @@ export async function checkWhitelist(wallet: string): Promise<WhitelistResult> {
   const trimmed = wallet.trim()
 
   // SOL addresses are base58 and case-sensitive — match exactly as entered in the sheet.
-  const entry = (ETH_RE.test(trimmed) ? ethMap.get(trimmed.toLowerCase()) : rawMap.get(trimmed)) ?? null
+  const entries = (ETH_RE.test(trimmed) ? ethMap.get(trimmed.toLowerCase()) : rawMap.get(trimmed)) ?? []
 
-  return { whitelisted: entry !== null, entry }
+  return { whitelisted: entries.length > 0, entries }
 }
