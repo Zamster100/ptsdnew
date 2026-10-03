@@ -30,7 +30,7 @@ export function GetTestedGate() {
         <div className="w-full rounded-xl border border-main-yellow/30 bg-main-yellow/[0.06] px-5 py-5">
           <p className="font-mono text-[10px] uppercase tracking-widest text-main-yellow">Results day</p>
           <p className="font-manrope mt-2 text-lg font-black leading-snug text-white">
-            Guaranteed winners of the 500 WL spots will be disclosed on October 2, 2026.
+            Guaranteed winners of the 500 WL spots will be disclosed on October 3, 2026.
           </p>
         </div>
 
