@@ -1,5 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // The game uses relative asset URLs, so /crash must be served as /crash/
+  skipTrailingSlashRedirect: true,
   images: {
     remotePatterns: [
       {
