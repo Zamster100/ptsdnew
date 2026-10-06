@@ -1,0 +1,19 @@
+{
+  "name": "ptsd-crash",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node --env-file=.env src/server.js",
+    "test:money": "node test/api.mjs 12",
+    "test:odds": "node test/ev.mjs 40000"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.9.0",
+    "sharp": "^0.34.5"
+  },
+  "description": "PTSD Crash: crash game styled as a trading chart",
+  "engines": {
+    "node": ">=20.6"
+  }
+}

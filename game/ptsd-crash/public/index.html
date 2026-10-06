@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>PTSD Crash</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0e0f11">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&family=Manrope:wght@500;600;700;800&family=Nunito:wght@700;800;900&family=Rubik+Glitch&display=swap" rel="stylesheet">
+<link rel="icon" href="img/ptsd-logo.webp">
+<link rel="stylesheet" href="style.css?v=42">
+</head>
+<body>
+<div class="boot" id="boot">
+  <img class="boot-logo" src="img/ptsd-logo.webp" alt="PTSD">
+  <div class="boot-name">Crash</div>
+  <div class="boot-bar"><i></i></div>
+</div>
+<header class="dbar">
+  <div class="dbar-title"><img src="img/ptsd-logo.webp" alt="PTSD"><span>Crash</span></div>
+  <a class="powered" href="https://doxxuki.xyz/arcade/" target="_blank" rel="noopener"><span>powered by</span><img src="img/doxx-logo.webp" alt=""><b>DOXX</b></a>
+  <div class="dbar-right">
+    <button class="dbar-pill" id="balPill" type="button"><b id="balTop">…</b><i class="cur" id="balCur"></i></button>
+    <button class="xbtn" id="signInBtn" type="button" hidden><svg viewBox="0 0 24 24" width="14" height="14"><path d="M17.75 3h3.07l-6.7 7.66L22 21h-6.17l-4.83-6.32L5.47 21H2.4l7.17-8.2L2 3h6.33l4.37 5.77L17.75 3zm-1.08 16.17h1.7L7.4 4.74H5.58l11.09 14.43z" fill="currentColor"/></svg><span>Sign in</span></button>
+    <button class="me-chip" id="meChip" type="button" hidden><span class="av" id="meAv"></span><b id="meName"></b></button>
+    <button class="dbar-icon" id="muteBtn" type="button" aria-label="Sound effects" title="Sound effects">🔊</button>
+    <button class="dbar-icon dick-btn" id="dickBtn" type="button" aria-label="Cousin Dick's voice" title="Cousin Dick's voice"><img src="img/cousin-head.webp?v=2" alt=""></button>
+  </div>
+</header>
+<div class="testbar" id="testBar" hidden>TEST MODE · play money, nothing here is real · <button id="refillBtn" type="button">Refill</button></div>
+
+<main class="term">
+  <div class="tb">
+    <div class="tb-sym"><svg viewBox="0 0 24 24" width="15" height="15"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M15.5 15.5l5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><i class="tk-logo">P</i><b class="tk-sym">$PTSD/USD</b></div>
+    <span class="tb-sep"></span><span class="tb-item tb-on">1s</span>
+    <span class="tb-sep"></span><span class="tb-item tb-ico"><svg viewBox="0 0 24 24" width="16" height="16"><path d="M6 3v18M6 7h3v8H6M15 5v14M15 9h3v6h-3" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></span>
+    <span class="tb-sep"></span><span class="tb-item tb-hide-sm"><i>ƒ</i> Indicators</span>
+    <span class="tb-item tb-hide-sm">New Layout</span>
+    <span class="tb-grow"></span>
+    <button class="tb-btn" id="statsBtn" type="button">📊<span> Stats</span></button>
+    <button class="tb-btn" id="howBtn" type="button">❓<span> How to play</span></button>
+    <button class="tb-btn tb-chat" id="chatBtn" type="button">💬<span> Chat</span><i class="dot" id="chatDot" hidden></i></button>
+    <a class="tb-btn" id="boardBtn" href="leaderboard">🏆<span> Leaderboard</span></a>
+    <span class="tb-live"><i></i>LIVE</span>
+  </div>
+
+  <div class="news" aria-hidden="true"><b>BREAKING</b><div class="news-track"><div class="news-run" id="newsRun"></div></div></div>
+
+  <div class="mid">
+    <nav class="tools" aria-hidden="true">
+      <svg viewBox="0 0 24 24"><path d="M12 3v18M3 12h18" stroke="currentColor" stroke-width="1.6"/></svg>
+      <svg viewBox="0 0 24 24"><path d="M4 20L20 4" stroke="currentColor" stroke-width="1.6"/><circle cx="4" cy="20" r="2" fill="currentColor"/><circle cx="20" cy="4" r="2" fill="currentColor"/></svg>
+      <svg viewBox="0 0 24 24"><path d="M3 6h18M3 10h18M3 14h18M3 18h18" stroke="currentColor" stroke-width="1.6"/></svg>
+      <svg viewBox="0 0 24 24"><path d="M4 20l5-14 6 10 5-12" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+      <svg viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16M8 3v4M14 10v4M10 17v4" stroke="currentColor" stroke-width="1.6"/></svg>
+      <svg viewBox="0 0 24 24"><path d="M5 19c4-1 5-6 8-9s5-3 6-5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+      <svg viewBox="0 0 24 24"><path d="M6 5h12M12 5v15" stroke="currentColor" stroke-width="1.8"/></svg>
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="9" cy="10" r="1" fill="currentColor"/><circle cx="15" cy="10" r="1" fill="currentColor"/><path d="M8.5 14.5c2 2 5 2 7 0" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+      <i class="tools-sep"></i>
+      <svg viewBox="0 0 24 24"><path d="M4 16L16 4l4 4L8 20z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 12l2 2M11 9l2 2M14 6l2 2" stroke="currentColor" stroke-width="1.4"/></svg>
+      <svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M15.5 15.5l5 5M8 10.5h5M10.5 8v5" stroke="currentColor" stroke-width="1.6"/></svg>
+      <i class="tools-sep"></i>
+      <svg viewBox="0 0 24 24"><path d="M6 4v8a6 6 0 0012 0V4M6 8h4M14 8h4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+      <svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 11V8a4 4 0 018 0" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+    </nav>
+
+    <section class="chartwrap" id="chartWrap">
+      <div class="legend"><b class="tk-sym">$PTSD/USD</b> · 1s · PTSD CRASH <span id="ohlc"></span></div>
+      <div id="chart"></div>
+      <div class="markers" id="markers"></div>
+      <div class="mult" id="multBox" hidden>
+        <div class="mult-x" id="multX">1.00x</div>
+        <div class="mult-sub"><span id="multPct">+0.00%</span> · <span id="multPnl">0</span></div>
+      </div>
+      <div class="idle" id="idleMsg">
+        <img src="img/cousin-head.webp" alt="">
+        <div><b id="idleLine" class="in">Gen Wealth Awaits You</b><span>Pick your size and hit Buy. Sell before it crashes.</span></div>
+      </div>
+      <div class="flash" id="flash"></div>
+    </section>
+
+    <aside class="side">
+      <div class="side-h">Your stats</div>
+      <div class="side-stats" id="sideStats"></div>
+      <div class="side-tabs" id="sideTabs"><button data-side="chat" class="on" type="button">💬 Chat</button><button data-side="rounds" type="button">Your rounds</button><button data-side="how" type="button">How it works</button></div>
+      <div class="side-pane" id="paneChat">
+        <div class="chat" id="chat">
+          <div class="chat-list" id="chatList"><div class="side-empty">Loading chat…</div></div>
+          <form class="chat-form" id="chatForm" autocomplete="off">
+            <input id="chatIn" maxlength="280" placeholder="Say something…" enterkeyhint="send">
+            <button type="submit" id="chatSend">Send</button>
+          </form>
+        </div>
+      </div>
+      <div class="side-pane" id="paneRounds" hidden>
+        <div class="side-note">Tap a round to check it.</div>
+        <div class="side-list" id="hist"><div class="side-empty">No rounds yet.</div></div>
+      </div>
+      <div class="side-pane" id="paneHow" hidden>
+        <ul class="side-rules" id="rules"></ul>
+        <button class="side-more" id="howMore" type="button">How to play + FAQ</button>
+      </div>
+    </aside>
+  </div>
+
+  <div class="pills" id="pills"></div>
+
+  <footer class="trade">
+    <div class="trade-btns">
+      <button class="btn-buy" id="buyBtn" type="button">Buy</button>
+      <button class="btn-half" id="halfBtn" type="button" disabled><span>Sell 50%</span><small id="halfAmt"></small></button>
+      <button class="btn-sell" id="sellBtn" type="button" disabled><span id="sellLbl">Sell</span><small id="sellAmt"></small></button>
+    </div>
+    <div class="toasts" id="toasts"></div>
+    <div class="trade-amt">
+      <label class="amt">
+        <input id="amtIn" inputmode="numeric" autocomplete="off" placeholder="Amount">
+        <span class="amt-coin"></span>
+      </label>
+      <div class="chips" id="chips"></div>
+    </div>
+    <div class="trade-stats">
+      <div><span><i class="lg" style="font-style:normal">Account </i>Balance:</span><b id="balBottom">…</b></div>
+      <div><span>Realized PnL:</span><b id="pnlBottom">0</b></div>
+      <div class="claim" id="claimRow" hidden><span>Free credits:</span><button class="claim-btn" id="claimBtn" type="button">Claim</button><b id="claimWait"></b></div>
+      <div class="debt" id="debtBox" hidden title="Every time Cousin Dick sells before you get rekt, he adds it to your tab."><span>🧾 You owe Cousin Dick:</span><b id="debtAmt">0</b></div>
+    </div>
+  </footer>
+</main>
+
+<div class="pop" id="pop" hidden>
+  <div class="pop-card" id="popCard">
+    <img class="pop-img" id="popImg" alt="">
+    <div class="pop-badge" id="popBadge"></div>
+    <div class="pop-title" id="popTitle"></div>
+    <div class="pop-line" id="popLine"></div>
+    <div class="pop-num" id="popNum"></div>
+    <button class="pop-btn" id="popBtn" type="button">Buy again</button>
+    <div class="pop-shares" id="popShares" hidden>
+      <button class="pop-share" id="popShare" type="button">
+      <svg viewBox="0 0 24 24" width="18" height="18"><path d="M21.5 4.5L2.8 11.7c-.9.4-.9 1.6.1 1.9l4.6 1.5 1.8 5.6c.3.8 1.3 1 1.9.4l2.6-2.5 4.9 3.6c.7.5 1.7.1 1.9-.7l3.1-14.6c.2-1-.8-1.8-1.7-1.4z" fill="currentColor"/></svg>
+      Telegram</button>
+      <button class="pop-share pop-share-x" id="popShareX" type="button">
+        <svg viewBox="0 0 24 24" width="16" height="16"><path d="M17.75 3h3.07l-6.7 7.66L22 21h-6.17l-4.83-6.32L5.47 21H2.4l7.17-8.2L2 3h6.33l4.37 5.77L17.75 3zm-1.08 16.17h1.7L7.4 4.74H5.58l11.09 14.43z" fill="currentColor"/></svg>
+        Post on X</button>
+    </div>
+    <div class="pop-share-note" id="popShareNote" hidden></div>
+  </div>
+</div>
+
+<div class="sheet" id="sheet" hidden>
+  <div class="sheet-card">
+    <div class="sheet-top">
+      <div class="sheet-tabs" id="sheetTabs"><button data-tab="stats" type="button">My stats</button><button data-tab="past" type="button">Rounds</button><button data-tab="chat" type="button">💬 Chat</button></div>
+      <div class="sheet-title" id="sheetTitle" hidden>Round check</div>
+      <button class="sheet-x" id="sheetX" type="button" aria-label="Close">✕</button>
+    </div>
+    <div class="sheet-body" id="sheetBody"></div>
+  </div>
+</div>
+
+<div class="onb" id="onb" hidden>
+  <div class="onb-card">
+    <button class="sheet-x onb-x" id="onbX" type="button" aria-label="Close">✕</button>
+    <div class="onb-dots" id="onbDots"><i data-d="x"></i><i data-d="wallet"></i><i data-d="social"></i><i data-d="how"></i></div>
+
+    <section class="onb-step" data-step="x">
+      <img class="onb-logo" src="img/ptsd-logo.webp" alt="PTSD">
+      <div class="onb-kicker">Introducing PTSD Crash</div>
+      <h2>The most addictive WL game ever</h2>
+      <p>Buy, sell before the chart rugs, climb the leaderboard, win <b>GUARANTEED WLs</b> and <b>FREE MINTS</b>. No real money, yes mad fun, let's dive in 👇</p>
+      <div class="onb-label">Step 1 · Connect your X (so we can track your progress)</div>
+      <a class="sign-x-btn" id="onbXGo" href="auth/x/start"><svg viewBox="0 0 24 24" width="18" height="18"><path d="M17.75 3h3.07l-6.7 7.66L22 21h-6.17l-4.83-6.32L5.47 21H2.4l7.17-8.2L2 3h6.33l4.37 5.77L17.75 3zm-1.08 16.17h1.7L7.4 4.74H5.58l11.09 14.43z" fill="currentColor"/></svg>Connect X</a>
+      <form class="sign-demo" id="onbDemo" hidden autocomplete="off">
+        <div class="sign-note">Demo sign-in until the X app keys are added. Type any X-style username:</div>
+        <div class="sign-row"><span>@</span><input id="onbUser" maxlength="15" placeholder="username" autocapitalize="off" spellcheck="false"><button type="submit">Go</button></div>
+      </form>
+      <div class="sign-err" id="onbXErr"></div>
+    </section>
+
+    <section class="onb-step" data-step="wallet">
+      <div class="onb-label">Step 2 · Your mint wallet</div>
+      <h2>Drop your ETH wallet</h2>
+      <p>Copy and paste the ETH wallet address you want to mint with. If you win a WL spot, this is the wallet that gets it.</p>
+      <form class="onb-wallet" id="onbWallet" autocomplete="off">
+        <input id="walletIn" placeholder="Your wallet address" spellcheck="false" autocapitalize="off" maxlength="200">
+        <button type="submit">Save wallet</button>
+      </form>
+      <div class="sign-err" id="walletErr"></div>
+    </section>
+
+    <section class="onb-step" data-step="social">
+      <div class="onb-label">Step 3 · Your first <span class="startAmt">100k</span> credits</div>
+      <h2>Follow PTSD for your first <span class="startAmt">100k</span> credits</h2>
+      <div class="onb-tasks">
+        <a class="onb-task" id="taskFollow" target="_blank" rel="noopener"><i>1</i><span>Follow <b id="handleTxt">@ptsdshow</b></span><em>✓</em></a>
+        <a class="onb-task" id="taskPost" target="_blank" rel="noopener"><i>2</i><span>Like, tag 3 friends and RT the post</span><em>✓</em></a>
+      </div>
+      <button class="onb-go" id="claimStarter" type="button" disabled>Claim <span class="startAmt">100k</span> credits</button>
+      <div class="sign-err" id="starterErr"></div>
+    </section>
+
+    <section class="onb-step" data-step="how">
+      <div class="onb-label" id="howLabel">Step 4 · How to play</div>
+      <h2>How to play</h2>
+      <ul class="onb-how" id="howList"></ul>
+      <div class="onb-faq" id="faq"></div>
+      <button class="onb-go" id="apeIn" type="button">APE IN 🦍</button>
+    </section>
+  </div>
+</div>
+
+<div class="sign" id="signIn" hidden>
+  <div class="sign-card">
+    <button class="sheet-x sign-x" id="signX" type="button" aria-label="Close">✕</button>
+    <img class="sign-logo" src="img/ptsd-logo.webp" alt="PTSD">
+    <div class="sign-title">Sign in to play</div>
+    <div class="sign-sub">Your X name and picture show up on the leaderboard and in the chat.</div>
+    <a class="sign-x-btn" id="signXGo" href="auth/x/start"><svg viewBox="0 0 24 24" width="18" height="18"><path d="M17.75 3h3.07l-6.7 7.66L22 21h-6.17l-4.83-6.32L5.47 21H2.4l7.17-8.2L2 3h6.33l4.37 5.77L17.75 3zm-1.08 16.17h1.7L7.4 4.74H5.58l11.09 14.43z" fill="currentColor"/></svg>Sign in with X</a>
+    <form class="sign-demo" id="signDemo" hidden autocomplete="off">
+      <div class="sign-note">Demo sign-in (real X sign-in switches on once the X app keys are added). Pick any X-style username:</div>
+      <div class="sign-row"><span>@</span><input id="signUser" maxlength="15" placeholder="username" autocapitalize="off" spellcheck="false"><button type="submit">Go</button></div>
+      <div class="sign-err" id="signErr"></div>
+    </form>
+  </div>
+</div>
+
+<div class="foot">18+ · play responsibly</div>
+
+<script src="vendor/lwc.js"></script>
+<script type="module" src="app.js?v=66"></script>
+</body>
+</html>
