@@ -5,8 +5,11 @@ import { NextRequest, NextResponse } from 'next/server'
 export function middleware(request: NextRequest) {
   if (request.nextUrl.pathname === '/crash') {
     // Set Location by hand: NextResponse.redirect(url) drops the trailing slash.
-    return new NextResponse(null, { status: 307, headers: { location: new URL('/crash/', request.url).href } })
+    const location = new URL('/crash/', request.url).href
+
+    return new NextResponse(null, { status: 307, headers: { location } })
   }
+
   return NextResponse.next()
 }
 
