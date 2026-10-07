@@ -1558,7 +1558,7 @@ const HOW = [
 const FAQ = [
   ["How to win?", "Be at the top of the leaderboard"],
   ["What are the prizes?", "Top 25 on the leaderboard win 1 FREE MINT and 1 Guaranteed WL spot\nTop 500 on the leaderboard win 1 Guaranteed WL spot"],
-  ["How long does this WL campaign will last?", "7 days (leaderboard snapshot on Tuesday October 13th at 12pm EST"],
+  ["How long does this WL campaign will last?", "10 days (leaderboard snapshot on Friday October 16th at 12pm EST)"],
   ["What is a Guaranteed WL spot?", "2 mints during the Guaranteed mint window of the PTSD Show For Fuddable Tickets Mint"],
   ["How many Guaranteed WL spots?", "Up to 500 max Guaranteed WL spots, 1 per every 10 accounts on the leaderboard\nex. 2500 people play, 250 WLs rewarded, 5000 people play = 500 WL spots, 10,000 people play = 500 WL spots"],
   ["How to submit a wallet when you win a Guaranteed WL spot?", "Submit the wallet you want to mint with by copy and pasting it into the onboarding flow when you first start playing the game"],
@@ -1573,7 +1573,7 @@ const FAQ = [
 ];
 $("rules").innerHTML = HOW.map((t) => `<li>${esc(t)}</li>`).join("");
 $("howList").innerHTML = HOW.map((t) => `<li>${esc(t)}</li>`).join("");
-$("faq").innerHTML = `<div class="onb-faq-h">FAQ</div>` + FAQ.map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${esc(a).replace(/\n/g, "<br>")}</p></details>`).join("");
+$("faq").innerHTML = FAQ.map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${esc(a).replace(/\n/g, "<br>")}</p></details>`).join("");
 
 // ---------------- onboarding: X -> wallet -> social -> how to play ----------------
 let onbStep = null, onbMode = "flow";
@@ -1616,6 +1616,9 @@ function closeOnb() { $("onb").hidden = true; }
 $("onbX").onclick = closeOnb;
 $("howBtn").onclick = () => showOnb("how", "info");
 $("howMore").onclick = () => showOnb("how", "info");
+$("faqBtn").onclick = () => showOnb("faq", "info");
+$("faqMore").onclick = () => showOnb("faq", "info");
+$("faqClose").onclick = closeOnb;
 $("onbDemo").addEventListener("submit", async (e) => {
   e.preventDefault();
   try { await api("auth/demo", { username: $("onbUser").value }); location.reload(); }

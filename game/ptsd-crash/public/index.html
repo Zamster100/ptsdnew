@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&family=Manrope:wght@500;600;700;800&family=Nunito:wght@700;800;900&family=Rubik+Glitch&display=swap" rel="stylesheet">
 <link rel="icon" href="img/ptsd-logo.webp">
-<link rel="stylesheet" href="style.css?v=42">
+<link rel="stylesheet" href="style.css?v=43">
 </head>
 <body>
 <div class="boot" id="boot">
@@ -20,7 +20,6 @@
 </div>
 <header class="dbar">
   <div class="dbar-title"><img src="img/ptsd-logo.webp" alt="PTSD"><span>Crash</span></div>
-  <a class="powered" href="https://doxxuki.xyz/arcade/" target="_blank" rel="noopener"><span>powered by</span><img src="img/doxx-logo.webp" alt=""><b>DOXX</b></a>
   <div class="dbar-right">
     <button class="dbar-pill" id="balPill" type="button"><b id="balTop">…</b><i class="cur" id="balCur"></i></button>
     <button class="xbtn" id="signInBtn" type="button" hidden><svg viewBox="0 0 24 24" width="14" height="14"><path d="M17.75 3h3.07l-6.7 7.66L22 21h-6.17l-4.83-6.32L5.47 21H2.4l7.17-8.2L2 3h6.33l4.37 5.77L17.75 3zm-1.08 16.17h1.7L7.4 4.74H5.58l11.09 14.43z" fill="currentColor"/></svg><span>Sign in</span></button>
@@ -41,6 +40,7 @@
     <span class="tb-grow"></span>
     <button class="tb-btn" id="statsBtn" type="button">📊<span> Stats</span></button>
     <button class="tb-btn" id="howBtn" type="button">❓<span> How to play</span></button>
+    <button class="tb-btn" id="faqBtn" type="button">📖<span> FAQ</span></button>
     <button class="tb-btn tb-chat" id="chatBtn" type="button">💬<span> Chat</span><i class="dot" id="chatDot" hidden></i></button>
     <a class="tb-btn" id="boardBtn" href="leaderboard">🏆<span> Leaderboard</span></a>
     <span class="tb-live"><i></i>LIVE</span>
@@ -100,7 +100,8 @@
       </div>
       <div class="side-pane" id="paneHow" hidden>
         <ul class="side-rules" id="rules"></ul>
-        <button class="side-more" id="howMore" type="button">How to play + FAQ</button>
+        <button class="side-more" id="howMore" type="button">How to play</button>
+        <button class="side-more" id="faqMore" type="button">FAQ</button>
       </div>
     </aside>
   </div>
@@ -206,8 +207,14 @@
       <div class="onb-label" id="howLabel">Step 4 · How to play</div>
       <h2>How to play</h2>
       <ul class="onb-how" id="howList"></ul>
-      <div class="onb-faq" id="faq"></div>
       <button class="onb-go" id="apeIn" type="button">APE IN 🦍</button>
+    </section>
+
+    <section class="onb-step" data-step="faq">
+      <div class="onb-label">PTSD Crash</div>
+      <h2>FAQ</h2>
+      <div class="onb-faq" id="faq"></div>
+      <button class="onb-go" id="faqClose" type="button">Got it</button>
     </section>
   </div>
 </div>
@@ -227,9 +234,9 @@
   </div>
 </div>
 
-<div class="foot">18+ · play responsibly</div>
+<div class="foot"><span class="foot-c">18+ · play responsibly</span><a class="powered" href="https://doxxuki.xyz/arcade/" target="_blank" rel="noopener"><span>powered by</span><img src="img/doxx-logo.webp" alt=""><b>DOXX</b></a></div>
 
 <script src="vendor/lwc.js"></script>
-<script type="module" src="app.js?v=66"></script>
+<script type="module" src="app.js?v=67"></script>
 </body>
 </html>
