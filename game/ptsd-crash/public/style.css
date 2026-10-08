@@ -23,6 +23,12 @@ img { -webkit-user-drag: none; user-select: none; }
 .dbar-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
 .dbar-pill { display: flex; align-items: baseline; gap: 5px; border: 1px solid var(--bd); background: var(--panel2); color: var(--txt); font-weight: 800; padding: 7px 12px; border-radius: 999px; font-size: 14px; font-variant-numeric: tabular-nums; }
 .dbar-pill .cur { font-style: normal; font-size: 10px; color: var(--mut); font-weight: 800; letter-spacing: .04em; }
+.rank-pill { text-decoration: none; white-space: nowrap; }
+.rank-pill[hidden] { display: none; }
+.rank-pill i { font-style: normal; font-size: 10px; color: var(--mut); font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+.rank-pill .rk-l { margin-right: 1px; }
+.rank-pill:hover { border-color: #ffd54a; }
+@media (max-width: 520px) { .rank-pill .rk-l { display: none; } .rank-pill b::before { content: "#"; } }
 .dbar-icon { border: 1px solid var(--bd); background: var(--panel2); color: var(--txt); border-radius: 50%; width: 34px; height: 34px; font-size: 15px; flex: none; }
 .xbtn { display: flex; align-items: center; gap: 6px; border: 1px solid #333; background: #000; color: #fff; font-weight: 800; font-size: 13px; padding: 8px 13px; border-radius: 999px; }
 .xbtn[hidden], .me-chip[hidden] { display: none; }
@@ -432,6 +438,12 @@ a.tb-btn { text-decoration: none; display: inline-flex; align-items: center; }
 .onb-wallet button, .onb-go { border: 0; background: var(--up); color: #fff; font-weight: 800; border-radius: 12px; padding: 0 16px; box-shadow: 0 3px 0 var(--up-d); }
 .onb-go { width: 100%; padding: 14px; font-size: 17px; margin-top: 14px; border-radius: 999px; }
 .onb-go:disabled { opacity: .4; box-shadow: none; cursor: default; }
+.claim-msg { margin: 6px 0 8px; font-size: 14px; font-weight: 700; color: #dfe3ea; }
+.claim-post { display: block; margin: 0 auto 4px; max-width: 100%; font-size: 13px; font-weight: 700; color: #6cb6ff; word-break: break-all; text-decoration: none; }
+.claim-post:hover { text-decoration: underline; }
+.onb-cta { display: flex; align-items: center; justify-content: center; text-decoration: none; background: #000; border: 1px solid #333; box-shadow: none; color: #fff; }
+.onb-cta:hover { border-color: #6cb6ff; }
+.onb-cta.done { border-color: var(--up); }
 .onb-tasks { display: flex; flex-direction: column; gap: 8px; text-align: left; }
 .onb-task { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--txt); background: #000; border: 1px solid #333; border-radius: 14px; padding: 12px 14px; font-weight: 700; font-size: 14px; }
 .onb-task i { font-style: normal; width: 24px; height: 24px; border-radius: 50%; background: #F05150; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 900; font-size: 12px; flex: none; }

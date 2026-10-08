@@ -715,7 +715,8 @@ function shareLink(d) {
   return api("share", { id: d.id, sym: ticker.sym, color: ticker.color }).then((j) => j.url).catch(() => gameUrl());
 }
 const touchDevice = () => window.matchMedia("(pointer: coarse)").matches;
-function shareText(d) { return `I sold $${ticker.sym} at ${d.mult.toFixed(2)}x on PTSD Crash and made ${sgn(d.pnl)} ${coin} 📈 Gen wealth awaits:`; }
+// The player's own win link is added after this text (X's &url=, or "text link" in the share sheet), so it ends on the call to action.
+function shareText(d) { return `I just hit a ${d.mult.toFixed(2)}X playing @${(cfg && cfg.handle) || "ptsdshow"}'s PTSD CRASH and made ${sgn(d.pnl)} ${coin} 📈\n\nMega fun and addictive, try it free 👉`; }
 function cardName(d) { return `ptsd-crash-${d.mult.toFixed(2)}x.png`; }
 function shareNote(t) { $("popShareNote").textContent = t; $("popShareNote").hidden = !t; }
 async function nativeShare(d) {
@@ -773,7 +774,20 @@ let cfg = null, coin = "CREDITS", lim = { min: 1000, max: 10000 }, balance = 0, 
 let round = null;   // the position on screen
 let history = [];
 
-function setBalance(b) { balance = b; $("balTop").textContent = fmt(b); $("balBottom").textContent = `${fmt(b)} ${coin}`; }
+function setBalance(b) { balance = b; $("balTop").textContent = fmt(b); $("balBottom").textContent = `${fmt(b)} ${coin}`; if (user) rankSoon(); }
+// Top-bar rank: your place on the leaderboard (the campaign board while a campaign runs).
+let rankTimer = 0;
+async function refreshRank() {
+  if (!user) { $("rankPill").hidden = true; return; }
+  try {
+    const j = await api("leaderboard?limit=1");
+    $("rankNum").textContent = j.mine ? j.mine.rank : "–";
+    $("rankTot").textContent = j.players || "–";
+    $("rankPill").hidden = false;
+  } catch {}
+}
+function rankSoon() { clearTimeout(rankTimer); rankTimer = setTimeout(refreshRank, 1500); }
+setInterval(() => { if (document.visibilityState === "visible") refreshRank(); }, 30000);
 let onb = null; // onboarding + claim state from the server
 function setPnl() { const el = $("pnlBottom"); el.textContent = `${sgn(sessionPnl)} ${coin}`; el.className = sessionPnl > 0 ? "w" : sessionPnl < 0 ? "l" : ""; }
 
@@ -1427,6 +1441,7 @@ function avatar(u, cls = "av") {
 function syncUser() {
   $("signInBtn").hidden = !!user;
   $("meChip").hidden = !user;
+  $("rankPill").hidden = true; refreshRank();
   if (user) { $("meAv").outerHTML = avatar(user, "av").replace('class="av', 'id="meAv" class="av'); $("meName").textContent = "@" + user.username; }
   $("chatForm").classList.toggle("off", !user);
   $("chatIn").placeholder = user ? "Say something…" : "Sign in with X to chat";
@@ -1599,6 +1614,11 @@ function showOnb(step, mode = "flow") {
   $("onbX").hidden = !(step === "x" || mode === "info");
   if (step === "x") { const demo = cfg && cfg.login === "demo"; $("onbXGo").hidden = demo; $("onbDemo").hidden = !demo; $("onbXErr").textContent = ""; }
   if (step === "wallet") { $("walletErr").textContent = ""; setTimeout(() => $("walletIn").focus(), 80); }
+  if (step === "claim") {
+    document.querySelectorAll(".dailyAmt").forEach((e) => (e.textContent = fmt((cfg && cfg.daily || 100000) / 1000) + "k"));
+    $("claimPost").href = $("claimOpen").href = CLAIM_POST; $("claimPost").textContent = CLAIM_POST;
+    $("claimOpen").classList.remove("done"); $("claimGo").disabled = true; $("claimErr").textContent = "";
+  }
   if (step === "social") {
     const handle = (cfg && cfg.handle) || "ptsdshow";
     $("handleTxt").textContent = "@" + handle;
@@ -1673,15 +1693,23 @@ function syncClaim() {
   $("claimWait").textContent = `next in ${untilTxt(onb.claimAt)}`;
 }
 setInterval(syncClaim, 30000);
-$("claimBtn").onclick = async () => {
+// Claiming asks them to engage with the announcement post first (like, comment, retweet). We can't check they did it,
+// so the claim button just unlocks once they've opened the post (same as the onboarding tasks).
+const CLAIM_POST = "https://x.com/ptsdshow/status/2107833456952848705";
+$("claimBtn").onclick = () => { ctx(); showOnb("claim", "info"); };
+$("claimOpen").addEventListener("click", () => {
+  ctx(); $("claimOpen").classList.add("done");
+  setTimeout(() => ($("claimGo").disabled = false), 1500);
+});
+$("claimGo").onclick = async () => {
   ctx();
-  $("claimBtn").disabled = true;
+  $("claimGo").disabled = true;
   try {
     const j = await api("claim", { kind: "daily" });
     onb = j.state; setBalance(j.balance); syncClaim();
+    closeOnb();
     sfx.big(); toast(IMG.me, `<b>+${fmt(j.amount)}</b> free credits. Go get rekt.`);
-  } catch (err) { refreshMe(); toast(IMG.cousin, esc(err.message)); }
-  finally { $("claimBtn").disabled = false; }
+  } catch (err) { refreshMe(); $("claimErr").textContent = err.message; }
 };
 async function refreshMe() { try { const j = await api("me"); onb = j.onb || null; setBalance(j.balances[coin] ?? 0); syncClaim(); } catch {} }
 
