@@ -1616,7 +1616,7 @@ function showOnb(step, mode = "flow") {
   if (step === "wallet") { $("walletErr").textContent = ""; setTimeout(() => $("walletIn").focus(), 80); }
   if (step === "claim") {
     document.querySelectorAll(".dailyAmt").forEach((e) => (e.textContent = fmt((cfg && cfg.daily || 100000) / 1000) + "k"));
-    $("claimPost").href = $("claimOpen").href = CLAIM_POST; $("claimPost").textContent = CLAIM_POST;
+    $("claimOpen").href = CLAIM_POST;
     $("claimOpen").classList.remove("done"); $("claimGo").disabled = true; $("claimErr").textContent = "";
   }
   if (step === "social") {
