@@ -28,20 +28,27 @@ export function initCampaign({ db, currency, addCredits }) {
     post: process.env.ANNOUNCE_POST_URL || "",
     handle: (process.env.X_HANDLE || "ptsdshow").replace(/^@/, ""),
   };
-  for (const col of ["wallet TEXT", "starter_at INTEGER", "claim_at INTEGER", "onboarded_at INTEGER"]) {
+  for (const col of ["wallet TEXT", "starter_at INTEGER", "claim_at INTEGER", "onboarded_at INTEGER", "wallet_norm TEXT"]) {
     try { db.exec(`ALTER TABLE crash_users ADD COLUMN ${col}`); } catch {}
   }
-  // Wallet is free text (players paste whatever they mint with), so no format or uniqueness rule.
+  // One wallet per account. Checked in code (inside a transaction) rather than with a UNIQUE index, because
+  // wallets saved before this rule may already be shared; those are listed by scripts/report.mjs.
   db.exec("DROP INDEX IF EXISTS crash_users_wallet");
+  db.exec("UPDATE crash_users SET wallet_norm=lower(trim(wallet)) WHERE wallet IS NOT NULL AND wallet_norm IS NULL");
+  db.exec("CREATE INDEX IF NOT EXISTS crash_users_wallet_norm ON crash_users(wallet_norm)");
+  db.exec("CREATE TABLE IF NOT EXISTS crash_wallet_events (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT NOT NULL, wallet_norm TEXT NOT NULL, existing_user_id TEXT, ts INTEGER NOT NULL)");
   db.exec("CREATE TABLE IF NOT EXISTS crash_claims (id INTEGER PRIMARY KEY AUTOINCREMENT, player TEXT NOT NULL, kind TEXT NOT NULL, amount INTEGER NOT NULL, ts INTEGER NOT NULL)");
   const q = {
     user: db.prepare("SELECT * FROM crash_users WHERE id=?"),
-    setWallet: db.prepare("UPDATE crash_users SET wallet=? WHERE id=?"),
+    setWallet: db.prepare("UPDATE crash_users SET wallet=?, wallet_norm=? WHERE id=?"),
+    walletOwner: db.prepare("SELECT id FROM crash_users WHERE wallet_norm=? AND id!=? AND (status IS NULL OR status!='blocked') LIMIT 1"),
+    logDupe: db.prepare("INSERT INTO crash_wallet_events(user_id,wallet_norm,existing_user_id,ts) VALUES(?,?,?,?)"),
     starter: db.prepare("UPDATE crash_users SET starter_at=?, claim_at=? WHERE id=? AND starter_at IS NULL"),
     daily: db.prepare("UPDATE crash_users SET claim_at=? WHERE id=? AND claim_at=?"),
     onboarded: db.prepare("UPDATE crash_users SET onboarded_at=? WHERE id=? AND onboarded_at IS NULL"),
     logClaim: db.prepare("INSERT INTO crash_claims(player,kind,amount,ts) VALUES(?,?,?,?)"),
-    players: db.prepare("SELECT COUNT(DISTINCT player) n FROM crash_rounds WHERE state!='open' AND ts>=? AND ts<?"),
+    // Blocked (bot) accounts don't count as players, so they don't inflate the WL / free-mint numbers.
+    players: db.prepare("SELECT COUNT(DISTINCT player) n FROM crash_rounds WHERE state!='open' AND ts>=? AND ts<? AND player NOT IN (SELECT id FROM crash_users WHERE status='blocked')"),
   };
   const hoursMs = cfg.hours * 3600_000;
 
@@ -52,6 +59,7 @@ export function initCampaign({ db, currency, addCredits }) {
     const next = u.claim_at ? u.claim_at + hoursMs : null;
     return {
       wallet: u.wallet || null,
+      walletLocked: !!u.starter_at,        // can't be changed after the first claim (support can)
       starter: !!u.starter_at,
       onboarded: !!u.onboarded_at,
       claimAt: next,                       // when the next daily claim opens (null before the starter pack)
@@ -93,12 +101,28 @@ export function initCampaign({ db, currency, addCredits }) {
     };
   }
 
+  const EVM = /^0x[0-9a-fA-F]{40}$/;
+  const saveWallet = db.transaction((id, address) => {
+    const u = q.user.get(id);
+    if (u.starter_at) return { code: 400, error: "Your wallet is locked after your first claim. Contact support if you need to change it." };
+    if (!EVM.test(address)) return { code: 400, error: "That doesn't look like an Ethereum wallet address. It should start with 0x and be 42 characters long." };
+    const norm = address.toLowerCase();
+    const owner = q.walletOwner.get(norm, id);
+    if (owner) {
+      q.logDupe.run(id, norm, owner.id, Date.now());
+      return { code: 409, duplicate: true, error: "This wallet has already been submitted by another account. Use your own wallet, or contact support." };
+    }
+    q.setWallet.run(address, norm, id);
+    return { code: 200 };
+  });
+
   // POST /api/wallet {address}   POST /api/claim {kind: starter|daily}   POST /api/onboarded
   function api(req, res, p, body, user, send, balance) {
     if (p === "/api/wallet" && req.method === "POST") {
       const a = String(body?.address || "").replace(/[\u0000-\u001f\u007f]+/g, "").trim().slice(0, 200);
       if (!a) return send(res, 400, { error: "Paste your wallet address first." });
-      q.setWallet.run(a, user.id);
+      const out = saveWallet(user.id, a.replace(/\s+/g, ""));
+      if (out.code !== 200) return send(res, out.code, { error: out.error, duplicate: !!out.duplicate, state: stateOf(user.id) });
       return send(res, 200, { ok: true, state: stateOf(user.id) });
     }
     if (p === "/api/claim" && req.method === "POST") {

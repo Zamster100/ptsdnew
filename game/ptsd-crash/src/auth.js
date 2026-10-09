@@ -15,7 +15,7 @@ import crypto from "node:crypto";
 
 const X_AUTHORIZE = "https://x.com/i/oauth2/authorize";
 const X_TOKEN = "https://api.x.com/2/oauth2/token";
-const X_ME = "https://api.x.com/2/users/me?user.fields=profile_image_url,name,username";
+const X_ME = "https://api.x.com/2/users/me?user.fields=profile_image_url,name,username,created_at,public_metrics";
 const SESSION_DAYS = 30;
 const COOKIE = "ptsd_sid";
 
@@ -31,11 +31,24 @@ export function initAuth({ db, base, publicUrl, test }) {
 CREATE TABLE IF NOT EXISTS crash_users (id TEXT PRIMARY KEY, provider TEXT NOT NULL, username TEXT NOT NULL, name TEXT, pfp TEXT, created INTEGER NOT NULL, seen INTEGER);
 CREATE TABLE IF NOT EXISTS crash_sessions (sid TEXT PRIMARY KEY, user_id TEXT NOT NULL, expires INTEGER NOT NULL);
 CREATE INDEX IF NOT EXISTS crash_sessions_user ON crash_sessions(user_id);
+-- Handles from the bot lists: flagged even if they sign in for the first time later.
+CREATE TABLE IF NOT EXISTS crash_blocklist (handle_lc TEXT PRIMARY KEY, status TEXT NOT NULL, tier TEXT, reason TEXT, added INTEGER NOT NULL);
 `);
+  // Account status: NULL = normal, 'blocked' = suspected bot (can't play, hidden from boards), 'review' = held back from prizes until checked.
+  // x_* = signals from X at sign-in, used to spot farms (same creation day, no followers...).
+  for (const col of ["status TEXT", "status_reason TEXT", "status_at INTEGER", "x_created TEXT", "x_followers INTEGER", "x_tweets INTEGER"]) {
+    try { db.exec(`ALTER TABLE crash_users ADD COLUMN ${col}`); } catch {}
+  }
+  const SUPPORT_URL = process.env.SUPPORT_URL || "";
+  const BLOCKED_MSG = "Your account has been flagged as suspected bot activity or part of a bot farm, so you can't play right now. If you think this is a mistake, contact support.";
   const q = {
     user: db.prepare("SELECT * FROM crash_users WHERE id=?"),
-    upsert: db.prepare(`INSERT INTO crash_users(id,provider,username,name,pfp,created,seen) VALUES(@id,@provider,@username,@name,@pfp,@now,@now)
-      ON CONFLICT(id) DO UPDATE SET username=excluded.username, name=excluded.name, pfp=COALESCE(excluded.pfp, crash_users.pfp), seen=excluded.seen`),
+    upsert: db.prepare(`INSERT INTO crash_users(id,provider,username,name,pfp,created,seen,x_created,x_followers,x_tweets) VALUES(@id,@provider,@username,@name,@pfp,@now,@now,@x_created,@x_followers,@x_tweets)
+      ON CONFLICT(id) DO UPDATE SET username=excluded.username, name=excluded.name, pfp=COALESCE(excluded.pfp, crash_users.pfp), seen=excluded.seen,
+        x_created=COALESCE(excluded.x_created, crash_users.x_created), x_followers=COALESCE(excluded.x_followers, crash_users.x_followers), x_tweets=COALESCE(excluded.x_tweets, crash_users.x_tweets)`),
+    listed: db.prepare("SELECT * FROM crash_blocklist WHERE handle_lc=?"),
+    setStatus: db.prepare("UPDATE crash_users SET status=?, status_reason=?, status_at=? WHERE id=?"),
+    blockedIds: db.prepare("SELECT id FROM crash_users WHERE status='blocked'"),
     session: db.prepare("SELECT u.* FROM crash_sessions s JOIN crash_users u ON u.id=s.user_id WHERE s.sid=? AND s.expires>?"),
     addSession: db.prepare("INSERT INTO crash_sessions(sid,user_id,expires) VALUES(?,?,?)"),
     dropSession: db.prepare("DELETE FROM crash_sessions WHERE sid=?"),
@@ -52,7 +65,10 @@ CREATE INDEX IF NOT EXISTS crash_sessions_user ON crash_sessions(user_id);
     res.setHeader("set-cookie", `${COOKIE}=${sid}; Path=${cookiePath}; Max-Age=${maxAge}; HttpOnly; SameSite=Lax${secure ? "; Secure" : ""}`);
   }
   function startSession(res, user) {
-    q.upsert.run({ ...user, now: Date.now() });
+    q.upsert.run({ x_created: null, x_followers: null, x_tweets: null, ...user, now: Date.now() });
+    // A handle on the bot list is flagged the moment it shows up (even if it was never seen before).
+    const listed = q.listed.get(String(user.username).toLowerCase());
+    if (listed && q.user.get(user.id)?.status !== listed.status) q.setStatus.run(listed.status, "bot list: " + (listed.reason || listed.tier || ""), Date.now(), user.id);
     const sid = crypto.randomBytes(24).toString("base64url");
     q.addSession.run(hashSid(sid), user.id, Date.now() + SESSION_DAYS * 864e5);
     setCookie(res, sid, SESSION_DAYS * 86400);
@@ -64,6 +80,14 @@ CREATE INDEX IF NOT EXISTS crash_sessions_user ON crash_sessions(user_id);
     const u = q.session.get(hashSid(sid), Date.now());
     return u ? { ...u, admin: admins.has(u.username.toLowerCase()) } : null;
   }
+  // Ids of blocked accounts, cached for a few seconds (used by the leaderboard and chat on every poll).
+  let blockedCache = { at: 0, set: new Set() };
+  function blockedIds() {
+    if (Date.now() - blockedCache.at > 3000) blockedCache = { at: Date.now(), set: new Set(q.blockedIds.all().map((r) => r.id)) };
+    return blockedCache.set;
+  }
+  const isBlocked = (u) => !!u && u.status === "blocked";
+  const blockedBody = () => ({ blocked: true, error: BLOCKED_MSG, support: SUPPORT_URL });
   // What other players may see about someone.
   function publicUser(id) {
     const u = q.user.get(id);
@@ -108,7 +132,11 @@ CREATE INDEX IF NOT EXISTS crash_sessions_user ON crash_sessions(user_id);
         if (!d || !d.id) throw new Error("no user: " + JSON.stringify(me).slice(0, 200));
         // X gives a 48px picture by default; ask for the 400px one.
         const pfp = d.profile_image_url ? d.profile_image_url.replace("_normal.", "_400x400.") : null;
-        startSession(res, { id: "x:" + d.id, provider: "x", username: d.username, name: d.name || d.username, pfp });
+        const pm = d.public_metrics || {};
+        startSession(res, {
+          id: "x:" + d.id, provider: "x", username: d.username, name: d.name || d.username, pfp,
+          x_created: d.created_at || null, x_followers: Number.isFinite(pm.followers_count) ? pm.followers_count : null, x_tweets: Number.isFinite(pm.tweet_count) ? pm.tweet_count : null,
+        });
         return redirect(res, publicUrl + "/");
       } catch (e) {
         console.error("[auth] X sign-in failed", e.message);
@@ -136,5 +164,5 @@ CREATE INDEX IF NOT EXISTS crash_sessions_user ON crash_sessions(user_id);
     return send(res, 404, { error: "not found" });
   }
 
-  return { mode, userOf, publicUser, route, api };
+  return { mode, userOf, publicUser, route, api, blockedIds, isBlocked, blockedBody, supportUrl: SUPPORT_URL };
 }

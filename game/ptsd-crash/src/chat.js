@@ -30,7 +30,8 @@ CREATE INDEX IF NOT EXISTS crash_comments_ts ON crash_comments(ts);`);
     if (p === "/api/comments" && req.method === "GET") {
       const after = Number(u.searchParams.get("after")) || 0;
       const since = Number(u.searchParams.get("since")) || 0;
-      const rows = after ? q.after.all(after) : q.latest.all(KEEP).reverse();
+      const bots = auth.blockedIds(); // messages from flagged (bot) accounts are hidden
+      const rows = (after ? q.after.all(after) : q.latest.all(KEEP).reverse()).filter((c) => !bots.has(c.user_id));
       return send(res, 200, {
         comments: rows.map((c) => view(c, user)),
         deleted: since ? q.deletedSince.all(since).map((r) => r.id) : [],
@@ -38,6 +39,7 @@ CREATE INDEX IF NOT EXISTS crash_comments_ts ON crash_comments(ts);`);
       });
     }
     if (!user) return send(res, 401, { error: "Sign in with X to chat.", signIn: true });
+    if (auth.isBlocked(user)) return send(res, 403, auth.blockedBody());
     if (p === "/api/comments" && req.method === "POST") {
       const text = String(body?.text || "").replace(/[\u0000-\u001f\u007f]+/g, " ").replace(/\s+/g, " ").trim().slice(0, MAX_LEN);
       if (!text) return send(res, 400, { error: "Say something first." });

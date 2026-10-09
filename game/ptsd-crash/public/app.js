@@ -222,6 +222,7 @@ async function playSong() {
 // ---------------- api ----------------
 let offset = 0;
 let user = null; // signed-in player { username, name, pfp }
+let blockedInfo = null; // set when the server says this account is flagged as a bot (the game then stays locked)
 // Hash of the server seed for your next round, locked before you bet.
 let nextCommit = "";
 // Which lock was on screen when each round was bought, so the check can prove it.
@@ -247,6 +248,7 @@ async function api(path, body) {
   const j = await r.json().catch(() => ({}));
   if (j.serverNow && Date.now() - t0 < 1500) offset = j.serverNow - (t0 + Date.now()) / 2;
   if (j.nextCommit) nextCommit = j.nextCommit;
+  if (j.blocked) showBlocked(j);
   if (r.status === 401 && j.signIn) { user = null; syncUser(); openSignIn(); }
   if (!r.ok) throw Object.assign(new Error(j.error || "Network error, try again."), { status: r.status });
   return j;
@@ -659,7 +661,9 @@ function popup({ kind, img, title, line, num, btn = "Run it back", action = "reb
   }
   $("popLine").textContent = line;
   $("popNum").textContent = num || "";
-  $("popBtn").textContent = btn;
+  $("popBtnText").textContent = btn;
+  $("popBtnSub").hidden = action !== "rebuy"; // "Run it back" popups say it's the same trade
+  $("popClose").hidden = action !== "rebuy"; // ...and also get a Close button
   popAction = action;
   $("pop").hidden = false;
 }
@@ -753,6 +757,7 @@ function closePop() {
   if (round && round.over) backToIdleSoon();
 }
 $("pop").addEventListener("click", (e) => { if (e.target === $("pop")) closePop(); });
+$("popClose").onclick = closePop;
 $("popBtn").onclick = () => {
   const rebuy = popAction === "rebuy" && (!round || round.over);
   $("pop").hidden = true;
@@ -1600,14 +1605,24 @@ function nextOnbStep() {
   if (!onb.onboarded) return "how";
   return null;
 }
+// Flagged accounts get one locked screen: what happened and where to appeal.
+function showBlocked(j) {
+  blockedInfo = j;
+  $("blockedMsg").textContent = j.error || "Your account has been flagged as suspected bot activity. Contact support.";
+  const url = j.support || (cfg && cfg.support) || "";
+  $("blockedSupport").hidden = !url;
+  if (url) $("blockedSupport").href = url;
+  showOnb("blocked");
+}
 function showOnb(step, mode = "flow") {
+  if (blockedInfo) { step = "blocked"; mode = "flow"; }
   step = step || nextOnbStep();
   if (!step) { $("onb").hidden = true; return; }
   onbStep = step; onbMode = mode;
   document.querySelectorAll(".onb-step").forEach((el) => (el.hidden = el.dataset.step !== step));
   const order = ["x", "wallet", "social", "how"], at = order.indexOf(step);
   document.querySelectorAll("#onbDots i").forEach((d, i) => { d.className = i < at ? "done" : i === at ? "on" : ""; });
-  $("onbDots").hidden = mode === "info";
+  $("onbDots").hidden = mode === "info" || step === "blocked";
   $("howLabel").textContent = mode === "info" ? "PTSD Crash" : "Step 4 · How to play";
   $("apeIn").textContent = mode === "info" ? "Got it" : "APE IN 🦍";
   // the X step and the how-to-play screen can be closed; wallet + social are needed to play
@@ -1632,7 +1647,7 @@ function showOnb(step, mode = "flow") {
   $("onb").scrollTop = 0;
   $("onb").hidden = false;
 }
-function closeOnb() { $("onb").hidden = true; }
+function closeOnb() { if (blockedInfo) return; $("onb").hidden = true; }
 $("onbX").onclick = closeOnb;
 $("howBtn").onclick = () => showOnb("how", "info");
 $("howMore").onclick = () => showOnb("how", "info");

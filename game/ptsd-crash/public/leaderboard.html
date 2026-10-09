@@ -43,6 +43,12 @@
   .tr .pnl { text-align: right; font-variant-numeric: tabular-nums; font-weight: 800; font-size: 15px; }
   .w { color: var(--up) !important; } .l { color: var(--down) !important; }
   .gap { text-align: center; color: var(--mut); padding: 4px; }
+  .you { margin-bottom: 14px; }
+  .you-h { font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--mut); margin: 0 4px 6px; }
+  .you-h b { color: #ffd54a; font-size: 13px; letter-spacing: 0; }
+  .you .tbl { border-color: #8a6a14; }
+  .you .tr { border-bottom: 0; }
+  .you-none { padding: 14px; font-size: 13px; font-weight: 700; color: #cfd4dc; text-align: center; }
   .empty { color: var(--mut); text-align: center; padding: 30px 10px; }
   .foot2 { color: #5d636d; font-size: 12px; text-align: center; margin-top: 16px; }
   .camp { background: linear-gradient(135deg, #2a1416, #151517 60%); border: 1px solid #4a2326; border-radius: 16px; padding: 14px 16px; margin-bottom: 14px; }
@@ -148,6 +154,13 @@ function handle(u) {
 }
 let period = "";
 try { const p = new URLSearchParams(location.search).get("period"); if (["campaign", "day", "week", "month", "all"].includes(p)) period = p; } catch {}
+// Who's signed in (null if nobody). Loaded once; the board waits for it.
+const mePromise = fetch("api/me").then((r) => r.json()).then((m) => {
+  if (!m.user) return null;
+  $("meChip").innerHTML = avatar(m.user) + `<b>@${esc(m.user.username)}</b>`;
+  $("meChip").hidden = false;
+  return m.user;
+}).catch(() => null);
 let camp = null;
 function clock() {
   if (!camp) return;
@@ -187,9 +200,11 @@ async function load() {
   const order = pod.length === 3 ? [pod[1], pod[0], pod[2]] : pod;
   const podium = `<div class="podium">${order.map((r) => `<div class="pod p${r.rank}"><span class="medal">${["🥇", "🥈", "🥉"][r.rank - 1]}</span>${avatar(r)}<div class="nm">${handle(r)}</div><div class="pnl ${cls(r.net)}">${sgn(r.net)}</div><div class="sub">${cur} · ${fmt(r.rounds)} rounds</div></div>`).join("")}</div>`;
   const row = (r) => `<div class="tr${r.me ? " me" : ""}"><span class="rk">${r.rank}</span><span class="who">${avatar(r)}<span>${handle(r)}${badge(r)}</span></span><span class="num hide-sm">${fmt(r.rounds)}</span><span class="num hide-sm">${r.best ? r.best.toFixed(2) + "x" : "-"}</span><span class="pnl ${cls(r.net)}">${sgn(r.net)}</span></div>`;
-  let rows = j.top.map(row).join("");
-  if (j.mine && j.mine.rank > j.top.length) rows += `<div class="gap">···</div>` + row(j.mine);
-  $("board").innerHTML = podium + `<div class="tbl"><div class="tr th"><span>#</span><span>Player</span><span class="num hide-sm">Rounds</span><span class="num hide-sm">Best</span><span class="pnl">PnL (${cur})</span></div>${rows}</div>`;
+  const rows = j.top.map(row).join("");
+  // Your own line, so you can see where you sit in the whole field (only when signed in).
+  const meUser = await mePromise;
+  const you = !meUser ? "" : `<div class="you"><div class="you-h">Your position${j.mine ? ` <b>#${fmt(j.mine.rank)}</b> of ${fmt(j.players)}` : ""}</div><div class="tbl">${j.mine ? row(j.mine) : `<div class="you-none">You're not on this board yet. Play a round to get ranked.</div>`}</div></div>`;
+  $("board").innerHTML = podium + you + `<div class="tbl"><div class="tr th"><span>#</span><span>Player</span><span class="num hide-sm">Rounds</span><span class="num hide-sm">Best</span><span class="pnl">PnL (${cur})</span></div>${rows}</div>`;
 }
 $("seg").addEventListener("click", (e) => {
   const b = e.target.closest("[data-p]"); if (!b) return;
@@ -197,11 +212,6 @@ $("seg").addEventListener("click", (e) => {
   try { history.replaceState(null, "", `?period=${period}`); } catch {}
   load();
 });
-fetch("api/me").then((r) => r.json()).then((m) => {
-  if (!m.user) return;
-  $("meChip").innerHTML = avatar(m.user) + `<b>@${esc(m.user.username)}</b>`;
-  $("meChip").hidden = false;
-}).catch(() => {});
 load();
 setInterval(() => { if (document.visibilityState === "visible") load(); }, 30000);
 </script>

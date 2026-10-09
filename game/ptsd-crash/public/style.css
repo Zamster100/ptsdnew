@@ -188,6 +188,13 @@ img { -webkit-user-drag: none; user-select: none; }
 .pop-line { font-weight: 700; font-size: 16px; color: #dfe3ea; margin-top: 8px; line-height: 1.35; }
 .pop-num { font-weight: 800; font-size: 20px; margin-top: 10px; font-variant-numeric: tabular-nums; }
 .pop-btn { margin-top: 16px; width: 100%; border: 0; border-radius: 999px; padding: 13px; font-weight: 800; font-size: 16px; color: #fff; background: var(--up); box-shadow: 0 3px 0 var(--up-d); }
+.pop-btns { display: flex; gap: 8px; margin-top: 16px; }
+.pop-btns .pop-btn { margin-top: 0; flex: 1; }
+.pop-btn-close { flex: .55 !important; background: #2a2b2f; box-shadow: 0 3px 0 #000; color: #cfd4dc; }
+.pop-btn-close[hidden] { display: none; }
+.pop-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; }
+.pop-btn small { font-size: 11px; font-weight: 700; color: rgba(255,255,255,.62); line-height: 1.1; }
+.pop-btn small[hidden] { display: none; }
 .pop.rekt .pop-card { border-color: var(--down); }
 .pop.rekt .pop-title, .pop.rekt .pop-num { color: var(--down); }
 .pop.win .pop-card { border-color: var(--up); }
@@ -438,6 +445,9 @@ a.tb-btn { text-decoration: none; display: inline-flex; align-items: center; }
 .onb-wallet button, .onb-go { border: 0; background: var(--up); color: #fff; font-weight: 800; border-radius: 12px; padding: 0 16px; box-shadow: 0 3px 0 var(--up-d); }
 .onb-go { width: 100%; padding: 14px; font-size: 17px; margin-top: 14px; border-radius: 999px; }
 .onb-go:disabled { opacity: .4; box-shadow: none; cursor: default; }
+.blocked-msg { margin: 8px 0 4px; font-size: 14px; font-weight: 700; line-height: 1.5; color: #dfe3ea; }
+#blockedSupport { display: block; text-align: center; text-decoration: none; }
+#blockedSupport[hidden] { display: none; }
 .claim-msg { margin: 6px 0 8px; font-size: 14px; font-weight: 700; color: #dfe3ea; }
 .onb-cta small { font-size: 11px; font-weight: 700; color: #8a919c; letter-spacing: .02em; }
 .onb-cta { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; text-decoration: none; padding: 11px 14px; background: #000; border: 1px solid #333; box-shadow: none; color: #fff; }

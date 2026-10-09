@@ -311,7 +311,10 @@ function leaderboard(period, player, limit = 50) {
   const camp = campaign.campaign();
   period = ["day", "week", "month", "all", "campaign"].includes(period) ? period : camp ? "campaign" : "month";
   if (period === "campaign" && !camp) period = "all";
-  const rows = period === "campaign" ? q.board.all(CURRENCY, camp.start, camp.end) : q.board.all(CURRENCY, periodStart(period), 8.64e15);
+  // Blocked (bot) accounts are hidden from every board and don't count as players.
+  const blocked = auth.blockedIds();
+  const all = period === "campaign" ? q.board.all(CURRENCY, camp.start, camp.end) : q.board.all(CURRENCY, periodStart(period), 8.64e15);
+  const rows = blocked.size ? all.filter((r) => !blocked.has(r.player)) : all;
   const row = (r, i) => ({ rank: i + 1, ...auth.publicUser(r.player), me: r.player === player, net: r.net, rounds: r.rounds, wins: r.wins, wagered: r.wagered, best: r.best, bestWin: r.bestWin });
   const top = rows.slice(0, limit).map(row);
   const i = player ? rows.findIndex((r) => r.player === player) : -1;
@@ -369,7 +372,7 @@ const server = http.createServer(async (req, res) => {
     const player = user ? user.id : null;
 
     if (p === "/api/config") {
-      return send(res, 200, { test: TEST && !CLAIMS, coins: COINS, maxMult: MAX_MULT, edge: EDGE, login: auth.mode, ...campaign.publicCfg(), serverNow: Date.now() });
+      return send(res, 200, { test: TEST && !CLAIMS, coins: COINS, maxMult: MAX_MULT, edge: EDGE, login: auth.mode, support: auth.supportUrl, ...campaign.publicCfg(), serverNow: Date.now() });
     }
     if (p.startsWith("/api/auth/")) return await auth.api(req, res, p, body, send);
     if (p === "/api/leaderboard") {
@@ -390,6 +393,11 @@ const server = http.createServer(async (req, res) => {
     }
     if (!player) return send(res, 401, { error: "Sign in with X to play.", signIn: true });
 
+    // Flagged as a bot: they can still load the page and see the message, but can't play, claim or chat.
+    if (auth.isBlocked(user)) {
+      if (p === "/api/me") return send(res, 200, { user: auth.publicUser(player), ...auth.blockedBody(), balances: { [CURRENCY]: 0 }, open: null, recent: [], nextCommit: "", serverNow: Date.now() });
+      return send(res, 403, auth.blockedBody());
+    }
     if (p === "/api/me") {
       const coins = Object.keys(COINS);
       const open = q.open.get(player);
