@@ -47,3 +47,13 @@
     font-size: 2rem;
   }
 }
+
+/* Long labels (e.g. "PLAY PTSD CRASH") must fit next to the Play button on phones */
+@media (max-width: 480px) {
+  .button {
+    min-width: 0;
+    font-size: 1rem;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}

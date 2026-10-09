@@ -8,23 +8,21 @@ import { PlayIcon } from '@/components/icons/PlayIcon'
 import Image from 'next/image'
 import Logo from '@/public/images/hero/logo.png'
 import { TicketButton } from '@/components/ui/TicketButton'
-import { useRouter } from 'next/navigation'
 
 interface HeroProps {
   originStoryRef: React.RefObject<HTMLDivElement | null>
 }
 
 export const Hero = ({ originStoryRef }: HeroProps) => {
-  const router = useRouter()
-
   const handlePlay = () => {
     if (originStoryRef.current) {
       originStoryRef.current.scrollIntoView({ behavior: 'smooth' })
     }
   }
 
-  const handleTickets = () => {
-    router.push('/tickets')
+  const handleCrash = () => {
+    // Full page load: the game is a separate app served under /crash/ (see next.config.js rewrites)
+    window.location.assign('/crash/')
   }
 
   return (
@@ -98,22 +96,22 @@ export const Hero = ({ originStoryRef }: HeroProps) => {
               <PlayIcon className="size-6 xl:size-10" />
               Play
             </Button>
-            <TicketButton onClick={handleTickets}>TICKETS</TicketButton>
+            <TicketButton onClick={handleCrash} className="whitespace-nowrap">PLAY PTSD CRASH</TicketButton>
           </div>
         </div>
       </div>
       {/* Mobile */}
-      <MobileHero handlePlay={handlePlay} handleTickets={handleTickets} />
+      <MobileHero handlePlay={handlePlay} handleCrash={handleCrash} />
     </section>
   )
 }
 
 const MobileHero = ({
   handlePlay,
-  handleTickets,
+  handleCrash,
 }: {
   handlePlay: () => void
-  handleTickets: () => void
+  handleCrash: () => void
 }) => {
   return (
     <div className="relative md:hidden">
@@ -200,7 +198,7 @@ const MobileHero = ({
             <PlayIcon className="size-6" />
             Play
           </Button>
-          <TicketButton onClick={handleTickets}>TICKETS</TicketButton>
+          <TicketButton onClick={handleCrash} className="whitespace-nowrap">PLAY PTSD CRASH</TicketButton>
         </div>
       </div>
     </div>
