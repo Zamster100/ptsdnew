@@ -6,8 +6,8 @@ import { useEffect, useRef, useState } from 'react'
 const rarities = [
   { name: 'Common',    count: 2500, multiplier: '1x',    color: '#f97316', pct: '75%' },
   { name: 'Rare',      count: 650,  multiplier: '2x',    color: '#ef4444', pct: '19%' },
-  { name: 'Epic',      count: 100,  multiplier: '3x',    color: '#22c55e', pct: '3%'  },
-  { name: 'Legendary', count: 80,   multiplier: '5x',    color: '#3b82f6', pct: '2%'  },
+  { name: 'Epic',      count: 150,  multiplier: '3x',    color: '#22c55e', pct: '4.5%' },
+  { name: 'Legendary', count: 30,   multiplier: '5x',    color: '#3b82f6', pct: '1%'  },
   { name: 'Golden',    count: 3,    multiplier: '100x+', color: '#c9a227', pct: '1%'  },
 ]
 
