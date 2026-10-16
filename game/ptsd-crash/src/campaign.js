@@ -12,6 +12,7 @@
 //   MINT_MAX, MINT_PER   free mints = min(MINT_MAX, players / MINT_PER) (25, 200)
 //   ANNOUNCE_POST_URL    the X post players are asked to like/RT/tag
 //   X_HANDLE             account to follow (default ptsdshow)
+import { cached } from "./bg.js";
 const num = (v, d) => (v != null && v !== "" && Number.isFinite(Number(v)) ? Number(v) : d);
 const time = (v) => { const t = v ? Date.parse(v) : NaN; return Number.isFinite(t) ? t : null; };
 
@@ -48,7 +49,7 @@ export function initCampaign({ db, currency, addCredits }) {
     onboarded: db.prepare("UPDATE crash_users SET onboarded_at=? WHERE id=? AND onboarded_at IS NULL"),
     logClaim: db.prepare("INSERT INTO crash_claims(player,kind,amount,ts) VALUES(?,?,?,?)"),
     // Blocked (bot) accounts don't count as players, so they don't inflate the WL / free-mint numbers.
-    players: db.prepare("SELECT COUNT(DISTINCT player) n FROM crash_rounds WHERE state!='open' AND ts>=? AND ts<? AND player NOT IN (SELECT id FROM crash_users WHERE status='blocked')"),
+    players: db.prepare("SELECT COUNT(*) n FROM (SELECT DISTINCT player FROM crash_rounds WHERE state!='open' AND ts>=? AND ts<?) d LEFT JOIN crash_users u ON u.id=d.player WHERE u.status IS NULL OR u.status!='blocked'"),
   };
   const hoursMs = cfg.hours * 3600_000;
 
@@ -90,10 +91,13 @@ export function initCampaign({ db, currency, addCredits }) {
     return { amount: cfg.daily };
   });
 
+  // The player count scans the round history, so it runs in the background worker (bg.js) every few seconds (this runs on every /api/config).
+  let playersCache = { at: 0, n: 0 };
   function campaign() {
     if (!cfg.campEnd) return null;
     const from = cfg.campStart || 0, to = cfg.campEnd;
-    const players = q.players.get(from, to).n;
+    const players = (cached("players:" + from + ":" + to, q.players.source, [from, to], 15_000, null) || [{ n: playersCache.n }])[0].n;
+    playersCache.n = players;
     return {
       start: from, end: to, ended: Date.now() >= to, players,
       wlSpots: Math.min(cfg.wlMax, Math.floor(players / cfg.wlPer)), wlMax: cfg.wlMax, wlPer: cfg.wlPer,

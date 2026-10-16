@@ -785,14 +785,14 @@ let rankTimer = 0;
 async function refreshRank() {
   if (!user) { $("rankPill").hidden = true; return; }
   try {
-    const j = await api("leaderboard?limit=1");
-    $("rankNum").textContent = j.mine ? j.mine.rank : "–";
+    const j = await api("rank");
+    $("rankNum").textContent = j.rank || "–";
     $("rankTot").textContent = j.players || "–";
     $("rankPill").hidden = false;
   } catch {}
 }
 function rankSoon() { clearTimeout(rankTimer); rankTimer = setTimeout(refreshRank, 1500); }
-setInterval(() => { if (document.visibilityState === "visible") refreshRank(); }, 30000);
+setInterval(() => { if (document.visibilityState === "visible") refreshRank(); }, 60000);
 let onb = null; // onboarding + claim state from the server
 function setPnl() { const el = $("pnlBottom"); el.textContent = `${sgn(sessionPnl)} ${coin}`; el.className = sessionPnl > 0 ? "w" : sessionPnl < 0 ? "l" : ""; }
 
@@ -1615,14 +1615,15 @@ function showBlocked(j) {
   showOnb("blocked");
 }
 function showOnb(step, mode = "flow") {
-  if (blockedInfo) { step = "blocked"; mode = "flow"; }
+  if (cfg && cfg.seasonOver) { step = "over"; mode = "flow"; }
+  else if (blockedInfo) { step = "blocked"; mode = "flow"; }
   step = step || nextOnbStep();
   if (!step) { $("onb").hidden = true; return; }
   onbStep = step; onbMode = mode;
   document.querySelectorAll(".onb-step").forEach((el) => (el.hidden = el.dataset.step !== step));
   const order = ["x", "wallet", "social", "how"], at = order.indexOf(step);
   document.querySelectorAll("#onbDots i").forEach((d, i) => { d.className = i < at ? "done" : i === at ? "on" : ""; });
-  $("onbDots").hidden = mode === "info" || step === "blocked";
+  $("onbDots").hidden = mode === "info" || step === "blocked" || step === "over";
   $("howLabel").textContent = mode === "info" ? "PTSD Crash" : "Step 4 · How to play";
   $("apeIn").textContent = mode === "info" ? "Got it" : "APE IN 🦍";
   // the X step and the how-to-play screen can be closed; wallet + social are needed to play
@@ -1647,7 +1648,7 @@ function showOnb(step, mode = "flow") {
   $("onb").scrollTop = 0;
   $("onb").hidden = false;
 }
-function closeOnb() { if (blockedInfo) return; $("onb").hidden = true; }
+function closeOnb() { if (blockedInfo || (cfg && cfg.seasonOver)) return; $("onb").hidden = true; }
 $("onbX").onclick = closeOnb;
 $("howBtn").onclick = () => showOnb("how", "info");
 $("howMore").onclick = () => showOnb("how", "info");
@@ -1782,7 +1783,9 @@ async function boot() {
     resetChart();
     if (me.open) startRound(me.open, true);
     pollChat();
-    if (new URLSearchParams(location.search).get("signin") === "failed") { toast(IMG.cousin, "X sign-in didn't go through. Try again.", 6000); window.history.replaceState(null, "", location.pathname); }
+    const signinErr = new URLSearchParams(location.search).get("signin");
+    if (signinErr === "failed") { toast(IMG.cousin, "X sign-in didn't go through. Try again.", 6000); window.history.replaceState(null, "", location.pathname); }
+    else if (signinErr === "lowfollowers") { toast(IMG.cousin, "Sorry, your X account does not qualify for this game.", 8000); window.history.replaceState(null, "", location.pathname); }
     // direct links: #stats / #chat open that panel, #leaderboard goes to its page
     if (location.hash === "#leaderboard") location.href = "leaderboard";
     else if (location.hash === "#stats") openSheet("stats");
@@ -1795,7 +1798,8 @@ async function boot() {
   hideBoot();
   tryIntro(); // plays right away where the browser allows it
   // first visit / unfinished steps: walk them through it
-  if (nextOnbStep()) setTimeout(() => showOnb(), bootSeen ? 200 : Math.max(300, 2100 - performance.now()));
+  if (cfg && cfg.seasonOver) showOnb("over");
+  else if (nextOnbStep()) setTimeout(() => showOnb(), bootSeen ? 200 : Math.max(300, 2100 - performance.now()));
 }
 $("refillBtn").onclick = async () => { try { const j = await api("refill", {}); setBalance(j.balance); toast(IMG.me, "Test balance refilled."); } catch (e) { toast(IMG.cousin, e.message); } };
 $("balPill").onclick = () => (user ? $("amtIn").focus() : openSignIn());

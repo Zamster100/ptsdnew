@@ -12,6 +12,7 @@ import { renderCard, cardFile } from "./card.js";
 import { initAuth } from "./auth.js";
 import { initChat } from "./chat.js";
 import { initCampaign } from "./campaign.js";
+import { startBg, cached } from "./bg.js";
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const PORT = Number(process.env.PORT || 3512);
@@ -40,6 +41,12 @@ export const COINS = { [CURRENCY]: { min: Number(process.env.MIN_BET || 1000), m
 
 const db = new Database(DB_PATH);
 db.pragma("journal_mode = WAL");
+// Don't wait for the disk on every buy/sell (that stalled the game 100-400ms on slow disk moments).
+// With WAL this is still safe if the app crashes; only an OS crash/power cut could lose the last instant.
+// The WAL is folded back into the DB by the background worker (bg-worker.js), not on a player's request.
+db.pragma("synchronous = NORMAL");
+db.pragma("wal_autocheckpoint = 0");
+startBg(DB_PATH);
 db.exec(`
 CREATE TABLE IF NOT EXISTS crash_balances (player TEXT, coin TEXT, balance INTEGER NOT NULL, PRIMARY KEY (player, coin));
 CREATE TABLE IF NOT EXISTS crash_rounds (
@@ -48,6 +55,7 @@ CREATE TABLE IF NOT EXISTS crash_rounds (
   noise_seed TEXT NOT NULL, crash REAL NOT NULL, start_ms INTEGER NOT NULL, end_ms INTEGER NOT NULL,
   state TEXT NOT NULL, sold_mult REAL, payout INTEGER, pnl INTEGER, sold_ms INTEGER, ts INTEGER NOT NULL);
 CREATE INDEX IF NOT EXISTS crash_rounds_player ON crash_rounds(player, ts);
+CREATE INDEX IF NOT EXISTS crash_rounds_ts ON crash_rounds(ts, state, coin, player);
 `);
 db.exec("CREATE TABLE IF NOT EXISTS crash_seeds (player TEXT PRIMARY KEY, server_seed TEXT NOT NULL, commit_hash TEXT NOT NULL)");
 db.exec("CREATE TABLE IF NOT EXISTS crash_shares (id TEXT PRIMARY KEY, round_id TEXT NOT NULL UNIQUE, sym TEXT NOT NULL, color TEXT NOT NULL, ts INTEGER NOT NULL)");
@@ -307,18 +315,47 @@ function periodStart(period) {
   return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1);
 }
 // Ranked by profit (PnL) over the period. Names + pictures come from sign-in.
-function leaderboard(period, player, limit = 50) {
+// The ranking query scans every round in the period (~0.3s), so it runs in the background
+// worker (bg.js) and everyone shares the last result, refreshed every few seconds.
+// Running it here used to freeze the whole server, so buys and sells waited behind it.
+// Season 1 is over: the boards are frozen at this moment and no new rounds or claims are accepted.
+// Override with SEASON_END (ISO time) only if the freeze point needs to change.
+const SEASON_END = Date.parse(process.env.SEASON_END || "") || 1792190339106;
+const seasonOver = () => Date.now() >= SEASON_END;
+const BOARD_TTL_MS = Number(process.env.BOARD_CACHE_MS) || 10_000;
+const boardCache = new Map(); // `${period}:${start}` -> { raw, rows, pub }
+function boardRows(period) {
   const camp = campaign.campaign();
   period = ["day", "week", "month", "all", "campaign"].includes(period) ? period : camp ? "campaign" : "month";
   if (period === "campaign" && !camp) period = "all";
-  // Blocked (bot) accounts are hidden from every board and don't count as players.
-  const blocked = auth.blockedIds();
-  const all = period === "campaign" ? q.board.all(CURRENCY, camp.start, camp.end) : q.board.all(CURRENCY, periodStart(period), 8.64e15);
-  const rows = blocked.size ? all.filter((r) => !blocked.has(r.player)) : all;
-  const row = (r, i) => ({ rank: i + 1, ...auth.publicUser(r.player), me: r.player === player, net: r.net, rounds: r.rounds, wins: r.wins, wagered: r.wagered, best: r.best, bestWin: r.bestWin });
+  const start = period === "campaign" ? camp.start : periodStart(period);
+  const key = period + ":" + start;
+  const raw = cached("board:" + key, q.board.source, [CURRENCY, start, Math.min(SEASON_END, period === "campaign" ? camp.end : 8.64e15)], BOARD_TTL_MS, null);
+  let hit = boardCache.get(key);
+  if (!hit || hit.raw !== raw) {
+    // Blocked (bot) accounts are hidden from every board and don't count as players.
+    const blocked = auth.blockedIds();
+    const all = raw || [];
+    hit = { raw, rows: blocked.size ? all.filter((r) => !blocked.has(r.player)) : all, pub: new Map() };
+    if (boardCache.size > 20) boardCache.clear();
+    boardCache.set(key, hit);
+  }
+  return { period, camp, hit };
+}
+function leaderboard(period, player, limit = 50) {
+  const { period: per, camp, hit } = boardRows(period);
+  const rows = hit.rows;
+  const pub = (id) => { let p = hit.pub.get(id); if (!p) hit.pub.set(id, (p = auth.publicUser(id))); return p; };
+  const row = (r, i) => ({ rank: i + 1, ...pub(r.player), me: r.player === player, net: r.net, rounds: r.rounds, wins: r.wins, wagered: r.wagered, best: r.best, bestWin: r.bestWin });
   const top = rows.slice(0, limit).map(row);
   const i = player ? rows.findIndex((r) => r.player === player) : -1;
-  return { period, coin: CURRENCY, top, mine: i >= 0 ? row(rows[i], i) : null, players: rows.length, campaign: camp };
+  return { period: per, coin: CURRENCY, top, mine: i >= 0 ? row(rows[i], i) : null, players: rows.length, campaign: camp };
+}
+// Just your place and the player count (the top-bar rank pill), no rows built.
+function rankOf(player) {
+  const { rows } = boardRows(null).hit;
+  const i = player ? rows.findIndex((r) => r.player === player) : -1;
+  return { rank: i >= 0 ? i + 1 : null, players: rows.length };
 }
 
 // ---------- http ----------
@@ -372,9 +409,10 @@ const server = http.createServer(async (req, res) => {
     const player = user ? user.id : null;
 
     if (p === "/api/config") {
-      return send(res, 200, { test: TEST && !CLAIMS, coins: COINS, maxMult: MAX_MULT, edge: EDGE, login: auth.mode, support: auth.supportUrl, ...campaign.publicCfg(), serverNow: Date.now() });
+      return send(res, 200, { test: TEST && !CLAIMS, coins: COINS, maxMult: MAX_MULT, edge: EDGE, login: auth.mode, support: auth.supportUrl, seasonOver: seasonOver(), ...campaign.publicCfg(), serverNow: Date.now() });
     }
     if (p.startsWith("/api/auth/")) return await auth.api(req, res, p, body, send);
+    if (p === "/api/rank") return send(res, 200, rankOf(player));
     if (p === "/api/leaderboard") {
       const lim = Math.min(500, Math.max(1, Number(u.searchParams.get("limit")) || 50));
       return send(res, 200, leaderboard(u.searchParams.get("period"), player, lim));
@@ -387,6 +425,9 @@ const server = http.createServer(async (req, res) => {
         if (size < 5_000_000) fs.appendFileSync(f, JSON.stringify({ ts: new Date().toISOString(), player, ...body }).slice(0, 4000) + "\n");
       } catch {}
       return send(res, 200, { ok: true });
+    }
+    if (seasonOver() && req.method === "POST" && ["/api/buy", "/api/wallet", "/api/claim", "/api/onboarded"].includes(p)) {
+      return send(res, 403, { error: "Season 1 of PTSD Crash is over. Results are in the leaderboard.", seasonOver: true });
     }
     if (p === "/api/me" && !player) {
       return send(res, 200, { user: null, balances: { [CURRENCY]: 0 }, open: null, recent: [], nextCommit: "", serverNow: Date.now() });
@@ -487,3 +528,5 @@ for (const row of q.allOpen.all()) {
 }
 const HOST = process.env.HOST || "127.0.0.1";
 server.listen(PORT, HOST, () => console.log(`[ptsd-crash] ${HOST}:${PORT} base ${BASE || "/"} test=${TEST} login=${auth.mode}`));
+// Warm the leaderboards so the first visitors after a restart don't see an empty board.
+for (const p of ["campaign", "day", "week", "month", "all"]) boardRows(p);

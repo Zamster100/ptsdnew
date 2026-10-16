@@ -39,6 +39,13 @@ CREATE TABLE IF NOT EXISTS crash_blocklist (handle_lc TEXT PRIMARY KEY, status T
   for (const col of ["status TEXT", "status_reason TEXT", "status_at INTEGER", "x_created TEXT", "x_followers INTEGER", "x_tweets INTEGER"]) {
     try { db.exec(`ALTER TABLE crash_users ADD COLUMN ${col}`); } catch {}
   }
+  const MIN_FOLLOWERS = Number.isFinite(Number(process.env.MIN_X_FOLLOWERS)) && process.env.MIN_X_FOLLOWERS !== "" ? Number(process.env.MIN_X_FOLLOWERS) : 20;
+  const num = (v, d) => (v !== undefined && v !== "" && Number.isFinite(Number(v)) ? Number(v) : d);
+  const MIN_AGE_DAYS = num(process.env.MIN_X_AGE_DAYS, 30);
+  const BURST_LIMIT = num(process.env.SIGNUP_BURST_LIMIT, 25), BURST_WINDOW_MS = num(process.env.SIGNUP_BURST_MINUTES, 10) * 60000;
+  // Handle shape of the bot farm: first name + initial + 6 digits (susanm533966), with a generic first name as display name.
+  const FARM_HANDLE = /^[a-z]{4,14}\d{6}$/;
+  const FARM_NAME = /^(Barbara|Betty|Donna|Dorothy|Elizabeth|Helen|Jennifer|Karen|Kimberly|Laura|Linda|Lisa|Margaret|Maria|Mary|Nancy|Ruth|Sharon|Susan|Carol|Patricia|Deborah|Sarah|Michelle|Sandra)$/;
   const SUPPORT_URL = process.env.SUPPORT_URL || "";
   const BLOCKED_MSG = "Your account has been flagged as suspected bot activity or part of a bot farm, so you can't play right now. If you think this is a mistake, contact support.";
   const q = {
@@ -46,6 +53,7 @@ CREATE TABLE IF NOT EXISTS crash_blocklist (handle_lc TEXT PRIMARY KEY, status T
     upsert: db.prepare(`INSERT INTO crash_users(id,provider,username,name,pfp,created,seen,x_created,x_followers,x_tweets) VALUES(@id,@provider,@username,@name,@pfp,@now,@now,@x_created,@x_followers,@x_tweets)
       ON CONFLICT(id) DO UPDATE SET username=excluded.username, name=excluded.name, pfp=COALESCE(excluded.pfp, crash_users.pfp), seen=excluded.seen,
         x_created=COALESCE(excluded.x_created, crash_users.x_created), x_followers=COALESCE(excluded.x_followers, crash_users.x_followers), x_tweets=COALESCE(excluded.x_tweets, crash_users.x_tweets)`),
+    recentSignups: db.prepare("SELECT COUNT(*) n FROM crash_users WHERE created>?"),
     listed: db.prepare("SELECT * FROM crash_blocklist WHERE handle_lc=?"),
     setStatus: db.prepare("UPDATE crash_users SET status=?, status_reason=?, status_at=? WHERE id=?"),
     blockedIds: db.prepare("SELECT id FROM crash_users WHERE status='blocked'"),
@@ -133,10 +141,28 @@ CREATE TABLE IF NOT EXISTS crash_blocklist (handle_lc TEXT PRIMARY KEY, status T
         // X gives a 48px picture by default; ask for the 400px one.
         const pfp = d.profile_image_url ? d.profile_image_url.replace("_normal.", "_400x400.") : null;
         const pm = d.public_metrics || {};
+        // Minimum followers to play (MIN_X_FOLLOWERS, default 20). Skipped if X didn't return a count.
+        if (Number.isFinite(pm.followers_count) && pm.followers_count < MIN_FOLLOWERS) {
+          console.log(`[auth] @${d.username} turned away: ${pm.followers_count} followers (< ${MIN_FOLLOWERS})`);
+          return redirect(res, publicUrl + "/?signin=lowfollowers");
+        }
+        // Minimum X account age (MIN_X_AGE_DAYS, default 30): farms are made in batches just before they are used.
+        const ageDays = d.created_at ? (Date.now() - Date.parse(d.created_at)) / 864e5 : NaN;
+        if (Number.isFinite(ageDays) && ageDays < MIN_AGE_DAYS) {
+          console.log(`[auth] @${d.username} turned away: X account ${Math.floor(ageDays)} days old (< ${MIN_AGE_DAYS})`);
+          return redirect(res, publicUrl + "/?signin=lowfollowers");
+        }
+        const isNew = !q.user.get("x:" + d.id);
+        const burst = isNew && q.recentSignups.get(Date.now() - BURST_WINDOW_MS).n >= BURST_LIMIT;
         startSession(res, {
           id: "x:" + d.id, provider: "x", username: d.username, name: d.name || d.username, pfp,
           x_created: d.created_at || null, x_followers: Number.isFinite(pm.followers_count) ? pm.followers_count : null, x_tweets: Number.isFinite(pm.tweet_count) ? pm.tweet_count : null,
         });
+        // Auto-flag known farm shapes. Never overrides a status that is already set (blocklist, admin).
+        if (isNew && !q.user.get("x:" + d.id)?.status) {
+          if (FARM_HANDLE.test(d.username) && FARM_NAME.test(d.name || "")) { q.setStatus.run("blocked", "auto: generated handle + generic first-name display name", Date.now(), "x:" + d.id); console.log(`[auth] auto-blocked @${d.username} (farm handle shape)`); }
+          else if (burst) { q.setStatus.run("review", `auto: sign-up burst (${BURST_LIMIT}+ new accounts in ${BURST_WINDOW_MS / 60000} min)`, Date.now(), "x:" + d.id); console.log(`[auth] review @${d.username} (sign-up burst)`); }
+        }
         return redirect(res, publicUrl + "/");
       } catch (e) {
         console.error("[auth] X sign-in failed", e.message);

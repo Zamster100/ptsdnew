@@ -18,6 +18,11 @@
   .lbp-head h1 { margin: 0; font: 400 34px/1 "Rubik Glitch", Manrope, sans-serif; color: #F05150; }
   .lbp-head p { margin: 4px 0 0; color: var(--mut); font-size: 13px; }
   .lbp-play { margin-left: auto; text-decoration: none; background: var(--up); color: #fff; font-weight: 800; border-radius: 999px; padding: 10px 18px; box-shadow: 0 3px 0 var(--up-d); white-space: nowrap; }
+  .over { background: var(--panel); border: 1px solid #5a2a2b; border-radius: 16px; padding: 16px 18px; margin-bottom: 14px; }
+  .over h2 { margin: 0 0 8px; font-size: 18px; color: #F05150; }
+  .over p { margin: 0 0 10px; font-size: 14px; line-height: 1.5; color: var(--txt); }
+  .over p.fine { color: var(--mut); font-size: 13px; }
+  .over a.go { display: inline-block; text-decoration: none; background: var(--up); color: #fff; font-weight: 800; border-radius: 999px; padding: 10px 20px; box-shadow: 0 3px 0 var(--up-d); }
   .lbp .seg { margin-bottom: 14px; flex-wrap: wrap; }
   .lbp .seg button { font-size: 13px; padding: 6px 14px; }
   .podium { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 14px; align-items: end; }
@@ -99,7 +104,13 @@
 <main class="lbp">
   <div class="lbp-head">
     <div><h1>Leaderboard</h1><p>Ranked by profit (PnL). Every round counts, wins and losses.</p></div>
-    <a class="lbp-play" href="./">Play</a>
+    <span class="lbp-play" aria-disabled="true" style="opacity:.4;cursor:not-allowed;box-shadow:none;background:#3a3b40">Season 1 over</span>
+  </div>
+  <div class="over">
+    <h2>Season 1 of PTSD Crash is over.</h2>
+    <p>Congratulations to all the winners. The Top 25 will receive a Free Mint, and the Top 500 will be granted 1 GTD spot on the WL.</p>
+    <p class="fine">A snapshot has been taken. The leaderboard and Top 500 will be reviewed. Any botted accounts and duplicates will be removed, and qualifying players from the Top 500 will be added to the WL.</p>
+    <a class="go" href="/whitelist">Go to Whitelist</a>
   </div>
   <div class="camp" id="camp" hidden>
     <div class="camp-top"><b>WL campaign</b><span id="campWhen"></span></div>
