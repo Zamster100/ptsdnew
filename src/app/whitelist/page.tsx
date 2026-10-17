@@ -11,7 +11,7 @@ type Category = 'presale' | 'guaranteed' | 'fcfs-priority' | 'fcfs-general' | 'o
 type BackgroundKey = 'idle' | 'notfound' | Exclude<Category, 'other'>
 
 interface Entry {
-  /** Category text straight from the sheet � shown as-is. */
+  /** Category text straight from the sheet — shown as-is. */
   label: string
   category: Category
   price: number
@@ -68,14 +68,14 @@ export default function WhitelistPage() {
         setRainKey(k => k + 1)
       }
     } catch {
-      setError('Network error — please try again')
+      setError('Network error â€” please try again')
       setStatus('error')
     }
   }
 
   return (
     <div className="relative h-dvh min-h-[560px] w-full overflow-hidden bg-black font-sans text-white">
-      {/* Background stack — every layer stays mounted so swaps are an instant crossfade, no loading flash. */}
+      {/* Background stack â€” every layer stays mounted so swaps are an instant crossfade, no loading flash. */}
       {(Object.keys(BACKGROUNDS) as BackgroundKey[]).map(key => (
         <div
           key={key}
@@ -139,7 +139,7 @@ export default function WhitelistPage() {
               disabled={!isValid || status === 'loading'}
               className="shrink-0 rounded-full bg-ticket-red px-5 py-3 font-manrope text-sm font-bold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-30 md:px-8 md:py-4 md:text-base"
             >
-              {status === 'loading' ? 'Checking…' : 'Check'}
+              {status === 'loading' ? 'Checkingâ€¦' : 'Check'}
             </button>
           </div>
         </form>
