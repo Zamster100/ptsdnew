@@ -354,6 +354,17 @@ function leaderboard(period, player, limit = 50) {
 // After the season only the signed-in player's own place is returned (no other player's row), and only
 // for the Top 500 under review. Everyone below that, and anyone flagged, gets a neutral status.
 const REVIEW_TOP = 500;
+// Per-player result of the review (handle -> mint | gtd | fcfs_priority | moved | suspended), kept in data/outcomes.json
+// on the server only. A player is only ever told their own result.
+const OUTCOMES_FILE = path.join(ROOT, "data/outcomes.json");
+let outcomes = { at: 0, map: {} };
+function outcomeOf(player) {
+  try {
+    const st = fs.statSync(OUTCOMES_FILE);
+    if (st.mtimeMs !== outcomes.at) outcomes = { at: st.mtimeMs, map: JSON.parse(fs.readFileSync(OUTCOMES_FILE, "utf8")) };
+  } catch { return null; }
+  return outcomes.map[String(auth.publicUser(player)?.username || "").toLowerCase()] || null;
+}
 function ownPlace(player, user) {
   if (!player) return { hidden: true, status: "anon" };
   if (auth.isBlocked(user)) return { hidden: true, status: "review" };
@@ -361,8 +372,12 @@ function ownPlace(player, user) {
   const i = rows.findIndex((r) => r.player === player);
   if (i < 0) return { hidden: true, status: "none" };
   const r = rows[i];
+  const oc = outcomeOf(player);
+  const mine = { rank: i + 1, net: r.net, rounds: r.rounds, wins: r.wins, best: r.best, ...auth.publicUser(player) };
+  if (oc === "moved" || oc === "suspended") return { hidden: true, status: "outcome", outcome: oc };
+  if (oc) return { hidden: true, status: "outcome", outcome: oc, mine };
   if (i >= REVIEW_TOP) return { hidden: true, status: "outside" };
-  return { hidden: true, status: "ranked", mine: { rank: i + 1, net: r.net, rounds: r.rounds, wins: r.wins, best: r.best, ...auth.publicUser(player) } };
+  return { hidden: true, status: "ranked", mine };
 }
 // Just your place and the player count (the top-bar rank pill), no rows built.
 function rankOf(player) {

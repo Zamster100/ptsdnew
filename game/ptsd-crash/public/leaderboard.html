@@ -23,6 +23,11 @@
   .over p { margin: 0 0 10px; font-size: 14px; line-height: 1.5; color: var(--txt); }
   .over p.fine { color: var(--mut); font-size: 13px; }
   .over a.go { display: inline-block; text-decoration: none; background: var(--up); color: #fff; font-weight: 800; border-radius: 999px; padding: 10px 20px; box-shadow: 0 3px 0 var(--up-d); }
+  .note { margin-top: 10px; border-radius: 14px; padding: 14px 16px; background: var(--panel); border: 1px solid var(--bd); }
+  .note h3 { margin: 0 0 6px; font-size: 15px; }
+  .note p { margin: 0; font-size: 14px; line-height: 1.5; color: var(--txt); }
+  .note.win { border-color: #0c8a64; background: linear-gradient(135deg, rgba(18,184,134,.14), var(--panel) 70%); } .note.win h3 { color: var(--up); }
+  .note.warn { border-color: #6b5420; } .note.warn h3 { color: #ffd54a; }
   .fade { -webkit-mask-image: linear-gradient(#000 40%, transparent 98%); mask-image: linear-gradient(#000 40%, transparent 98%); pointer-events: none; }
   .fade-note { text-align: center; color: var(--mut); font-size: 13px; margin: 6px 0 0; }
   .lbp .seg { margin-bottom: 14px; flex-wrap: wrap; }
@@ -195,6 +200,16 @@ async function load() {
     document.querySelector(".seg").hidden = true; $("camp").hidden = true;
     const meUser = await mePromise;
     const st = !meUser ? "anon" : j.status;
+    const DC = `<a href="https://discord.com/invite/ptsdshow" target="_blank" rel="noopener noreferrer" style="color:var(--teal)">Discord</a>`;
+    const NOTES = {
+      mint: ["win", "Congratulations, you've won a Free Mint + a GTD spot!", `Your Free Mint will be airdropped to you within 24 hours of the mint, and you are also whitelisted for an additional 1 GTD spot. Final qualifying addresses are uploaded on October 19th, 2026.`],
+      gtd: ["win", "Congratulations, you've secured a GTD spot!", `You've won a Guaranteed (GTD) spot on the PTSD whitelist and your wallet has been whitelisted. Final qualifying addresses are uploaded on October 19th, 2026.`],
+      fcfs_priority: ["win", "Congratulations, you're on our FCFS priority list!", `Although you didn't qualify for a GTD spot, we saw your effort and have added you to our FCFS priority list. Thanks for playing Season 1.`],
+      moved: ["warn", "Your spot has been moved to the FCFS list", `We found that this account's wallet activity is linked to other accounts or showed automated behaviour. For this reason your GTD spot could not be secured and has been moved to the FCFS list. If you think this is an error, please reach out to us on ${DC}.`],
+      suspended: ["warn", "X account suspended", `Sorry, the X account linked to this entry is suspended, and botted accounts are not permitted. If you think this is an error, please reach out to us on ${DC}.`],
+    };
+    const nt = st === "outcome" && NOTES[j.outcome];
+    const noteHtml = nt ? `<div class="note ${nt[0]}"><h3>${nt[1]}</h3><p>${nt[2]}</p></div>` : "";
     const msg = {
       anon: `<div class="you-none">Sign in with X on the game page to see your position.</div>`,
       none: `<div class="you-none">You didn't play a round this season, so you have no position.</div>`,
@@ -206,7 +221,8 @@ async function load() {
     $("camp").hidden = false;
     $("campWhen").textContent = "Season 1 · final"; $("campClock").innerHTML = `Snapshot taken<small>under review</small>`;
     $("campPlayers").textContent = fmt(j.players);
-    const you = `<div class="you"><div class="you-h">Your position${m ? ` <b>#${fmt(m.rank)}</b> <small style="color:var(--mut)">(provisional, pending review)</small>` : ""}</div><div class="tbl">${m ? `<div class="tr me"><span class="rk">${m.rank}</span><span class="who">${avatar(m)}<span>${handle(m)}</span></span><span class="num hide-sm">${fmt(m.rounds)}</span><span class="num hide-sm">${m.best ? m.best.toFixed(2) + "x" : "-"}</span><span class="pnl ${cls(m.net)}">${sgn(m.net)}</span></div>` : msg}</div></div>`;
+    const rowHtml = m ? `<div class="tbl"><div class="tr me"><span class="rk">${m.rank}</span><span class="who">${avatar(m)}<span>${handle(m)}</span></span><span class="num hide-sm">${fmt(m.rounds)}</span><span class="num hide-sm">${m.best ? m.best.toFixed(2) + "x" : "-"}</span><span class="pnl ${cls(m.net)}">${sgn(m.net)}</span></div></div>` : nt ? "" : `<div class="tbl">${msg}</div>`;
+    const you = `<div class="you"><div class="you-h">${nt && !m ? "Your result" : "Your position"}${m ? ` <b>#${fmt(m.rank)}</b>${nt ? "" : ` <small style="color:var(--mut)">(provisional, pending review)</small>`}` : ""}</div>${rowHtml}${noteHtml}</div>`;
     const trow = (r) => `<div class="tr"><span class="rk">${r.rank}</span><span class="who">${avatar(r)}<span>${handle(r)}</span></span><span class="num hide-sm">${fmt(r.rounds)}</span><span class="num hide-sm">${r.best ? r.best.toFixed(2) + "x" : "-"}</span><span class="pnl ${cls(r.net)}">${sgn(r.net)}</span></div>`;
     const pod = j.top.slice(0, 3), ord = pod.length === 3 ? [pod[1], pod[0], pod[2]] : pod;
     const podium = `<div class="podium">${ord.map((r) => `<div class="pod p${r.rank}"><span class="medal">${["🥇", "🥈", "🥉"][r.rank - 1]}</span>${avatar(r)}<div class="nm">${handle(r)}</div><div class="pnl ${cls(r.net)}">${sgn(r.net)}</div><div class="sub">${cur} · ${fmt(r.rounds)} rounds</div></div>`).join("")}</div>`;
