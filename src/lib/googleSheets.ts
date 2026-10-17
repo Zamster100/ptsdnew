@@ -25,13 +25,13 @@ interface WhitelistCache {
   fetchedAt: number
 }
 
-// Highest priority first â€” a wallet on several rows resolves to the best category.
+// Highest priority first — a wallet on several rows resolves to the best category.
 const CATEGORY_PRIORITY: WhitelistCategory[] = ['presale', 'guaranteed', 'fcfs-priority', 'fcfs-general', 'other']
 
 let cache: WhitelistCache | null = null
 const CACHE_TTL_MS = 60 * 1000
 
-/** The sheet has typos ("Gauranteed", "FCFC") â€” match loosely rather than exactly. */
+/** The sheet has typos ("Gauranteed", "FCFC") — match loosely rather than exactly. */
 function parseCategory(raw: string | undefined): WhitelistCategory {
   const value = (raw ?? '').trim().toLowerCase()
   if (value.startsWith('presale')) return 'presale'
@@ -142,7 +142,7 @@ export async function checkWhitelist(wallet: string): Promise<WhitelistResult> {
   const { ethMap, rawMap } = await getWhitelist()
   const trimmed = wallet.trim()
 
-  // SOL addresses are base58 and case-sensitive â€” match exactly as entered in the sheet.
+  // SOL addresses are base58 and case-sensitive — match exactly as entered in the sheet.
   const entries = (ETH_RE.test(trimmed) ? ethMap.get(trimmed.toLowerCase()) : rawMap.get(trimmed)) ?? []
 
   return { whitelisted: entries.length > 0, entries }

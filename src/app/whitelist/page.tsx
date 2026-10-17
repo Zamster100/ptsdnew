@@ -68,14 +68,14 @@ export default function WhitelistPage() {
         setRainKey(k => k + 1)
       }
     } catch {
-      setError('Network error â€” please try again')
+      setError('Network error — please try again')
       setStatus('error')
     }
   }
 
   return (
     <div className="relative h-dvh min-h-[560px] w-full overflow-hidden bg-black font-sans text-white">
-      {/* Background stack â€” every layer stays mounted so swaps are an instant crossfade, no loading flash. */}
+      {/* Background stack — every layer stays mounted so swaps are an instant crossfade, no loading flash. */}
       {(Object.keys(BACKGROUNDS) as BackgroundKey[]).map(key => (
         <div
           key={key}
@@ -139,7 +139,7 @@ export default function WhitelistPage() {
               disabled={!isValid || status === 'loading'}
               className="shrink-0 rounded-full bg-ticket-red px-5 py-3 font-manrope text-sm font-bold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-30 md:px-8 md:py-4 md:text-base"
             >
-              {status === 'loading' ? 'Checkingâ€¦' : 'Check'}
+              {status === 'loading' ? 'Checking…' : 'Check'}
             </button>
           </div>
         </form>
