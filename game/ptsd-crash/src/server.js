@@ -351,6 +351,19 @@ function leaderboard(period, player, limit = 50) {
   const i = player ? rows.findIndex((r) => r.player === player) : -1;
   return { period: per, coin: CURRENCY, top, mine: i >= 0 ? row(rows[i], i) : null, players: rows.length, campaign: camp };
 }
+// After the season only the signed-in player's own place is returned (no other player's row), and only
+// for the Top 500 under review. Everyone below that, and anyone flagged, gets a neutral status.
+const REVIEW_TOP = 500;
+function ownPlace(player, user) {
+  if (!player) return { hidden: true, status: "anon" };
+  if (auth.isBlocked(user)) return { hidden: true, status: "review" };
+  const { rows } = boardRows("campaign").hit;
+  const i = rows.findIndex((r) => r.player === player);
+  if (i < 0) return { hidden: true, status: "none" };
+  const r = rows[i];
+  if (i >= REVIEW_TOP) return { hidden: true, status: "outside" };
+  return { hidden: true, status: "ranked", mine: { rank: i + 1, net: r.net, rounds: r.rounds, wins: r.wins, best: r.best, ...auth.publicUser(player) } };
+}
 // Just your place and the player count (the top-bar rank pill), no rows built.
 function rankOf(player) {
   const { rows } = boardRows(null).hit;
@@ -412,9 +425,10 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, { test: TEST && !CLAIMS, coins: COINS, maxMult: MAX_MULT, edge: EDGE, login: auth.mode, support: auth.supportUrl, seasonOver: seasonOver(), ...campaign.publicCfg(), serverNow: Date.now() });
     }
     if (p.startsWith("/api/auth/")) return await auth.api(req, res, p, body, send);
-    if (p === "/api/rank") return send(res, 200, rankOf(player));
+    if (p === "/api/rank") return send(res, 200, seasonOver() ? { rank: null, players: 0 } : rankOf(player));
     if (p === "/api/leaderboard") {
       const lim = Math.min(500, Math.max(1, Number(u.searchParams.get("limit")) || 50));
+      if (seasonOver()) return send(res, 200, { period: "campaign", coin: CURRENCY, top: [], players: 0, campaign: null, ...ownPlace(player, user) });
       return send(res, 200, leaderboard(u.searchParams.get("period"), player, lim));
     }
     if (p.startsWith("/api/comments")) return chat.api(req, res, p, u, body, user, send);

@@ -109,7 +109,9 @@
   <div class="over">
     <h2>Season 1 of PTSD Crash is over.</h2>
     <p>Congratulations to all the winners. The Top 25 will receive a Free Mint, and the Top 500 will be granted 1 GTD spot on the WL.</p>
-    <p class="fine">A snapshot has been taken. The leaderboard and Top 500 will be reviewed. Any botted accounts and duplicates will be removed, and qualifying players from the Top 500 will be added to the WL.</p>
+    <p>A snapshot has been taken and winners are under review. We are checking every account for botting and fairness, and any botted accounts and duplicates will be removed. Qualifying players from the Top 500 will be added to the WL.</p>
+    <p class="fine">If you were in the Top 500 and were removed, contact our <a href="https://discord.com/invite/ptsdshow" target="_blank" rel="noopener noreferrer" style="color:var(--teal)">Discord support</a> and we will review.</p>
+    <p><b>Final qualifying addresses will be uploaded on October 19th, 2026, after full review.</b></p>
     <a class="go" href="/whitelist">Go to Whitelist</a>
   </div>
   <div class="camp" id="camp" hidden>
@@ -189,6 +191,20 @@ async function load() {
   try { j = await fetch(`api/leaderboard?${period ? "period=" + period + "&" : ""}limit=500`).then((r) => r.json()); }
   catch { $("board").innerHTML = `<div class="empty">Could not load. Refresh the page.</div>`; return; }
   const cur = esc(j.coin);
+  if (j.hidden) {
+    document.querySelector(".seg").hidden = true; $("camp").hidden = true;
+    const meUser = await mePromise;
+    const st = !meUser ? "anon" : j.status;
+    const msg = {
+      anon: `<div class="you-none">Sign in with X on the game page to see your position.</div>`,
+      none: `<div class="you-none">You didn't play a round this season, so you have no position.</div>`,
+      outside: `<div class="you-none">You finished outside the Top 500.</div>`,
+      review: `<div class="you-none">Your account is under review. If you think this is a mistake, contact our Discord support.</div>`,
+    }[st];
+    const m = j.mine;
+    $("board").innerHTML = `<div class="you"><div class="you-h">Your position${m ? ` <b>#${fmt(m.rank)}</b> <small style="color:var(--mut)">(provisional, pending review)</small>` : ""}</div><div class="tbl">${m ? `<div class="tr me"><span class="rk">${m.rank}</span><span class="who">${avatar(m)}<span>${handle(m)}</span></span><span class="num hide-sm">${fmt(m.rounds)}</span><span class="num hide-sm">${m.best ? m.best.toFixed(2) + "x" : "-"}</span><span class="pnl ${cls(m.net)}">${sgn(m.net)}</span></div>` : msg}</div></div>`;
+    return;
+  }
   period = j.period;
   document.querySelectorAll("#seg [data-p]").forEach((b) => b.classList.toggle("on", b.dataset.p === period));
   camp = j.campaign || null;
