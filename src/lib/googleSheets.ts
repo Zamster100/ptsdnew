@@ -35,7 +35,7 @@ const CACHE_TTL_MS = 60 * 1000
 function parseCategory(raw: string | undefined): WhitelistCategory {
   const value = (raw ?? '').trim().toLowerCase()
   if (value.startsWith('presale')) return 'presale'
-  if (value.startsWith('ga') || value.startsWith('gu') || value.startsWith('gtw')) return 'guaranteed'
+  if (value.startsWith('ga') || value.startsWith('gu') || value.startsWith('gt')) return 'guaranteed'
   // Two FCFS groups: anything labelled "priority" is Priority; every other FCFS row ("FCFS Contests", "FCFS", typos) is General.
   if (value.startsWith('fcf')) return value.includes('priority') ? 'fcfs-priority' : 'fcfs-general'
 
