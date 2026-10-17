@@ -7,10 +7,12 @@ import { TicketRain } from '@/components/shared/TicketRain'
 const ETH_RE = /^0x[a-fA-F0-9]{40}$/
 const SOL_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/
 
-type Category = 'presale' | 'guaranteed' | 'fcfs'
-type BackgroundKey = 'idle' | 'notfound' | Category
+type Category = 'presale' | 'guaranteed' | 'fcfs-priority' | 'fcfs-general' | 'other'
+type BackgroundKey = 'idle' | 'notfound' | Exclude<Category, 'other'>
 
 interface Entry {
+  /** Category text straight from the sheet — shown as-is. */
+  label: string
   category: Category
   price: number
   quantity: number
@@ -24,13 +26,8 @@ const BACKGROUNDS: Record<BackgroundKey, { desktop: string; mobile: string }> = 
   notfound: { desktop: '/images/raffle/notwl.jpg', mobile: '/images/raffle/mnotw.jpg' },
   presale: { desktop: '/images/raffle/presale.jpg', mobile: '/images/raffle/mpreslae.jpg' },
   guaranteed: { desktop: '/images/raffle/gtw.jpg', mobile: '/images/raffle/mgtw.jpg' },
-  fcfs: { desktop: '/images/raffle/fcfs.jpg', mobile: '/images/raffle/mfcfs.jpg' },
-}
-
-const CATEGORY_LABELS: Record<Category, string> = {
-  presale: 'Presale',
-  guaranteed: 'Guaranteed WL',
-  fcfs: 'FCFS',
+  'fcfs-priority': { desktop: '/images/raffle/fcfs.jpg', mobile: '/images/raffle/mfcfs.jpg' },
+  'fcfs-general': { desktop: '/images/raffle/fcfs.jpg', mobile: '/images/raffle/mfcfs.jpg' },
 }
 
 const RAIN_IMAGES = ['blue', 'gold', 'green', 'orange', 'red'].map(c => `/images/Tickets/small/${c}.png`)
@@ -48,7 +45,7 @@ export default function WhitelistPage() {
   const isValid = ETH_RE.test(input.trim()) || SOL_RE.test(input.trim())
 
   const activeBackground: BackgroundKey =
-    status === 'found' && entries[0] ? entries[0].category : status === 'not-found' ? 'notfound' : 'idle'
+    status === 'found' && entries[0] ? (entries[0].category === 'other' ? 'idle' : entries[0].category) : status === 'not-found' ? 'notfound' : 'idle'
 
   async function handleCheck(e: React.FormEvent) {
     e.preventDefault()
@@ -160,11 +157,11 @@ export default function WhitelistPage() {
               </div>
               {entries.map(e => (
                 <div
-                  key={e.category}
+                  key={e.label}
                   className="mt-1.5 grid grid-cols-[1.4fr_1fr_1fr_1fr] items-baseline gap-x-3 border-t border-white/10 pt-1.5 first:border-t-0 first:pt-0"
                 >
                   <span className="font-mono text-xs font-bold uppercase tracking-widest text-main-yellow">
-                    {CATEGORY_LABELS[e.category]}
+                    {e.label}
                   </span>
                   <span className="font-manrope text-lg font-black tabular-nums md:text-xl">{e.quantity}</span>
                   <span className="font-manrope text-lg font-black tabular-nums md:text-xl">

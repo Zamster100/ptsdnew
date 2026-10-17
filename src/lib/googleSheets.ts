@@ -1,8 +1,12 @@
 const ETH_RE = /^0x[a-fA-F0-9]{40}$/
 
-export type WhitelistCategory = 'presale' | 'guaranteed' | 'fcfs'
+/** Used only for ordering and artwork � the label shown to users is the sheet's own text. */
+export type WhitelistCategory = 'presale' | 'guaranteed' | 'fcfs-priority' | 'fcfs-general' | 'other'
 
 export interface WhitelistEntry {
+  /** The Category cell exactly as written in the sheet (trimmed). */
+  label: string
+  /** Bucket the label falls into, for sorting and background art. */
   category: WhitelistCategory
   /** Price per mint in USD. */
   price: number
@@ -11,7 +15,7 @@ export interface WhitelistEntry {
 
 export interface WhitelistResult {
   whitelisted: boolean
-  /** One entry per category the wallet is in, best category first (presale > guaranteed > fcfs). */
+  /** One entry per category the wallet is in, best category first (presale > guaranteed > fcfs-priority > fcfs-general > anything else). */
   entries: WhitelistEntry[]
 }
 
@@ -22,19 +26,20 @@ interface WhitelistCache {
 }
 
 // Highest priority first — a wallet on several rows resolves to the best category.
-const CATEGORY_PRIORITY: WhitelistCategory[] = ['presale', 'guaranteed', 'fcfs']
+const CATEGORY_PRIORITY: WhitelistCategory[] = ['presale', 'guaranteed', 'fcfs-priority', 'fcfs-general', 'other']
 
 let cache: WhitelistCache | null = null
 const CACHE_TTL_MS = 60 * 1000
 
 /** The sheet has typos ("Gauranteed", "FCFC") — match loosely rather than exactly. */
-function parseCategory(raw: string | undefined): WhitelistCategory | null {
+function parseCategory(raw: string | undefined): WhitelistCategory {
   const value = (raw ?? '').trim().toLowerCase()
   if (value.startsWith('presale')) return 'presale'
   if (value.startsWith('ga') || value.startsWith('gu') || value.startsWith('gtw')) return 'guaranteed'
-  if (value.startsWith('fcf')) return 'fcfs'
+  // Two FCFS groups: anything labelled "priority" is Priority; every other FCFS row ("FCFS Contests", "FCFS", typos) is General.
+  if (value.startsWith('fcf')) return value.includes('priority') ? 'fcfs-priority' : 'fcfs-general'
 
-  return null
+  return 'other'
 }
 
 function parseNumber(raw: string | undefined): number | null {
@@ -48,13 +53,13 @@ function priorityOf(entry: WhitelistEntry): number {
 }
 
 /**
- * A wallet can have several rows. Rows in the same category are separate purchases/allocations, so their
- * quantities add up (price is uniform within a category); different categories stay as separate entries,
+ * A wallet can have several rows. Rows with the same label are separate purchases/allocations, so their
+ * quantities add up (price is uniform within a label); different labels stay as separate entries,
  * kept sorted best-first.
  */
 function addEntry(map: Map<string, WhitelistEntry[]>, key: string, entry: WhitelistEntry) {
   const list = map.get(key) ?? []
-  const same = list.find(e => e.category === entry.category)
+  const same = list.find(e => e.label.toLowerCase() === entry.label.toLowerCase())
 
   if (same) {
     same.quantity += entry.quantity
@@ -106,12 +111,13 @@ async function fetchWhitelist(): Promise<WhitelistCache> {
 
   for (const row of rows) {
     const wallet = row[walletCol]?.trim()
-    const category = parseCategory(row[categoryCol])
-    if (!wallet || !category) continue
+    const label = row[categoryCol]?.trim()
+    if (!wallet || !label) continue
 
     const quantity = parseNumber(row[quantityCol])
     const entry: WhitelistEntry = {
-      category,
+      label,
+      category: parseCategory(label),
       price: parseNumber(row[priceCol]) ?? 0,
       quantity: quantity !== null && quantity > 0 ? quantity : 1,
     }
