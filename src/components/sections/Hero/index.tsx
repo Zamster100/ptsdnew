@@ -7,7 +7,8 @@ import { AnimatedBackground } from './components/AnimatedBackground'
 import { PlayIcon } from '@/components/icons/PlayIcon'
 import Image from 'next/image'
 import Logo from '@/public/images/hero/logo.png'
-import { TicketButton } from '@/components/ui/TicketButton'
+import { MintCountdown } from '@/components/shared/MintCountdown'
+import { MINT_URL } from '@/lib/mint'
 
 interface HeroProps {
   originStoryRef: React.RefObject<HTMLDivElement | null>
@@ -18,11 +19,6 @@ export const Hero = ({ originStoryRef }: HeroProps) => {
     if (originStoryRef.current) {
       originStoryRef.current.scrollIntoView({ behavior: 'smooth' })
     }
-  }
-
-  const handleCrash = () => {
-    // Full page load: the game is a separate app served under /crash/ (see next.config.js rewrites)
-    window.location.assign('/crash/')
   }
 
   return (
@@ -96,23 +92,34 @@ export const Hero = ({ originStoryRef }: HeroProps) => {
               <PlayIcon className="size-6 xl:size-10" />
               Play
             </Button>
-            <TicketButton onClick={handleCrash} className="whitespace-nowrap">PLAY PTSD CRASH</TicketButton>
           </div>
+          <MintNotice className="z-10 mt-2 lg:mt-3" />
         </div>
       </div>
       {/* Mobile */}
-      <MobileHero handlePlay={handlePlay} handleCrash={handleCrash} />
+      <MobileHero handlePlay={handlePlay} />
     </section>
   )
 }
 
-const MobileHero = ({
-  handlePlay,
-  handleCrash,
-}: {
-  handlePlay: () => void
-  handleCrash: () => void
-}) => {
+const MintNotice = ({ className = '' }: { className?: string }) => (
+  <div className={`flex flex-col items-start gap-2 ${className}`}>
+    <p className="font-manrope text-sm font-black uppercase tracking-wider text-ticket-gold lg:text-lg">
+      PTSD NFT Collection Minting in:
+    </p>
+    <MintCountdown />
+    <a
+      href={MINT_URL}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-xs font-semibold text-white/70 underline underline-offset-2 transition-colors hover:text-white"
+    >
+      View on OpenSea →
+    </a>
+  </div>
+)
+
+const MobileHero = ({ handlePlay }: { handlePlay: () => void }) => {
   return (
     <div className="relative md:hidden">
       <Badge
@@ -198,8 +205,8 @@ const MobileHero = ({
             <PlayIcon className="size-6" />
             Play
           </Button>
-          <TicketButton onClick={handleCrash} className="whitespace-nowrap">PLAY PTSD CRASH</TicketButton>
         </div>
+        <MintNotice className="z-10 mb-8" />
       </div>
     </div>
   )

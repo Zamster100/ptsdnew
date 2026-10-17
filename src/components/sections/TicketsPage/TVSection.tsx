@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { useRef } from 'react'
 import { cn } from '@/lib/utils'
 import styles from './TVSection.module.css'
+import { MintBanner } from '@/components/shared/MintBanner'
 
 export const TVSection = () => {
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -50,6 +51,11 @@ export const TVSection = () => {
         </div>
         <span className={styles.playMe}>Play Me</span>
       </button>
+
+      {/* Mint announcement — lower half of the hero */}
+      <div className="absolute inset-x-0 bottom-[4%] z-30 md:bottom-[7%]">
+        <MintBanner />
+      </div>
     </section>
   )
 }

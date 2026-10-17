@@ -2,7 +2,7 @@ const ITEMS = [
   { text: '3,333 TOTAL SUPPLY', cls: 'text-main-cyan' },
   { text: '3 GOLDEN TICKETS', cls: 'text-ticket-gold' },
   { text: '100x MAX TOKEN MULTIPLIER', cls: 'text-ticket-gold' },
-  { text: 'PUBLIC MINT · DATE TBD', cls: 'text-main-yellow' },
+  { text: 'NON FUDDABLE TICKETS MINT · OCT 20, 2026 · OPENSEA', cls: 'text-main-yellow' },
   { text: '5 RARITY TIERS', cls: 'text-white/70' },
   { text: 'TICKET SYSTEM LIVE', cls: 'text-main-cyan' },
   { text: 'SAME PRICE · RANDOM GOLDEN REVEAL', cls: 'text-ticket-gold' },

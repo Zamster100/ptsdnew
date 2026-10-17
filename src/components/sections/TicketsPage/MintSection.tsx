@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react'
 import Image from 'next/image'
+import { MINT_DATE, MINT_URL } from '@/lib/mint'
 
 const DISCORD_URL = 'https://discord.com/invite/PTSDshow'
 
@@ -113,7 +114,7 @@ const SuccessModal = ({
             You snagged your guaranteed spot and your future self thanks you.
           </p>
           <p>
-            For <span className="font-semibold text-white">live NFT mint updates and detailed status</span>, join our Discord. That's where we'll post allowlist confirmations, mint instructions, and everything you need when the date is confirmed.
+            For <span className="font-semibold text-white">live NFT mint updates and detailed status</span>, join our Discord. That's where we'll post allowlist confirmations, mint instructions, and everything you need ahead of the {MINT_DATE} mint.
           </p>
           <p>
             Follow us on{' '}
@@ -125,7 +126,9 @@ const SuccessModal = ({
             >
               X
             </a>{' '}
-            for the public mint announcement. When it drops, your mint is on the house.{' '}
+            for mint updates. Minting {MINT_DATE} on{' '}
+            <a href={MINT_URL} target="_blank" rel="noopener noreferrer" className="font-semibold text-white underline underline-offset-2 transition-opacity hover:opacity-70">OpenSea</a>
+            . Your mint is on the house.{' '}
             <span className="font-semibold text-white">Free. Zero. Nada.</span>
           </p>
         </div>
@@ -302,8 +305,7 @@ export const MintSection = () => {
             </h2>
             <p className="font-manrope mb-8 max-w-xl text-base leading-[1.75] text-light-text">
               Two steps to lock in your spot. Pay now in any currency — your
-              ETH wallet gets allowlisted for the free mint on OpenSea when the
-              date drops.
+              ETH wallet gets allowlisted for the free mint on OpenSea on {MINT_DATE}.
             </p>
 
             <div className="w-[90%] space-y-8">

@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
+import { MINT_DATE, MINT_URL } from '@/lib/mint'
 
 export const FinalCTASection = () => {
   return (
@@ -18,6 +19,10 @@ export const FinalCTASection = () => {
           <span className="text-ticket-red">5 RARITY TIERS.</span>
         </h2>
 
+        <p className="font-manrope mx-auto mb-6 max-w-xl text-lg font-black uppercase text-white md:text-xl">
+          Minting {MINT_DATE} on{' '}
+          <a href={MINT_URL} target="_blank" rel="noopener noreferrer" className="text-ticket-gold underline underline-offset-2">OpenSea</a>
+        </p>
         <p className="font-manrope mx-auto mb-3 max-w-xl text-base leading-[1.75] text-light-text md:text-lg">
           Every PTSD Ticket maps to a rarity tier and a token multiplier,
           locked in at reveal. This is the beginning of the PTSD token
