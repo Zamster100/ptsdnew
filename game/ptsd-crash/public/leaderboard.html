@@ -23,6 +23,8 @@
   .over p { margin: 0 0 10px; font-size: 14px; line-height: 1.5; color: var(--txt); }
   .over p.fine { color: var(--mut); font-size: 13px; }
   .over a.go { display: inline-block; text-decoration: none; background: var(--up); color: #fff; font-weight: 800; border-radius: 999px; padding: 10px 20px; box-shadow: 0 3px 0 var(--up-d); }
+  .fade { -webkit-mask-image: linear-gradient(#000 40%, transparent 98%); mask-image: linear-gradient(#000 40%, transparent 98%); pointer-events: none; }
+  .fade-note { text-align: center; color: var(--mut); font-size: 13px; margin: 6px 0 0; }
   .lbp .seg { margin-bottom: 14px; flex-wrap: wrap; }
   .lbp .seg button { font-size: 13px; padding: 6px 14px; }
   .podium { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 14px; align-items: end; }
@@ -202,7 +204,17 @@ async function load() {
       review: `<div class="you-none">Your account is under review. If you think this is a mistake, contact our Discord support.</div>`,
     }[st];
     const m = j.mine;
-    $("board").innerHTML = `<div class="you"><div class="you-h">Your position${m ? ` <b>#${fmt(m.rank)}</b> <small style="color:var(--mut)">(provisional, pending review)</small>` : ""}</div><div class="tbl">${m ? `<div class="tr me"><span class="rk">${m.rank}</span><span class="who">${avatar(m)}<span>${handle(m)}</span></span><span class="num hide-sm">${fmt(m.rounds)}</span><span class="num hide-sm">${m.best ? m.best.toFixed(2) + "x" : "-"}</span><span class="pnl ${cls(m.net)}">${sgn(m.net)}</span></div>` : msg}</div></div>`;
+    // prizes + total players stay visible; the old formula-based WL/mint counts and the clock don't apply any more
+    $("camp").hidden = false;
+    $("campWhen").textContent = "Season 1 · final"; $("campClock").innerHTML = `Snapshot taken<small>under review</small>`;
+    document.querySelectorAll("#camp .camp-grid > div").forEach((el, i) => { el.hidden = i < 2; });
+    $("campPlayers").textContent = fmt(j.players);
+    const you = `<div class="you"><div class="you-h">Your position${m ? ` <b>#${fmt(m.rank)}</b> <small style="color:var(--mut)">(provisional, pending review)</small>` : ""}</div><div class="tbl">${m ? `<div class="tr me"><span class="rk">${m.rank}</span><span class="who">${avatar(m)}<span>${handle(m)}</span></span><span class="num hide-sm">${fmt(m.rounds)}</span><span class="num hide-sm">${m.best ? m.best.toFixed(2) + "x" : "-"}</span><span class="pnl ${cls(m.net)}">${sgn(m.net)}</span></div>` : msg}</div></div>`;
+    const trow = (r) => `<div class="tr"><span class="rk">${r.rank}</span><span class="who">${avatar(r)}<span>${handle(r)}</span></span><span class="num hide-sm">${fmt(r.rounds)}</span><span class="num hide-sm">${r.best ? r.best.toFixed(2) + "x" : "-"}</span><span class="pnl ${cls(r.net)}">${sgn(r.net)}</span></div>`;
+    const pod = j.top.slice(0, 3), ord = pod.length === 3 ? [pod[1], pod[0], pod[2]] : pod;
+    const podium = `<div class="podium">${ord.map((r) => `<div class="pod p${r.rank}"><span class="medal">${["🥇", "🥈", "🥉"][r.rank - 1]}</span>${avatar(r)}<div class="nm">${handle(r)}</div><div class="pnl ${cls(r.net)}">${sgn(r.net)}</div><div class="sub">${cur} · ${fmt(r.rounds)} rounds</div></div>`).join("")}</div>`;
+    const list = j.top.length ? `<div class="fade"><div class="tbl"><div class="tr th"><span>#</span><span>Player</span><span class="num hide-sm">Rounds</span><span class="num hide-sm">Best</span><span class="pnl">PnL (${cur})</span></div>${j.top.map(trow).join("")}</div></div><div class="fade-note">Full rankings are under review.</div>` : "";
+    $("board").innerHTML = podium + you + list;
     return;
   }
   period = j.period;

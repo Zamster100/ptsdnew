@@ -428,7 +428,7 @@ const server = http.createServer(async (req, res) => {
     if (p === "/api/rank") return send(res, 200, seasonOver() ? { rank: null, players: 0 } : rankOf(player));
     if (p === "/api/leaderboard") {
       const lim = Math.min(500, Math.max(1, Number(u.searchParams.get("limit")) || 50));
-      if (seasonOver()) return send(res, 200, { period: "campaign", coin: CURRENCY, top: [], players: 0, campaign: null, ...ownPlace(player, user) });
+      if (seasonOver()) { const lb = leaderboard("campaign", player, 10); return send(res, 200, { period: "campaign", coin: CURRENCY, top: lb.top, players: lb.players, campaign: null, ...ownPlace(player, user) }); }
       return send(res, 200, leaderboard(u.searchParams.get("period"), player, lim));
     }
     if (p.startsWith("/api/comments")) return chat.api(req, res, p, u, body, user, send);
