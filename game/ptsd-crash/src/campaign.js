@@ -69,11 +69,10 @@ export function initCampaign({ db, currency, addCredits, hoursOf }) {
     };
   }
   // Only a player who finished the starter step can bet in claims mode.
-  const ready = (id) => { const u = q.user.get(id); return !!(u && u.wallet && u.starter_at); };
+  const ready = (id) => { const u = q.user.get(id); return !!(u && u.starter_at); };
 
   const claimStarter = db.transaction((id) => {
     const u = q.user.get(id);
-    if (!u.wallet) return { error: "Add your wallet first." };
     if (u.starter_at) return { error: "Starter credits already claimed." };
     const now = Date.now();
     q.starter.run(now, now, id);

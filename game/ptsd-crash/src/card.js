@@ -82,3 +82,66 @@ export function cardFile(root, id) {
   fs.mkdirSync(dir, { recursive: true });
   return path.join(dir, id + ".png");
 }
+
+// ---------- profile card ----------
+// A trading-card style image for a player's profile link: avatar, handle, badge tier, cycle rank and profit.
+const LEVEL = [
+  { c1: "#4a4f57", c2: "#2b2e33", txt: "#9aa1ab" },   // no Tickets
+  { c1: "#00D8C6", c2: "#08766e", txt: "#00D8C6" },   // 1
+  { c1: "#3b82f6", c2: "#1d3f85", txt: "#6ea3ff" },   // 2
+  { c1: "#a855f7", c2: "#51227a", txt: "#c58bff" },   // 3
+  { c1: "#E8A317", c2: "#7a5208", txt: "#ffc94d" },   // 5
+  { c1: "#F05150", c2: "#8c1d1d", txt: "#ff8a88" },   // 10
+];
+const pfpCache = new Map();
+async function pfpUri(url, size) {
+  if (!url) return null;
+  const hit = pfpCache.get(url);
+  if (hit && Date.now() - hit.at < 3600_000) return hit.uri;
+  try {
+    const r = await fetch(url.replace("_normal.", "_400x400."), { signal: AbortSignal.timeout(4000) });
+    if (!r.ok) throw new Error("pfp " + r.status);
+    const buf = await sharp(Buffer.from(await r.arrayBuffer())).resize(size, size, { fit: "cover" }).png().toBuffer();
+    const uri = "data:image/png;base64," + buf.toString("base64");
+    if (pfpCache.size > 300) pfpCache.clear();
+    pfpCache.set(url, { at: Date.now(), uri });
+    return uri;
+  } catch { return null; }
+}
+
+export async function renderProfileCard(root, p) {
+  const W = 1200, H = 630, font = "Inter ExtraBold, Inter, DejaVu Sans";
+  const lv = LEVEL[Math.min(5, p.nft.badge.level)], handle = p.user.username;
+  const [logo, pfp] = await Promise.all([dataUri(root, "img/ptsd-logo.webp", 0, 56), pfpUri(p.user.pfp, 260)]);
+  const letter = esc((handle[0] || "?").toUpperCase());
+  const avatar = pfp
+    ? `<image href="${pfp}" x="70" y="150" width="260" height="260" clip-path="url(#av)" preserveAspectRatio="xMidYMid slice"/>`
+    : `<rect x="70" y="150" width="260" height="260" rx="130" fill="#2b2e33"/><text x="200" y="320" text-anchor="middle" font-family="${font}" font-weight="800" font-size="130" fill="#fff">${letter}</text>`;
+  const stat = (x, label, value, color = "#fff") => `<g><text x="${x}" y="470" font-family="${font}" font-weight="800" font-size="20" fill="#6a727d" letter-spacing="2">${label}</text><text x="${x}" y="540" font-family="${font}" font-weight="800" font-size="62" fill="${color}">${value}</text></g>`;
+  const rank = p.rank ? `#${fmt(p.rank)}` : "-";
+  const handleSize = handle.length > 12 ? 52 : 68;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#15171b"/><stop offset="1" stop-color="#0b0c0e"/></linearGradient>
+    <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${lv.c1}"/><stop offset="1" stop-color="${lv.c2}"/></linearGradient>
+    <clipPath id="av"><rect x="70" y="150" width="260" height="260" rx="130"/></clipPath>
+  </defs>
+  <rect width="${W}" height="${H}" fill="url(#bg)"/>
+  <rect x="14" y="14" width="${W - 28}" height="${H - 28}" rx="34" fill="none" stroke="url(#ring)" stroke-width="6"/>
+  <g opacity=".07" stroke="#fff">${[0, 1, 2, 3, 4, 5].map((i) => `<line x1="40" x2="${W - 40}" y1="${110 + i * 90}" y2="${110 + i * 90}"/>`).join("")}</g>
+  <image href="${logo.uri}" x="52" y="40" width="${logo.w}" height="${logo.h}"/>
+  <text x="${72 + logo.w}" y="82" font-family="${font}" font-weight="800" font-size="36" fill="#fff">CRASH</text>
+  <text x="${W - 52}" y="82" text-anchor="end" font-family="${font}" font-weight="800" font-size="24" fill="#6a727d" letter-spacing="2">${esc((p.cycle ? p.cycle.name : "SEASON").toUpperCase())}</text>
+  <circle cx="200" cy="280" r="142" fill="none" stroke="url(#ring)" stroke-width="10"/>
+  ${avatar}
+  <text x="372" y="236" font-family="${font}" font-weight="800" font-size="${handleSize}" fill="#fff">@${esc(handle)}</text>
+  <rect x="372" y="262" width="${44 + p.nft.badge.name.length * 21}" height="54" rx="27" fill="url(#ring)"/>
+  <text x="${372 + 20}" y="298" font-family="${font}" font-weight="800" font-size="28" fill="#fff">${esc(p.nft.badge.name.toUpperCase())}</text>
+  <text x="372" y="362" font-family="${font}" font-weight="800" font-size="26" fill="${lv.txt}">${p.nft.count ? `${p.nft.count} Ticket${p.nft.count > 1 ? "s" : ""} held` : "No Tickets yet"}</text>
+  ${stat(70, "RANK", rank, "#fff")}
+  ${stat(420, "CYCLE PROFIT", fmt(p.score), p.score > 0 ? "#12b886" : "#fff")}
+  ${stat(850, "ROUNDS", fmt(p.rounds), "#fff")}
+  <text x="${W - 52}" y="${H - 38}" text-anchor="end" font-family="${font}" font-weight="800" font-size="22" fill="#6a727d">PTSD Crash</text>
+</svg>`;
+  return sharp(Buffer.from(svg)).png({ compressionLevel: 9 }).toBuffer();
+}

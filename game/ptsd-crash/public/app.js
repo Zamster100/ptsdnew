@@ -1,4 +1,5 @@
 import { buildPath, multAtTick, tickIndex, paidMult, crashFromR, MAX_MULT } from "./path.js?v=10";
+import { renderWalletButtons } from "./wallet.js?v=1";
 
 const $ = (id) => document.getElementById(id);
 const LWC = window.LightweightCharts;
@@ -794,6 +795,8 @@ async function refreshRank() {
 function rankSoon() { clearTimeout(rankTimer); rankTimer = setTimeout(refreshRank, 1500); }
 setInterval(() => { if (document.visibilityState === "visible") refreshRank(); }, 60000);
 let onb = null; // onboarding + claim state from the server
+let nft = null; // linked wallet + Tickets held (owner view)
+const walletSkipped = () => { try { return localStorage.getItem("ptsdWalletSkip") === "1"; } catch { return false; } };
 function setPnl() { const el = $("pnlBottom"); el.textContent = `${sgn(sessionPnl)} ${coin}`; el.className = sessionPnl > 0 ? "w" : sessionPnl < 0 ? "l" : ""; }
 
 function chipsUI() {
@@ -1446,6 +1449,7 @@ function avatar(u, cls = "av") {
 function syncUser() {
   $("signInBtn").hidden = !!user;
   $("meChip").hidden = !user;
+  $("profileBtn").hidden = !user; if (user) $("profileBtn").href = "p/" + encodeURIComponent(user.username);
   $("rankPill").hidden = true; refreshRank();
   if (user) { $("meAv").outerHTML = avatar(user, "av").replace('class="av', 'id="meAv" class="av'); $("meName").textContent = "@" + user.username; }
   $("chatForm").classList.toggle("off", !user);
@@ -1576,21 +1580,16 @@ const HOW = [
   "Every result is locked in before you bet. Nobody, not even us, can see it until the round ends. Tap any round to check it yourself.",
 ];
 const FAQ = [
-  ["How to win?", "Be at the top of the leaderboard"],
-  ["What are the prizes?", "Top 25 on the leaderboard win 1 FREE MINT and 1 Guaranteed WL spot\nTop 500 on the leaderboard win 1 Guaranteed WL spot"],
-  ["How long does this WL campaign will last?", "10 days (leaderboard snapshot on Friday October 16th at 12pm EST)"],
-  ["What is a Guaranteed WL spot?", "2 mints during the Guaranteed mint window of the PTSD Show For Fuddable Tickets Mint"],
-  ["How many Guaranteed WL spots?", "Up to 500 max Guaranteed WL spots, 1 per every 10 accounts on the leaderboard\nex. 2500 people play, 250 WLs rewarded, 5000 people play = 500 WL spots, 10,000 people play = 500 WL spots"],
-  ["How to submit a wallet when you win a Guaranteed WL spot?", "Submit the wallet you want to mint with by copy and pasting it into the onboarding flow when you first start playing the game"],
+  ["How do I win?", "Finish in the top 3 of a cycle. The leaderboard ranks everyone by the profit they made in that cycle."],
+  ["What are the prizes?", "$1,000 in cash for the top 3 of each cycle. There are two cycles, 10 days each."],
+  ["How do cycles work?", "Every cycle starts everyone from the same 10k credits, so nobody starts behind. The leaderboard is ranked by profit made in that cycle only, and a bad run counts as 0, so you are never buried."],
+  ["How do I get credits?", "You start every cycle with 10k credits. You can also claim 10k free credits every 24 hours. Claimed credits never count as profit."],
+  ["What do PTSD Ticket NFTs do?", "Holding Tickets gives you an edge. Connect a wallet that holds them and you can claim free credits more often: every 12h with 1 Ticket, 8h with 2, and 6h with 3 or more. You also unlock Ticket Holder badges that level up with how many you hold, shown on your profile."],
+  ["How do I connect my wallet?", "Open your profile and tap Connect. You sign a free message to prove the wallet is yours, nothing is sent and no funds move. It is optional, and only your Ticket count is ever public, never your wallet address."],
   ["Why do I need to connect my X account?", "That is how your progress is tracked. You can login on desktop and mobile and play 24/7."],
-  ["How many FREE MINTS?", "Max 25, 1 for every 200 participants that join."],
-  ["How to claim FREE MINTS?", "They will be airdropped to the winners after the collection sell out on mint day."],
-  ["What does the leaderboard track?", "PnL"],
-  ["Do I need to bet real money?", "No, the game uses credits. Just connect your X account and copy and paste the ETH wallet address you would like to use to mint when you win the WL"],
-  ["How much can I play?", "Forever, until you run out of credits"],
-  ["How do I get credits?", "Every cycle you start with 10k credits. Every 24 hours you can claim another 10k credits. Claimed credits never count as profit."],
-  ["How do cycles work?", "There are two 10 day cycles. Everyone starts each cycle with the same 10k credits, and the leaderboard is ranked by profit made in that cycle. A bad run counts as 0, so you are never buried. The top 3 of each cycle share the $1,000 cash prize."],
-  ["What if I don’t get to the 10% of the leaderboard?", "Then you have a skill issue"],
+  ["What does the leaderboard track?", "Profit (PnL) in the current cycle. Free claims do not count."],
+  ["Do I need to bet real money?", "No, the game uses credits. Just sign in with X."],
+  ["How much can I play?", "As much as your credits allow. Run out and your next free claim is never more than 24 hours away."],
 ];
 $("rules").innerHTML = HOW.map((t) => `<li>${esc(t)}</li>`).join("");
 $("howList").innerHTML = HOW.map((t) => `<li>${esc(t)}</li>`).join("");
@@ -1601,7 +1600,7 @@ let onbStep = null, onbMode = "flow";
 function nextOnbStep() {
   if (!user) return "x";
   if (!cfg || !cfg.claims || !onb) return null;
-  if (!onb.wallet) return "wallet";
+  if (cfg.nft && cfg.nft.enabled && !(nft && nft.address) && !walletSkipped()) return "wallet";
   if (!onb.starter) return "social";
   if (!onb.onboarded) return "how";
   return null;
@@ -1639,7 +1638,14 @@ function showOnb(step, mode = "flow") {
   // the X step and the how-to-play screen can be closed; wallet + social are needed to play
   $("onbX").hidden = !(step === "x" || mode === "info");
   if (step === "x") { const demo = cfg && cfg.login === "demo"; $("onbXGo").hidden = demo; $("onbDemo").hidden = !demo; $("onbXErr").textContent = ""; }
-  if (step === "wallet") { $("walletErr").textContent = ""; setTimeout(() => $("walletIn").focus(), 80); }
+  if (step === "wallet") {
+    $("walletErr").textContent = "";
+    renderWalletButtons($("walletList"), {
+      api,
+      onError: (m) => ($("walletErr").textContent = m),
+      onDone: (w) => { nft = w; const n = (w && w.count) || 0; toast(IMG.me, n ? `Wallet connected. <b>${n}</b> Ticket${n > 1 ? "s" : ""} found, free claims every <b>${w.claimHours}h</b>.` : "Wallet connected. No Tickets found in it yet."); syncClaim(); showOnb(); },
+    });
+  }
   if (step === "claim") {
     document.querySelectorAll(".dailyAmt").forEach((e) => (e.textContent = fmt((cfg && cfg.daily || 10000) / 1000) + "k"));
     $("claimOpen").href = CLAIM_POST;
@@ -1670,13 +1676,7 @@ $("onbDemo").addEventListener("submit", async (e) => {
   try { await api("auth/demo", { username: $("onbUser").value }); location.reload(); }
   catch (err) { $("onbXErr").textContent = err.message; }
 });
-$("onbWallet").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  try {
-    const j = await api("wallet", { address: $("walletIn").value.trim() });
-    onb = j.state; syncClaim(); showOnb();
-  } catch (err) { $("walletErr").textContent = err.message; }
-});
+$("walletSkip").onclick = () => { try { localStorage.setItem("ptsdWalletSkip", "1"); } catch {} showOnb(); };
 // We can't check they did it, but the claim only unlocks after they've opened the follow link (or the post, when there is one).
 const taskDone = new Set();
 for (const id of ["taskFollow", "taskPost"]) $(id).addEventListener("click", () => {
@@ -1737,7 +1737,7 @@ $("claimGo").onclick = async () => {
     sfx.big(); toast(IMG.me, `<b>+${fmt(j.amount)}</b> free credits. Go get rekt.`);
   } catch (err) { refreshMe(); $("claimErr").textContent = err.message; }
 };
-async function refreshMe() { try { const j = await api("me"); onb = j.onb || null; setBalance(j.balances[coin] ?? 0); syncClaim(); } catch {} }
+async function refreshMe() { try { const j = await api("me"); onb = j.onb || null; nft = j.nft || null; setBalance(j.balances[coin] ?? 0); syncClaim(); } catch {} }
 
 // ---------------- intro song on page open ----------------
 let introDone = false;
@@ -1784,7 +1784,7 @@ async function boot() {
     $("amtIn").value = fmt(lim.min); markChip();
     const me = await api("me");
     user = me.user || null;
-    onb = me.onb || null;
+    onb = me.onb || null; nft = me.nft || null;
     syncUser(); syncMute(); syncClaim();
     showDebt();
     setBalance(me.balances[coin] ?? 0);

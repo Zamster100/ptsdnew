@@ -475,3 +475,12 @@ a.tb-btn { text-decoration: none; display: inline-flex; align-items: center; }
 }
 @media (max-width: 520px) { .tb .tb-item, .tb .tb-sep { display: none; } .tb { gap: 6px; } }
 .onb-task[hidden] { display: none; }
+
+/* connect wallet (onboarding + profile) */
+.wl-list { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+.wl-btn { display: flex; align-items: center; justify-content: center; gap: 10px; border: 0; background: var(--up); color: #fff; font-weight: 800; font-size: 16px; border-radius: 999px; padding: 13px 16px; box-shadow: 0 3px 0 var(--up-d); cursor: pointer; }
+.wl-btn:disabled { opacity: .5; box-shadow: none; cursor: default; }
+.wl-btn img { border-radius: 6px; }
+.wl-none { font-size: 14px; line-height: 1.5; color: var(--mut); text-align: left; }
+.wl-none a { color: var(--teal, #00D8C6); }
+.wl-skip { display: block; margin: 12px auto 0; background: none; border: 0; color: var(--mut); font-weight: 700; font-size: 14px; text-decoration: underline; cursor: pointer; }

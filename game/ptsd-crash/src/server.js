@@ -8,11 +8,12 @@ import crypto from "node:crypto";
 import { fileURLToPath } from "node:url";
 import Database from "better-sqlite3";
 import { buildPath, paidMult, timeForMult, crashFromR, MAX_MULT, EDGE, CAP_HOLD_MS } from "../public/path.js";
-import { renderCard, cardFile } from "./card.js";
+import { renderCard, cardFile, renderProfileCard } from "./card.js";
 import { initAuth } from "./auth.js";
 import { initChat } from "./chat.js";
 import { initCampaign } from "./campaign.js";
 import { initCycles } from "./cycles.js";
+import { initWallet, badgeOf, TIERS } from "./wallet.js";
 import { startBg, cached } from "./bg.js";
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
@@ -330,8 +331,8 @@ const SEASON_END = Date.parse(process.env.SEASON_END || "") || 1792190339106;
 const betsOff = () => !cycles.current();
 const BOARD_TTL_MS = Number(process.env.BOARD_CACHE_MS) || 10_000;
 const boardCache = new Map(); // `${period}:${start}` -> { raw, rows, pub }
-function cycleRows() {
-  const c = cycles.shown() || cycles.next();
+function cycleRows() { return cycleRowsFor(cycles.shown() || cycles.next()); }
+function cycleRowsFor(c) {
   if (!c) return { cycle: null, hit: { rows: [], pub: new Map() } };
   const key = "cycle:" + c.id;
   const raw = cached("board:" + key, q.cycleBoard.source, [CURRENCY, c.start, c.end], BOARD_TTL_MS, null);
@@ -419,6 +420,75 @@ function rankOf(player) {
   return { rank: i >= 0 ? i + 1 : null, players: rows.length };
 }
 
+// ---------- profiles ----------
+// Public by default: handle, avatar, game stats, Ticket count and badge. Never the wallet address or balance.
+let userByName = null; // prepared on first use: crash_users is created by initAuth further down
+const findUser = (h) => (userByName ||= db.prepare("SELECT id, created FROM crash_users WHERE lower(username)=? ORDER BY (provider='x') DESC, seen DESC LIMIT 1")).get(h);
+const profCache = new Map(); // id -> { at, data }
+function profileOf(handle) {
+  const u = findUser(String(handle || "").toLowerCase());
+  if (!u || auth.blockedIds().has(u.id)) return null;
+  const hit = profCache.get(u.id);
+  if (hit && Date.now() - hit.at < 20_000) return hit.data;
+  const rankIn = (c) => {
+    const rows = cycleRowsFor(c).hit.rows, i = rows.findIndex((r) => r.player === u.id);
+    return { rank: i >= 0 ? i + 1 : null, players: rows.length, row: i >= 0 ? rows[i] : null };
+  };
+  const cur = cycles.shown() || cycles.next();
+  const now = rankIn(cur), r = now.row;
+  const count = wallet.countOf(u.id), badge = badgeOf(count);
+  const nextTier = [...TIERS].reverse().find((t) => t.min > count) || null;
+  const s = statsOf(u.id, CURRENCY);
+  const data = {
+    user: auth.publicUser(u.id), joined: u.created,
+    cycle: cur && { id: cur.id, name: cur.name, start: cur.start, end: cur.end, live: !!cycles.current(), upcoming: cur.start > Date.now() },
+    rank: now.rank, players: now.players,
+    score: r ? r.score : 0, play: r ? Math.round(Math.sqrt(r.score) * 100) / 100 : 0, net: r ? r.net : 0, rounds: r ? r.rounds : 0, wins: r ? r.wins : 0, best: r ? r.best : 0, bestWin: r ? r.bestWin : 0,
+    lifetime: { rounds: s.rounds, wins: s.wins, wagered: s.wagered, bestMult: s.bestMult, bestStreak: s.bestStreak },
+    nft: { count, badge, next: nextTier && { name: nextTier.name, min: nextTier.min, level: nextTier.level }, tiers: [...TIERS].reverse().map((t) => ({ min: t.min, level: t.level, name: t.name })) },
+    history: cycles.list.filter((c) => c.end <= Date.now()).map((c) => { const x = rankIn(c); return { id: c.id, name: c.name, rank: x.rank, players: x.players, score: x.row ? x.row.score : 0 }; }),
+  };
+  if (profCache.size > 500) profCache.clear();
+  profCache.set(u.id, { at: Date.now(), data });
+  return data;
+}
+// /p/<handle> is the page (people) or a link preview with the card (bots); /p/<handle>.png is the card.
+const cardCache = new Map(); // handle -> { at, buf }
+async function serveProfile(req, res, rest) {
+  const m = /^([A-Za-z0-9_]{1,15})(\.png)?$/.exec(rest);
+  const prof = m && profileOf(m[1]);
+  if (!prof) { res.writeHead(302, { location: PLAY_URL }); return res.end(); }
+  const handle = prof.user.username, url = `${PUBLIC_URL}/p/${handle}`;
+  if (m[2]) {
+    const key = handle.toLowerCase();
+    let c = cardCache.get(key);
+    if (!c || Date.now() - c.at > 5 * 60_000) {
+      c = { at: Date.now(), buf: await renderProfileCard(ROOT, prof) };
+      if (cardCache.size > 200) cardCache.clear();
+      cardCache.set(key, c);
+    }
+    res.writeHead(200, { "content-type": "image/png", "cache-control": "public, max-age=300" });
+    return res.end(c.buf);
+  }
+  if (!BOTS.test(req.headers["user-agent"] || "")) {
+    // <base> makes the page's relative links (style.css, api/...) work from /p/<handle> under any CRASH_BASE.
+    const page = fs.readFileSync(path.join(ROOT, "public/profile.html"), "utf8").replace("<!--BASE-->", `<base href="${BASE}/">`);
+    res.writeHead(200, { "content-type": "text/html; charset=utf-8", "cache-control": "no-cache" });
+    return res.end(page);
+  }
+  const title = `@${handle} on PTSD Crash`;
+  const desc = [prof.rank ? `Rank #${prof.rank} of ${prof.players.toLocaleString("en-US")}` : null, prof.nft.count ? `${prof.nft.badge.name} (${prof.nft.count} Ticket${prof.nft.count > 1 ? "s" : ""})` : null, "Gen wealth awaits."].filter(Boolean).join(" · ");
+  const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+  const html = `<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)}</title>
+<meta property="og:type" content="website"><meta property="og:site_name" content="PTSD Crash"><meta property="og:url" content="${url}">
+<meta property="og:title" content="${esc(title)}"><meta property="og:description" content="${esc(desc)}">
+<meta property="og:image" content="${url}.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${esc(title)}"><meta name="twitter:description" content="${esc(desc)}"><meta name="twitter:image" content="${url}.png">
+</head><body><a href="${PLAY_URL}">Play PTSD Crash</a></body></html>`;
+  res.writeHead(200, { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=300" });
+  res.end(html);
+}
+
 // ---------- http ----------
 function send(res, code, obj) {
   if (res.writableEnded) return;
@@ -434,8 +504,9 @@ async function readJson(req) {
 
 const auth = initAuth({ db, base: BASE, publicUrl: PUBLIC_URL, test: TEST });
 const chat = initChat({ db, auth });
+const wallet = initWallet({ db });
 const campaign = initCampaign({
-  db, currency: CURRENCY,
+  db, currency: CURRENCY, hoursOf: wallet.claimHoursOf,
   addCredits: (player, n) => { balanceOf(player, CURRENCY); q.setBal.run(player, CURRENCY, (q.bal.get(player, CURRENCY)?.balance || 0) + n); },
 });
 
@@ -463,21 +534,27 @@ const server = http.createServer(async (req, res) => {
     const u = new URL(req.url, "http://x");
     let p = u.pathname;
     if (p.startsWith("/win/")) return await serveWin(req, res, p.slice(5));
+    if (p.startsWith("/p/")) return await serveProfile(req, res, p.slice(3));
     if (BASE && p === BASE) { res.writeHead(301, { location: BASE + "/" }); return res.end(); }
     if (BASE && p.startsWith(BASE + "/")) p = p.slice(BASE.length);
     if (p.startsWith("/win/")) return await serveWin(req, res, p.slice(5));
+    if (p.startsWith("/p/")) return await serveProfile(req, res, p.slice(3));
     if (p.startsWith("/auth/")) return await auth.route(req, res, p, u);
     if (!p.startsWith("/api/")) {
       if (p === "/leaderboard") return serveStatic(res, "leaderboard.html");
       return serveStatic(res, p === "/" ? "index.html" : p);
     }
 
+    if (p.startsWith("/api/profile/")) {
+      const prof = profileOf(decodeURIComponent(p.slice(13)));
+      return prof ? send(res, 200, prof) : send(res, 404, { error: "No such player." });
+    }
     const body = req.method === "POST" ? await readJson(req) : null;
     const user = auth.userOf(req);
     const player = user ? user.id : null;
 
     if (p === "/api/config") {
-      return send(res, 200, { test: TEST && !CLAIMS, coins: COINS, maxMult: MAX_MULT, edge: EDGE, login: auth.mode, support: auth.supportUrl, seasonOver: betsOff(), ...campaign.publicCfg(), ...cycles.publicCfg(), serverNow: Date.now() });
+      return send(res, 200, { test: TEST && !CLAIMS, coins: COINS, maxMult: MAX_MULT, edge: EDGE, login: auth.mode, support: auth.supportUrl, seasonOver: betsOff(), ...campaign.publicCfg(), ...cycles.publicCfg(), nft: { enabled: wallet.enabled, contract: wallet.contract }, serverNow: Date.now() });
     }
     if (p.startsWith("/api/auth/")) return await auth.api(req, res, p, body, send);
     if (p === "/api/rank") return send(res, 200, betsOff() && !cycles.started() ? { rank: null, players: 0 } : rankOf(player));
@@ -512,18 +589,21 @@ const server = http.createServer(async (req, res) => {
       return send(res, 403, auth.blockedBody());
     }
     cycles.touch(player);
+    if (p.startsWith("/api/wallet/")) { const out = await wallet.api(req, res, p, body, user, send); if (out !== null) return; }
     if (p === "/api/me") {
+      await wallet.refresh(player);
       const coins = Object.keys(COINS);
       const open = q.open.get(player);
       if (open && overdue(open)) endRound(open.id);
       const still = q.open.get(player);
       return send(res, 200, {
-        user: auth.publicUser(player), onb: campaign.stateOf(player),
+        user: auth.publicUser(player), onb: campaign.stateOf(player), nft: wallet.stateOf(player),
         balances: Object.fromEntries(coins.map((c) => [c, balanceOf(player, c)])),
         open: still ? publicRound(still) : null,
         recent: q.recent.all(player).map(histRow), nextCommit: nextSeed(player).commit_hash, serverNow: Date.now(),
       });
     }
+    if (p === "/api/claim") await wallet.refresh(player, 60_000); // the claim timer follows the Tickets held right now
     {
       const out = campaign.api(req, res, p, body, user, send, () => balanceOf(player, CURRENCY));
       if (out !== null) return;

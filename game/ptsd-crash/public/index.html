@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&family=Manrope:wght@500;600;700;800&family=Nunito:wght@700;800;900&family=Rubik+Glitch&display=swap" rel="stylesheet">
 <link rel="icon" href="img/ptsd-logo.webp">
-<link rel="stylesheet" href="style.css?v=50">
+<link rel="stylesheet" href="style.css?v=51">
 </head>
 <body>
 <div class="boot" id="boot">
@@ -39,6 +39,7 @@
     <span class="tb-sep"></span><span class="tb-item tb-hide-sm"><i>ƒ</i> Indicators</span>
     <span class="tb-item tb-hide-sm">New Layout</span>
     <span class="tb-grow"></span>
+    <a class="tb-btn" id="profileBtn" href="#" hidden>👤<span> Profile</span></a>
     <button class="tb-btn" id="statsBtn" type="button">📊<span> Stats</span></button>
     <button class="tb-btn" id="howBtn" type="button">❓<span> How to play</span></button>
     <button class="tb-btn" id="faqBtn" type="button">📖<span> FAQ</span></button>
@@ -186,14 +187,12 @@
     </section>
 
     <section class="onb-step" data-step="wallet">
-      <div class="onb-label">Step 2 · Your mint wallet</div>
-      <h2>Drop your ETH wallet</h2>
-      <p>Copy and paste the ETH wallet address you want to mint with. If you win a WL spot, this is the wallet that gets it.</p>
-      <form class="onb-wallet" id="onbWallet" autocomplete="off">
-        <input id="walletIn" placeholder="Your wallet address" spellcheck="false" autocapitalize="off" maxlength="200">
-        <button type="submit">Save wallet</button>
-      </form>
+      <div class="onb-label">Step 2 · Wallet (optional)</div>
+      <h2>Connect your wallet</h2>
+      <p>This step is optional, you can play without it. <b>For NFT boosts, connect a wallet holding PTSD Ticket NFTs.</b> The more Tickets you hold, the more often you can claim free credits. Connecting is free, you only sign a message.</p>
+      <div class="wl-list" id="walletList"></div>
       <div class="sign-err" id="walletErr"></div>
+      <button class="wl-skip" id="walletSkip" type="button">Skip for now</button>
     </section>
 
     <section class="onb-step" data-step="social">
@@ -264,6 +263,6 @@
 <div class="foot">18+ · play responsibly</div>
 
 <script src="vendor/lwc.js"></script>
-<script type="module" src="app.js?v=75"></script>
+<script type="module" src="app.js?v=77"></script>
 </body>
 </html>
