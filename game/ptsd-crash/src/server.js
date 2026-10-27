@@ -14,6 +14,7 @@ import { initChat } from "./chat.js";
 import { initCampaign } from "./campaign.js";
 import { initCycles } from "./cycles.js";
 import { initWallet, badgeOf, TIERS } from "./wallet.js";
+import { initReferrals } from "./referrals.js";
 import { startBg, cached } from "./bg.js";
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
@@ -337,10 +338,14 @@ function cycleRowsFor(c) {
   const key = "cycle:" + c.id;
   const raw = cached("board:" + key, q.cycleBoard.source, [CURRENCY, c.start, c.end], BOARD_TTL_MS, null);
   let hit = boardCache.get(key);
-  if (!hit || hit.raw !== raw) {
+  if (!hit || hit.raw !== raw || hit.v !== referrals.version() || Date.now() - hit.at > BOARD_TTL_MS) {
     const blocked = auth.blockedIds();
-    const all = raw || [];
-    hit = { raw, rows: blocked.size ? all.filter((r) => !blocked.has(r.player)) : all, pub: new Map() };
+    // Qualified referrals add a fixed amount to the referrer's cycle profit (see referrals.js).
+    const bonus = referrals.bonusMap(c.id), seen = new Set();
+    const all = (raw || []).map((r) => { seen.add(r.player); const b = bonus.get(r.player) || 0; return { ...r, bonus: b, score: Math.max(0, r.net + b) }; });
+    for (const [player, b] of bonus) if (!seen.has(player)) all.push({ player, net: 0, rounds: 0, wagered: 0, wins: 0, best: 0, bestWin: 0, bonus: b, score: b });
+    all.sort((a, b) => b.score - a.score || b.wagered - a.wagered);
+    hit = { raw, v: referrals.version(), at: Date.now(), rows: blocked.size ? all.filter((r) => !blocked.has(r.player)) : all, pub: new Map() };
     if (boardCache.size > 20) boardCache.clear();
     boardCache.set(key, hit);
   }
@@ -351,7 +356,7 @@ function cycleLeaderboard(player, limit = 50) {
   const rows = hit.rows;
   const pub = (id) => { let p = hit.pub.get(id); if (!p) hit.pub.set(id, (p = auth.publicUser(id))); return p; };
   // score = PnL floored at 0; play = the Play points that feed the cycle score (sqrt keeps one lucky run from dwarfing everything else).
-  const row = (r, i) => ({ rank: i + 1, ...pub(r.player), me: r.player === player, nfts: wallet.countOf(r.player), score: r.score, play: Math.round(Math.sqrt(r.score) * 100) / 100, net: r.net, rounds: r.rounds, wins: r.wins, wagered: r.wagered, best: r.best, bestWin: r.bestWin });
+  const row = (r, i) => ({ rank: i + 1, ...pub(r.player), me: r.player === player, nfts: wallet.countOf(r.player), score: r.score, bonus: r.bonus || 0, play: Math.round(Math.sqrt(Math.max(0, r.net)) * 100) / 100, net: r.net, rounds: r.rounds, wins: r.wins, wagered: r.wagered, best: r.best, bestWin: r.bestWin });
   const i = player ? rows.findIndex((r) => r.player === player) : -1;
   return {
     period: "cycle", coin: CURRENCY, top: rows.slice(0, limit).map(row), mine: i >= 0 ? row(rows[i], i) : null, players: rows.length,
@@ -443,7 +448,7 @@ function profileOf(handle) {
     user: auth.publicUser(u.id), joined: u.created,
     cycle: cur && { id: cur.id, name: cur.name, start: cur.start, end: cur.end, live: !!cycles.current(), upcoming: cur.start > Date.now() },
     rank: now.rank, players: now.players,
-    score: r ? r.score : 0, play: r ? Math.round(Math.sqrt(r.score) * 100) / 100 : 0, net: r ? r.net : 0, rounds: r ? r.rounds : 0, wins: r ? r.wins : 0, best: r ? r.best : 0, bestWin: r ? r.bestWin : 0,
+    score: r ? r.score : 0, bonus: r ? r.bonus || 0 : 0, referrals: referrals.countOf(u.id), play: r ? Math.round(Math.sqrt(Math.max(0, r.net)) * 100) / 100 : 0, net: r ? r.net : 0, rounds: r ? r.rounds : 0, wins: r ? r.wins : 0, best: r ? r.best : 0, bestWin: r ? r.bestWin : 0,
     lifetime: { rounds: s.rounds, wins: s.wins, wagered: s.wagered, bestMult: s.bestMult, bestStreak: s.bestStreak },
     nft: { count, badge, next: nextTier && { name: nextTier.name, min: nextTier.min, level: nextTier.level }, tiers: [...TIERS].reverse().map((t) => ({ min: t.min, level: t.level, name: t.name })) },
     history: cycles.list.filter((c) => c.end <= Date.now()).map((c) => { const x = rankIn(c); return { id: c.id, name: c.name, rank: x.rank, players: x.players, score: x.row ? x.row.score : 0 }; }),
@@ -504,10 +509,12 @@ async function readJson(req) {
 
 const auth = initAuth({ db, base: BASE, publicUrl: PUBLIC_URL, test: TEST });
 const chat = initChat({ db, auth });
+// Credits that go straight to the balance (claims, bonuses). They never touch crash_rounds, so they are never PnL.
+function addCredits(player, n) { balanceOf(player, CURRENCY); q.setBal.run(player, CURRENCY, (q.bal.get(player, CURRENCY)?.balance || 0) + n); }
 const wallet = initWallet({ db });
 const campaign = initCampaign({
   db, currency: CURRENCY, bonusOf: wallet.bonusHoursOf,
-  addCredits: (player, n) => { balanceOf(player, CURRENCY); q.setBal.run(player, CURRENCY, (q.bal.get(player, CURRENCY)?.balance || 0) + n); },
+  addCredits,
 });
 
 const cycles = initCycles({
@@ -516,6 +523,8 @@ const cycles = initCycles({
   setBalance: (player, n) => q.setBal.run(player, CURRENCY, n),
   hasOpen: (player) => !!q.open.get(player),
 });
+
+const referrals = initReferrals({ db, cycles, addCredits });
 
 const MIME = { ".html": "text/html; charset=utf-8", ".json": "application/json", ".js": "text/javascript", ".css": "text/css", ".png": "image/png", ".webp": "image/webp", ".svg": "image/svg+xml", ".mp3": "audio/mpeg", ".woff2": "font/woff2" };
 function serveStatic(res, rel) {
@@ -574,7 +583,7 @@ const server = http.createServer(async (req, res) => {
       } catch {}
       return send(res, 200, { ok: true });
     }
-    if (betsOff() && req.method === "POST" && ["/api/buy", "/api/wallet", "/api/claim", "/api/onboarded"].includes(p)) {
+    if (betsOff() && req.method === "POST" && ["/api/buy", "/api/wallet", "/api/claim", "/api/onboarded", "/api/referral/apply"].includes(p)) {
       const nx = cycles.next();
       return send(res, 403, { error: nx ? `No cycle is running. ${nx.name} starts soon.` : "Season 1 of PTSD Crash is over. Results are in the leaderboard.", seasonOver: true });
     }
@@ -590,6 +599,7 @@ const server = http.createServer(async (req, res) => {
     }
     cycles.touch(player);
     if (p.startsWith("/api/wallet/")) { const out = await wallet.api(req, res, p, body, user, send); if (out !== null) return; }
+    if (p.startsWith("/api/referral/")) { const out = referrals.api(req, res, p, body, user, send); if (out !== null) return; }
     if (p === "/api/me") {
       await wallet.refresh(player);
       const coins = Object.keys(COINS);
@@ -597,7 +607,7 @@ const server = http.createServer(async (req, res) => {
       if (open && overdue(open)) endRound(open.id);
       const still = q.open.get(player);
       return send(res, 200, {
-        user: auth.publicUser(player), onb: campaign.stateOf(player), nft: wallet.stateOf(player),
+        user: auth.publicUser(player), onb: campaign.stateOf(player), nft: wallet.stateOf(player), ref: referrals.stateOf(player),
         balances: Object.fromEntries(coins.map((c) => [c, balanceOf(player, c)])),
         open: still ? publicRound(still) : null,
         recent: q.recent.all(player).map(histRow), nextCommit: nextSeed(player).commit_hash, serverNow: Date.now(),

@@ -796,6 +796,23 @@ function rankSoon() { clearTimeout(rankTimer); rankTimer = setTimeout(refreshRan
 setInterval(() => { if (document.visibilityState === "visible") refreshRank(); }, 60000);
 let onb = null; // onboarding + claim state from the server
 let nft = null; // linked wallet + Tickets held (owner view)
+let ref = null; // referral state (owner view)
+// A shared link (?ref=handle) is remembered until the player has signed in and can use it.
+try { const c = new URLSearchParams(location.search).get("ref"); if (c && /^[A-Za-z0-9_]{1,15}$/.test(c)) localStorage.setItem("ptsdRef", c); } catch {}
+const savedRef = () => { try { return localStorage.getItem("ptsdRef") || ""; } catch { return ""; } };
+const clearRef = () => { try { localStorage.removeItem("ptsdRef"); } catch {} };
+async function useRef(code, quiet) {
+  try {
+    const j = await api("referral/apply", { code });
+    ref = j.ref; clearRef(); await refreshMe();
+    toast(IMG.me, `Referral code applied. <b>+${fmt(j.bonus)}</b> bonus credits from <b>@${esc(j.by)}</b>.`);
+    return true;
+  } catch (e) {
+    if (!quiet) { const el = $("refErr"); if (el) el.textContent = e.message; }
+    if (e.status === 400 || e.status === 404) clearRef(); // not usable (already used, played, unknown): stop retrying
+    return false;
+  }
+}
 const walletSkipped = () => { try { return localStorage.getItem("ptsdWalletSkip") === "1"; } catch { return false; } };
 function setPnl() { const el = $("pnlBottom"); el.textContent = `${sgn(sessionPnl)} ${coin}`; el.className = sessionPnl > 0 ? "w" : sessionPnl < 0 ? "l" : ""; }
 
@@ -1574,6 +1591,7 @@ const FAQ = [
   ["How do I get credits?", "You start every cycle with 10k credits. You can also claim 10k free credits every 24 hours. Claimed credits never count as profit."],
   ["What do PTSD Ticket NFTs do?", "Holding Tickets gives you an edge. Connect a wallet that holds them to unlock NFT bonus credits, an extra 10k free claim: once a day with 1 Ticket, twice a day with 2, three times a day with 3 or more. You also unlock Ticket Holder badges that level up with how many you hold, shown on your profile."],
   ["How do I connect my wallet?", "Open your profile and tap Connect. You sign a free message to prove the wallet is yours, nothing is sent and no funds move. It is optional, and only your Ticket count is ever public, never your wallet address."],
+  ["How do referrals work?", "Share your link from your profile. Anyone who joins with your code gets +10k bonus credits on top of their 10k. Each friend who plays at least 5 rounds with a real X account adds +5,000 to your cycle profit, up to 20 friends."],
   ["Why do I need to connect my X account?", "That is how your progress is tracked. You can login on desktop and mobile and play 24/7."],
   ["What does the leaderboard track?", "Profit (PnL) in the current cycle. Free claims do not count."],
   ["Do I need to bet real money?", "No, the game uses credits. Just sign in with X."],
@@ -1648,6 +1666,9 @@ function showOnb(step, mode = "flow") {
     $("claimOpen").classList.remove("done"); $("claimGo").disabled = true; $("claimErr").textContent = "";
   }
   if (step === "social") {
+    $("refErr").textContent = "";
+    $("refForm").hidden = !(ref && ref.canApply);
+    if (!$("refIn").value) $("refIn").value = savedRef();
     const handle = (cfg && cfg.handle) || "ptsdshow";
     $("handleTxt").textContent = "@" + handle;
     $("taskFollow").href = `https://x.com/intent/follow?screen_name=${encodeURIComponent(handle)}`;
@@ -1671,6 +1692,12 @@ $("onbDemo").addEventListener("submit", async (e) => {
   e.preventDefault();
   try { await api("auth/demo", { username: $("onbUser").value }); location.reload(); }
   catch (err) { $("onbXErr").textContent = err.message; }
+});
+$("refForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const code = $("refIn").value.trim();
+  if (!code) { $("refErr").textContent = "Enter a referral code."; return; }
+  if (await useRef(code, false)) $("refForm").hidden = true;
 });
 $("walletSkip").onclick = () => { try { localStorage.setItem("ptsdWalletSkip", "1"); } catch {} showOnb(); };
 // We can't check they did it, but the claim only unlocks after they've opened the follow link (or the post, when there is one).
@@ -1754,7 +1781,7 @@ $("claimGo").onclick = async () => {
     sfx.big(); toast(IMG.me, `<b>+${fmt(j.amount)}</b> free credits. Go get rekt.`);
   } catch (err) { refreshMe(); $("claimErr").textContent = err.message; }
 };
-async function refreshMe() { try { const j = await api("me"); onb = j.onb || null; nft = j.nft || null; setBalance(j.balances[coin] ?? 0); syncClaim(); } catch {} }
+async function refreshMe() { try { const j = await api("me"); onb = j.onb || null; nft = j.nft || null; ref = j.ref || null; setBalance(j.balances[coin] ?? 0); syncClaim(); } catch {} }
 
 // ---------------- intro song on page open ----------------
 let introDone = false;
@@ -1801,8 +1828,9 @@ async function boot() {
     $("amtIn").value = fmt(lim.min); markChip();
     const me = await api("me");
     user = me.user || null;
-    onb = me.onb || null; nft = me.nft || null;
+    onb = me.onb || null; nft = me.nft || null; ref = me.ref || null;
     syncUser(); syncMute(); syncClaim();
+    if (user && ref && ref.canApply && savedRef() && !(cfg && cfg.seasonOver)) useRef(savedRef(), true);
     setBalance(me.balances[coin] ?? 0);
     history = me.recent || []; renderHistory(); setPnl();
     if (user) loadStats();

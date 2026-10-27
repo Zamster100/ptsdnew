@@ -106,13 +106,31 @@ async function load() {
         <div class="pf-stat"><b>${p.best ? p.best.toFixed(2) + "x" : "-"}</b><span>Best multiplier</span></div>
         <div class="pf-stat"><b>${fmt(p.lifetime.bestStreak)}</b><span>Best win streak</span></div>
       </div>
+      ${p.bonus ? `<div class="pf-sub" style="margin-top:12px">Cycle profit includes <b>+${fmt(p.bonus)}</b> from ${fmt(p.referrals)} referral${p.referrals === 1 ? "" : "s"}.</div>` : ""}
       <div class="pf-share"><a href="${share}" target="_blank" rel="noopener noreferrer">Share on X</a><button class="alt" id="copyBtn" type="button">Copy link</button></div>
     </div>
     <div class="pf-sec"><h2>Ticket levels</h2><p class="mut">Hold PTSD Ticket NFTs to level up. Tickets also unlock the NFT bonus: an extra 10k free credits claim, once a day with 1 Ticket, twice with 2, three times with 3 or more.</p><div class="ladder">${rungs}</div><p class="mut" style="margin-top:10px">${next}</p></div>
-    ${mine ? `<div class="pf-sec" id="own"></div>` : ""}
+    ${mine ? `<div class="pf-sec" id="own"></div><div class="pf-sec" id="refs"></div>` : ""}
     ${hist}`;
   $("copyBtn").onclick = async () => { try { await navigator.clipboard.writeText(url); $("copyBtn").textContent = "Copied!"; setTimeout(() => ($("copyBtn").textContent = "Copy link"), 1500); } catch { prompt("Copy this link", url); } };
-  if (mine) ownPanel();
+  if (mine) { ownPanel(); refPanel(); }
+}
+
+// Only the owner sees this: referral link, how it pays, and who they brought in.
+async function refPanel() {
+  const box = $("refs");
+  let m;
+  try { m = await api("me"); } catch { return; }
+  const r = m.ref;
+  if (!r) return;
+  const link = new URL("./?ref=" + encodeURIComponent(r.code), document.baseURI).href;
+  const rows = r.refs.length ? `<table class="hist">${r.refs.map((x) => `<tr><td>@${esc(x.username)}</td><td>${esc(x.status)}</td></tr>`).join("")}</table>` : `<p class="mut">No one has used your code yet.</p>`;
+  box.innerHTML = `<h2>Refer friends</h2>
+    <p>Each friend who joins with your link gets <b>+${fmt(r.bonus)}</b> bonus credits. When they play at least <b>${r.minRounds}</b> rounds with a real X account, you get <b>+${fmt(r.points)}</b> added to your cycle profit. Up to <b>${r.max}</b> friends.</p>
+    <div class="own-row"><code style="overflow:hidden;text-overflow:ellipsis;max-width:100%">${esc(link)}</code></div>
+    <div class="pf-share"><button id="copyRef" type="button">Copy my link</button><a id="shareRef" target="_blank" rel="noopener noreferrer" href="https://x.com/intent/tweet?text=${encodeURIComponent("Join me on PTSD Crash. Use my link for +" + fmt(r.bonus) + " bonus credits.")}&url=${encodeURIComponent(link)}">Share on X</a></div>
+    <p class="mut" style="margin-top:12px"><b>${r.counted}</b> of ${r.max} counted · ${r.pending} still playing</p>${rows}`;
+  $("copyRef").onclick = async () => { try { await navigator.clipboard.writeText(link); $("copyRef").textContent = "Copied!"; setTimeout(() => ($("copyRef").textContent = "Copy my link"), 1500); } catch { prompt("Copy this link", link); } };
 }
 
 // Only the owner sees this: the wallet link and the claim timer. The address never appears on the public page.

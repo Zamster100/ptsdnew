@@ -486,3 +486,4 @@ a.tb-btn { text-decoration: none; display: inline-flex; align-items: center; }
 .wl-list[hidden], .wl-skip[hidden] { display: none; }
 a.dbar-icon { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
 a.dbar-icon[hidden] { display: none; }
+.onb-wallet[hidden] { display: none; }

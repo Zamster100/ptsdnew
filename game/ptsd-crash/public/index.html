@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&family=Manrope:wght@500;600;700;800&family=Nunito:wght@700;800;900&family=Rubik+Glitch&display=swap" rel="stylesheet">
 <link rel="icon" href="img/ptsd-logo.webp">
-<link rel="stylesheet" href="style.css?v=54">
+<link rel="stylesheet" href="style.css?v=55">
 </head>
 <body>
 <div class="boot" id="boot">
@@ -204,6 +204,11 @@
       </div>
       <button class="onb-go" id="claimStarter" type="button" disabled>Claim <span class="startAmt">100k</span> credits</button>
       <div class="sign-err" id="starterErr"></div>
+      <form class="onb-wallet" id="refForm" autocomplete="off" hidden style="margin-top:12px">
+        <input id="refIn" placeholder="Referral code (optional)" spellcheck="false" autocapitalize="off" maxlength="40">
+        <button type="submit">Apply</button>
+      </form>
+      <div class="sign-err" id="refErr"></div>
     </section>
 
     <section class="onb-step" data-step="over">
@@ -273,6 +278,6 @@
 <div class="foot">18+ · play responsibly</div>
 
 <script src="vendor/lwc.js"></script>
-<script type="module" src="app.js?v=82"></script>
+<script type="module" src="app.js?v=83"></script>
 </body>
 </html>
