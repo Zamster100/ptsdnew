@@ -506,7 +506,7 @@ const auth = initAuth({ db, base: BASE, publicUrl: PUBLIC_URL, test: TEST });
 const chat = initChat({ db, auth });
 const wallet = initWallet({ db });
 const campaign = initCampaign({
-  db, currency: CURRENCY, hoursOf: wallet.claimHoursOf,
+  db, currency: CURRENCY, bonusOf: wallet.bonusHoursOf,
   addCredits: (player, n) => { balanceOf(player, CURRENCY); q.setBal.run(player, CURRENCY, (q.bal.get(player, CURRENCY)?.balance || 0) + n); },
 });
 
@@ -603,7 +603,7 @@ const server = http.createServer(async (req, res) => {
         recent: q.recent.all(player).map(histRow), nextCommit: nextSeed(player).commit_hash, serverNow: Date.now(),
       });
     }
-    if (p === "/api/claim") await wallet.refresh(player, 60_000); // the claim timer follows the Tickets held right now
+    if (p === "/api/claim") await wallet.refresh(player, 60_000); // the NFT bonus follows the Tickets held right now
     {
       const out = campaign.api(req, res, p, body, user, send, () => balanceOf(player, CURRENCY));
       if (out !== null) return;

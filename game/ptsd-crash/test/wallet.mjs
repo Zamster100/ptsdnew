@@ -57,7 +57,7 @@ try {
 
   const a = await player("walleta"), b = await player("walletb");
   const wa = Wallet.createRandom(), wb = Wallet.createRandom();
-  check((await a.get("me")).nft.badge.level === 0 && (await a.get("me")).nft.claimHours === 24, "no wallet: 24h claim, no badge");
+  check((await a.get("me")).nft.badge.level === 0 && (await a.get("me")).nft.bonusHours === null, "no wallet: NFT bonus locked, no badge");
 
   // finishing onboarding no longer needs a wallet
   check((await a.post("claim", { kind: "starter" })).code === 200, "follow step completes without a wallet");
@@ -69,17 +69,17 @@ try {
 
   held.set(wa.address.toLowerCase(), 0);
   let r = await connect(a, wa);
-  check(r.code === 200 && r.wallet.count === 0 && r.wallet.claimHours === 24, "link with 0 Tickets: still 24h", r);
+  check(r.code === 200 && r.wallet.count === 0 && r.wallet.bonusHours === null, "link with 0 Tickets: bonus still locked", r);
 
   // another account can't take the same wallet
   check((await connect(b, wa)).code === 409, "same wallet on a second account is refused");
 
   // tiers follow the Tickets held (re-read through /api/wallet/refresh, cached for 60s min, so use a fresh account per tier)
-  for (const [n, hours, level, name] of [[1, 12, 1, "Ticket Holder"], [2, 8, 2, "Double Ticket"], [3, 6, 3, "Triple Ticket"], [4, 6, 3, "Triple Ticket"], [5, 6, 4, "High Roller"], [12, 6, 5, "Gen Wealth"]]) {
+  for (const [n, hours, level, name] of [[1, 24, 1, "Ticket Holder"], [2, 12, 2, "Double Ticket"], [3, 8, 3, "Triple Ticket"], [4, 8, 3, "Triple Ticket"], [5, 8, 4, "High Roller"], [12, 8, 5, "Gen Wealth"]]) {
     const pl = await player("tier" + n), w = Wallet.createRandom();
     held.set(w.address.toLowerCase(), n);
     const c = await connect(pl, w);
-    check(c.code === 200 && c.wallet.count === n && c.wallet.claimHours === hours && c.wallet.badge.level === level && c.wallet.badge.name === name, `${n} Tickets -> claim ${hours}h, badge ${name}`, c.wallet);
+    check(c.code === 200 && c.wallet.count === n && c.wallet.bonusHours === hours && c.wallet.badge.level === level && c.wallet.badge.name === name, `${n} Tickets -> NFT bonus every ${hours}h, badge ${name}`, c.wallet);
   }
 
   // the claim timer on /api/me and the claim endpoint use the Ticket tier: 1 Ticket = claim opens after 12h, not 24h
@@ -87,7 +87,18 @@ try {
   await t1.post("claim", { kind: "starter" }); await connect(t1, w1);
   const me = await t1.get("me");
   const waitH = (me.onb.claimAt - Date.now()) / 3600_000;
-  check(waitH > 11.9 && waitH <= 12.01, "next claim is 12h away for a 1-Ticket holder", waitH);
+  check(waitH > 23.9 && waitH <= 24.01, "the normal claim stays 24h for everyone", waitH);
+  check(me.onb.bonus.locked === false && me.onb.bonus.canClaim === true && me.onb.bonus.hours === 24, "1-Ticket holder: NFT bonus is open", me.onb.bonus);
+  const bal0 = (await t1.get("me")).balances.CREDITS;
+  const bc = await t1.post("claim", { kind: "bonus" });
+  check(bc.code === 200 && bc.amount === 10000 && bc.balance === bal0 + 10000, "NFT bonus claim pays 10k", bc);
+  const bc2 = await t1.post("claim", { kind: "bonus" });
+  check(bc2.code === 400, "no second NFT bonus claim before the timer", bc2);
+  const after = (await t1.get("me")).onb.bonus, bw = (after.claimAt - Date.now()) / 3600_000;
+  check(after.canClaim === false && bw > 23.9 && bw <= 24.01, "next NFT bonus is 24h away with 1 Ticket", after);
+  // no Tickets = locked, claim refused
+  const lockedClaim = await a.post("claim", { kind: "bonus" });
+  check(lockedClaim.code === 400 && (await a.get("me")).onb.bonus.locked === true, "no Tickets: NFT bonus is locked and refused", lockedClaim);
 
   // holdings are cached: repeated /api/me does not hit the RPC again
   const before = rpcCalls;

@@ -31,8 +31,8 @@ export function initCycles({ db, balanceOf, setBalance, hasOpen }) {
   const q = {
     done: db.prepare("SELECT 1 FROM crash_cycle_players WHERE cycle_id=? AND player=?"),
     mark: db.prepare("INSERT OR IGNORE INTO crash_cycle_players(cycle_id,player,start_balance,prev_balance,ts) VALUES(?,?,?,?,?)"),
-    // The free-claim timer restarts with the cycle: next claim is a full interval after the reset.
-    claimAt: db.prepare("UPDATE crash_users SET claim_at=? WHERE id=? AND starter_at IS NOT NULL"),
+    // The free-claim timer restarts with the cycle (next claim is a full interval after the reset); the NFT bonus opens again right away.
+    claimAt: db.prepare("UPDATE crash_users SET claim_at=?, bonus_at=NULL WHERE id=? AND starter_at IS NOT NULL"),
   };
 
   const current = (now = Date.now()) => list.find((c) => now >= c.start && now < c.end) || null;

@@ -2,7 +2,7 @@
 //
 // A player proves they own a wallet by signing a one-time message (free, no transaction). The server
 // checks the signature, then reads how many Ticket NFTs that wallet holds (ERC-721 balanceOf over RPC).
-// The count drives the free-claim timer (24h / 12h / 8h / 6h for 0 / 1 / 2 / 3+) and the badge tier.
+// The count unlocks the NFT bonus claim (see bonusHours) and sets the badge tier.
 // The address is never shown to other players, only the count.
 //
 // Settings (env):
@@ -16,8 +16,10 @@ import { verifyMessage } from "ethers";
 const num = (v, d) => (v != null && v !== "" && Number.isFinite(Number(v)) ? Number(v) : d);
 const EVM = /^0x[0-9a-fA-F]{40}$/;
 
-// Claim wait (hours) by Tickets held, capped at 3 boosts. Badges level up at 1, 2, 3, 5 and 10 Tickets.
-export const claimHours = (n) => (n >= 3 ? 6 : n === 2 ? 8 : n === 1 ? 12 : 24);
+// NFT bonus claim: a second 10k claim with its own timer, locked without Tickets. Wait in hours by Tickets held,
+// capped at 3 boosts: 1 Ticket = one extra claim a day, 2 = two, 3+ = three (so 20k / 30k / 40k credits a day in total).
+// Badges level up at 1, 2, 3, 5 and 10 Tickets.
+export const bonusHours = (n) => (n >= 3 ? 8 : n === 2 ? 12 : n === 1 ? 24 : null);
 export const TIERS = [
   { min: 10, level: 5, name: "Gen Wealth" },
   { min: 5, level: 4, name: "High Roller" },
@@ -79,7 +81,7 @@ export function initWallet({ db }) {
   function stateOf(player) {
     const u = q.user.get(player);
     const count = countOf(player);
-    return { enabled, address: u?.vwallet || null, count, badge: badgeOf(count), claimHours: claimHours(count), canSwapAt: u?.vwallet_at ? u.vwallet_at + cooldownMs : null };
+    return { enabled, address: u?.vwallet || null, count, badge: badgeOf(count), bonusHours: bonusHours(count), canSwapAt: u?.vwallet_at ? u.vwallet_at + cooldownMs : null };
   }
 
   const nonces = new Map(); // nonce -> { player, message, exp }
@@ -124,5 +126,5 @@ export function initWallet({ db }) {
     return null;
   }
 
-  return { enabled, contract, countOf, refresh, stateOf, api, claimHoursOf: (id) => claimHours(countOf(id)) };
+  return { enabled, contract, countOf, refresh, stateOf, api, bonusHoursOf: (id) => bonusHours(countOf(id)) };
 }

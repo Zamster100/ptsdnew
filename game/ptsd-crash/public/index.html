@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&family=Manrope:wght@500;600;700;800&family=Nunito:wght@700;800;900&family=Rubik+Glitch&display=swap" rel="stylesheet">
 <link rel="icon" href="img/ptsd-logo.webp">
-<link rel="stylesheet" href="style.css?v=51">
+<link rel="stylesheet" href="style.css?v=52">
 </head>
 <body>
 <div class="boot" id="boot">
@@ -128,6 +128,7 @@
       <div><span><i class="lg" style="font-style:normal">Account </i>Balance:</span><b id="balBottom">…</b></div>
       <div><span>Realized PnL:</span><b id="pnlBottom">0</b></div>
       <div class="claim" id="claimRow" hidden><span>Free credits:</span><button class="claim-btn" id="claimBtn" type="button">Claim</button><b id="claimWait"></b></div>
+      <div class="claim" id="bonusRow" hidden><span>NFT bonus credits:</span><button class="claim-btn lock" id="bonusLock" type="button" aria-label="Locked. Tap to see how to unlock">🔒</button><button class="claim-btn" id="bonusBtn" type="button" hidden>Claim</button><b id="bonusWait"></b></div>
       <div class="debt" id="debtBox" hidden title="Every time Cousin Dick sells before you get rekt, he adds it to your tab."><span>🧾 You owe Cousin Dick:</span><b id="debtAmt">0</b></div>
     </div>
   </footer>
@@ -189,7 +190,7 @@
     <section class="onb-step" data-step="wallet">
       <div class="onb-label">Step 2 · Wallet (optional)</div>
       <h2>Connect your wallet</h2>
-      <p>This step is optional, you can play without it. <b>For NFT boosts, connect a wallet holding PTSD Ticket NFTs.</b> The more Tickets you hold, the more often you can claim free credits. Connecting is free, you only sign a message.</p>
+      <p>This step is optional, you can play without it. <b>For NFT boosts, connect a wallet holding PTSD Ticket NFTs.</b> The more Tickets you hold, the more NFT bonus credits you can claim. Connecting is free, you only sign a message.</p>
       <div class="wl-list" id="walletList"></div>
       <div class="sign-err" id="walletErr"></div>
       <button class="wl-skip" id="walletSkip" type="button">Skip for now</button>
@@ -211,6 +212,16 @@
       <h2 id="overTitle">Season 1 of PTSD Crash is over</h2>
       <p class="blocked-msg" id="overMsg">Results are in the leaderboard.</p>
       <a class="onb-go" href="leaderboard">Leaderboard</a>
+    </section>
+
+    <section class="onb-step" data-step="nft">
+      <div class="onb-label">NFT bonus credits 🔒</div>
+      <h2>Unlock NFT bonus credits</h2>
+      <p id="nftMsg">To unlock, connect a wallet holding PTSD Ticket NFTs.</p>
+      <div class="wl-list" id="nftWl"></div>
+      <div class="sign-err" id="nftErr"></div>
+      <a class="onb-go" href="https://opensea.io/collection/non-fuddable-tickets" target="_blank" rel="noopener noreferrer">Get Tickets on OpenSea</a>
+      <button class="wl-skip" id="nftRecheck" type="button" hidden>Re-check my wallet</button>
     </section>
 
     <section class="onb-step" data-step="blocked">
@@ -263,6 +274,6 @@
 <div class="foot">18+ · play responsibly</div>
 
 <script src="vendor/lwc.js"></script>
-<script type="module" src="app.js?v=78"></script>
+<script type="module" src="app.js?v=79"></script>
 </body>
 </html>

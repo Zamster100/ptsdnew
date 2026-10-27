@@ -1584,7 +1584,7 @@ const FAQ = [
   ["What are the prizes?", "$1,000 in cash for the top 3 of each cycle. There are two cycles, 10 days each."],
   ["How do cycles work?", "Every cycle starts everyone from the same 10k credits, so nobody starts behind. The leaderboard is ranked by profit made in that cycle only, and a bad run counts as 0, so you are never buried."],
   ["How do I get credits?", "You start every cycle with 10k credits. You can also claim 10k free credits every 24 hours. Claimed credits never count as profit."],
-  ["What do PTSD Ticket NFTs do?", "Holding Tickets gives you an edge. Connect a wallet that holds them and you can claim free credits more often: every 12h with 1 Ticket, 8h with 2, and 6h with 3 or more. You also unlock Ticket Holder badges that level up with how many you hold, shown on your profile."],
+  ["What do PTSD Ticket NFTs do?", "Holding Tickets gives you an edge. Connect a wallet that holds them to unlock NFT bonus credits, an extra 10k free claim: once a day with 1 Ticket, twice a day with 2, three times a day with 3 or more. You also unlock Ticket Holder badges that level up with how many you hold, shown on your profile."],
   ["How do I connect my wallet?", "Open your profile and tap Connect. You sign a free message to prove the wallet is yours, nothing is sent and no funds move. It is optional, and only your Ticket count is ever public, never your wallet address."],
   ["Why do I need to connect my X account?", "That is how your progress is tracked. You can login on desktop and mobile and play 24/7."],
   ["What does the leaderboard track?", "Profit (PnL) in the current cycle. Free claims do not count."],
@@ -1643,8 +1643,16 @@ function showOnb(step, mode = "flow") {
     renderWalletButtons($("walletList"), {
       api,
       onError: (m) => ($("walletErr").textContent = m),
-      onDone: (w) => { nft = w; const n = (w && w.count) || 0; toast(IMG.me, n ? `Wallet connected. <b>${n}</b> Ticket${n > 1 ? "s" : ""} found, free claims every <b>${w.claimHours}h</b>.` : "Wallet connected. No Tickets found in it yet."); syncClaim(); showOnb(); },
+      onDone: (w) => { nft = w; const n = (w && w.count) || 0; toast(IMG.me, n ? `Wallet connected. <b>${n}</b> Ticket${n > 1 ? "s" : ""} found, <b>NFT bonus credits</b> unlocked.` : "Wallet connected. No Tickets found in it yet."); syncClaim(); showOnb(); },
     });
+  }
+  if (step === "nft") {
+    $("nftErr").textContent = "";
+    const linked = !!(nft && nft.address);
+    $("nftMsg").textContent = linked ? "Your connected wallet doesn't hold any PTSD Ticket NFTs yet. Get a Ticket to unlock NFT bonus credits, an extra free claim every day." : "To unlock, connect a wallet holding PTSD Ticket NFTs. Each Ticket you hold adds another free claim every day.";
+    $("nftRecheck").hidden = !linked;
+    $("nftWl").hidden = linked;
+    if (!linked) renderWalletButtons($("nftWl"), { api, onError: (m) => ($("nftErr").textContent = m), onDone: async (w) => { nft = w; await refreshMe(); if (nft && nft.count) { closeOnb(); toast(IMG.me, `<b>${nft.count}</b> Ticket${nft.count > 1 ? "s" : ""} found. NFT bonus credits unlocked!`); } else showOnb("nft", "info"); } });
   }
   if (step === "claim") {
     document.querySelectorAll(".dailyAmt").forEach((e) => (e.textContent = fmt((cfg && cfg.daily || 10000) / 1000) + "k"));
@@ -1711,7 +1719,15 @@ function untilTxt(t) {
 function syncClaim() {
   const show = !!(cfg && cfg.claims && user && onb && onb.starter);
   $("claimRow").hidden = !show;
+  $("bonusRow").hidden = !show;
   if (!show) return;
+  // NFT bonus: locked (🔒) without a wallet holding Tickets, otherwise its own claim + timer
+  const bonus = onb.bonus, locked = !bonus || bonus.locked, bReady = !locked && now() >= (bonus.claimAt || 0);
+  $("bonusLock").hidden = !locked;
+  $("bonusBtn").hidden = !bReady;
+  $("bonusBtn").textContent = `Claim ${fmt(cfg.daily / 1000)}k`;
+  $("bonusWait").hidden = locked || bReady;
+  if (!locked && !bReady) $("bonusWait").textContent = `next in ${untilTxt(bonus.claimAt)}`;
   const ready = now() >= (onb.claimAt || 0);
   $("claimBtn").hidden = !ready;
   $("claimBtn").textContent = `Claim ${fmt(cfg.daily / 1000)}k`;
@@ -1719,6 +1735,19 @@ function syncClaim() {
   $("claimWait").textContent = `next in ${untilTxt(onb.claimAt)}`;
 }
 setInterval(syncClaim, 30000);
+$("bonusLock").onclick = () => showOnb("nft", "info");
+$("nftRecheck").onclick = async () => {
+  $("nftRecheck").disabled = true; $("nftErr").textContent = "";
+  try { await api("wallet/refresh", {}); await refreshMe(); if (nft && nft.count) { closeOnb(); toast(IMG.me, "Tickets found. NFT bonus credits unlocked!"); } else $("nftErr").textContent = "Still no Tickets in that wallet."; }
+  catch (e) { $("nftErr").textContent = e.message; }
+  $("nftRecheck").disabled = false;
+};
+$("bonusBtn").onclick = async () => {
+  ctx(); $("bonusBtn").disabled = true;
+  try { const j = await api("claim", { kind: "bonus" }); onb = j.state; setBalance(j.balance); syncClaim(); toast(IMG.me, `NFT bonus: <b>+${fmt(j.amount)}</b> credits.`); }
+  catch (e) { toast(IMG.cousin, e.message); refreshMe(); }
+  $("bonusBtn").disabled = false;
+};
 // Claiming asks them to engage with the announcement post first (like, comment, retweet). We can't check they did it,
 // so the claim button just unlocks once they've opened the post (same as the onboarding tasks).
 const CLAIM_POST = "https://x.com/ptsdshow/status/2107833456952848705";

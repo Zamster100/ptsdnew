@@ -421,6 +421,7 @@ a.tb-btn { text-decoration: none; display: inline-flex; align-items: center; }
 .claim { align-items: center !important; }
 .claim-btn { border: 0; background: var(--gold); color: var(--ink); font-weight: 800; font-size: 12px; border-radius: 999px; padding: 5px 12px; box-shadow: 0 2px 0 var(--gold-d); animation: hot 1.6s infinite; }
 .claim-btn[hidden], .claim b[hidden] { display: none; }
+.claim-btn.lock { background: var(--panel2); color: var(--txt); border: 1px solid var(--bd); box-shadow: 0 2px 0 #000; animation: none; padding: 4px 12px; }
 .claim b { color: var(--mut) !important; font-size: 12px !important; font-weight: 700; }
 @media (max-width: 899px) { .trade-stats .claim { width: 100%; justify-content: center; gap: 8px; } }
 
@@ -484,3 +485,4 @@ a.tb-btn { text-decoration: none; display: inline-flex; align-items: center; }
 .wl-none { font-size: 14px; line-height: 1.5; color: var(--mut); text-align: left; }
 .wl-none a { color: var(--teal, #00D8C6); }
 .wl-skip { display: block; margin: 12px auto 0; background: none; border: 0; color: var(--mut); font-weight: 700; font-size: 14px; text-decoration: underline; cursor: pointer; }
+.wl-list[hidden], .wl-skip[hidden] { display: none; }

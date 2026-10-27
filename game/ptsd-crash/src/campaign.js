@@ -16,7 +16,7 @@ import { cached } from "./bg.js";
 const num = (v, d) => (v != null && v !== "" && Number.isFinite(Number(v)) ? Number(v) : d);
 const time = (v) => { const t = v ? Date.parse(v) : NaN; return Number.isFinite(t) ? t : null; };
 
-export function initCampaign({ db, currency, addCredits, hoursOf }) {
+export function initCampaign({ db, currency, addCredits, bonusOf }) {
   const cfg = {
     claims: process.env.CLAIMS === "1",
     start: num(process.env.START_CREDITS, 100000),
@@ -29,7 +29,7 @@ export function initCampaign({ db, currency, addCredits, hoursOf }) {
     post: process.env.ANNOUNCE_POST_URL || "",
     handle: (process.env.X_HANDLE || "ptsdshow").replace(/^@/, ""),
   };
-  for (const col of ["wallet TEXT", "starter_at INTEGER", "claim_at INTEGER", "onboarded_at INTEGER", "wallet_norm TEXT"]) {
+  for (const col of ["wallet TEXT", "starter_at INTEGER", "claim_at INTEGER", "onboarded_at INTEGER", "wallet_norm TEXT", "bonus_at INTEGER"]) {
     try { db.exec(`ALTER TABLE crash_users ADD COLUMN ${col}`); } catch {}
   }
   // One wallet per account. Checked in code (inside a transaction) rather than with a UNIQUE index, because
@@ -46,19 +46,26 @@ export function initCampaign({ db, currency, addCredits, hoursOf }) {
     logDupe: db.prepare("INSERT INTO crash_wallet_events(user_id,wallet_norm,existing_user_id,ts) VALUES(?,?,?,?)"),
     starter: db.prepare("UPDATE crash_users SET starter_at=?, claim_at=? WHERE id=? AND starter_at IS NULL"),
     daily: db.prepare("UPDATE crash_users SET claim_at=? WHERE id=? AND claim_at=?"),
+    bonus: db.prepare("UPDATE crash_users SET bonus_at=? WHERE id=? AND COALESCE(bonus_at,0)=?"),
     onboarded: db.prepare("UPDATE crash_users SET onboarded_at=? WHERE id=? AND onboarded_at IS NULL"),
     logClaim: db.prepare("INSERT INTO crash_claims(player,kind,amount,ts) VALUES(?,?,?,?)"),
     // Blocked (bot) accounts don't count as players, so they don't inflate the WL / free-mint numbers.
     players: db.prepare("SELECT COUNT(*) n FROM (SELECT DISTINCT player FROM crash_rounds WHERE state!='open' AND ts>=? AND ts<?) d LEFT JOIN crash_users u ON u.id=d.player WHERE u.status IS NULL OR u.status!='blocked'"),
   };
-  // Hours between free claims for a player. One place to change it: NFT holders will get a shorter wait (Phase 3).
-  const hoursMs = (id) => (hoursOf ? hoursOf(id) : cfg.hours) * 3600_000;
+  const hoursMs = () => cfg.hours * 3600_000;
+
+  // NFT bonus claim: needs Tickets (hours = null while locked). The first one is open as soon as Tickets are held.
+  function bonusState(u) {
+    const hours = bonusOf ? bonusOf(u.id) : null;
+    const claimAt = hours && u.bonus_at ? u.bonus_at + hours * 3600_000 : 0;
+    return { locked: !hours, hours, claimAt, canClaim: !!u.starter_at && !!hours && Date.now() >= claimAt };
+  }
 
   // What the browser needs to know about this player's onboarding + claims.
   function stateOf(id) {
     const u = q.user.get(id);
     if (!u) return null;
-    const next = u.claim_at ? u.claim_at + hoursMs(id) : null;
+    const next = u.claim_at ? u.claim_at + hoursMs() : null;
     return {
       wallet: u.wallet || null,
       walletLocked: !!u.starter_at,        // can't be changed after the first claim (support can)
@@ -66,6 +73,7 @@ export function initCampaign({ db, currency, addCredits, hoursOf }) {
       onboarded: !!u.onboarded_at,
       claimAt: next,                       // when the next daily claim opens (null before the starter pack)
       canClaim: !!u.starter_at && next != null && Date.now() >= next,
+      bonus: bonusState(u),
     };
   }
   // Only a player who finished the starter step can bet in claims mode.
@@ -84,10 +92,23 @@ export function initCampaign({ db, currency, addCredits, hoursOf }) {
     const u = q.user.get(id);
     if (!u.starter_at) return { error: "Finish the first steps to get your credits." };
     const now = Date.now();
-    if (now < u.claim_at + hoursMs(id)) return { error: "Not yet. Come back when the timer runs out.", claimAt: u.claim_at + hoursMs(id) };
+    if (now < u.claim_at + hoursMs()) return { error: "Not yet. Come back when the timer runs out.", claimAt: u.claim_at + hoursMs() };
     if (!q.daily.run(now, id, u.claim_at).changes) return { error: "Already claimed." };
     addCredits(id, cfg.daily);
     q.logClaim.run(id, "daily", cfg.daily, now);
+    return { amount: cfg.daily };
+  });
+
+  const claimBonus = db.transaction((id) => {
+    const u = q.user.get(id);
+    if (!u.starter_at) return { error: "Finish the first steps to get your credits." };
+    const b = bonusState(u);
+    if (b.locked) return { error: "Connect a wallet holding PTSD Ticket NFTs to unlock the NFT bonus." };
+    const now = Date.now();
+    if (now < b.claimAt) return { error: "Not yet. Come back when the timer runs out." };
+    if (!q.bonus.run(now, id, u.bonus_at || 0).changes) return { error: "Already claimed." };
+    addCredits(id, cfg.daily);
+    q.logClaim.run(id, "bonus", cfg.daily, now);
     return { amount: cfg.daily };
   });
 
@@ -131,7 +152,7 @@ export function initCampaign({ db, currency, addCredits, hoursOf }) {
     }
     if (p === "/api/claim" && req.method === "POST") {
       if (!cfg.claims) return send(res, 400, { error: "Claims are off." });
-      const out = body?.kind === "starter" ? claimStarter(user.id) : claimDaily(user.id);
+      const out = body?.kind === "starter" ? claimStarter(user.id) : body?.kind === "bonus" ? claimBonus(user.id) : claimDaily(user.id);
       if (out.error) return send(res, 400, { error: out.error, state: stateOf(user.id) });
       return send(res, 200, { amount: out.amount, balance: balance(), state: stateOf(user.id) });
     }
