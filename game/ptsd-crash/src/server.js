@@ -12,6 +12,7 @@ import { renderCard, cardFile } from "./card.js";
 import { initAuth } from "./auth.js";
 import { initChat } from "./chat.js";
 import { initCampaign } from "./campaign.js";
+import { initCycles } from "./cycles.js";
 import { startBg, cached } from "./bg.js";
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
@@ -86,6 +87,10 @@ const q = {
   board: db.prepare(`SELECT player, SUM(pnl) net, COUNT(*) rounds, SUM(bet) wagered, SUM(pnl>0) wins,
     MAX(MAX(COALESCE(sold_mult,0), COALESCE(half_mult,0))) best, MAX(pnl) bestWin
     FROM crash_rounds WHERE state!='open' AND coin=? AND ts>=? AND ts<? GROUP BY player ORDER BY net DESC, wagered DESC LIMIT 20000`),
+  // Cycle board: PnL floored at 0, so a bad run is never a hole. Ties (everyone at 0) go to the bigger volume.
+  cycleBoard: db.prepare(`SELECT player, MAX(0, SUM(pnl)) score, SUM(pnl) net, COUNT(*) rounds, SUM(bet) wagered, SUM(pnl>0) wins,
+    MAX(MAX(COALESCE(sold_mult,0), COALESCE(half_mult,0))) best, MAX(pnl) bestWin
+    FROM crash_rounds WHERE state!='open' AND coin=? AND ts>=? AND ts<? GROUP BY player ORDER BY score DESC, wagered DESC LIMIT 20000`),
   settle: db.prepare("UPDATE crash_rounds SET state=@state, sold_mult=@sold_mult, payout=@payout, pnl=@pnl, sold_ms=@sold_ms WHERE id=@id AND state='open'"),
   half: db.prepare("UPDATE crash_rounds SET half_mult=?, half_payout=?, half_ms=? WHERE id=? AND state='open' AND half_ms IS NULL"),
   recent: db.prepare("SELECT id,coin,bet,crash,noise_seed,state,sold_mult,payout,pnl,ts,half_mult,half_payout FROM crash_rounds WHERE player=? AND state!='open' ORDER BY ts DESC LIMIT 25"),
@@ -318,12 +323,40 @@ function periodStart(period) {
 // The ranking query scans every round in the period (~0.3s), so it runs in the background
 // worker (bg.js) and everyone shares the last result, refreshed every few seconds.
 // Running it here used to freeze the whole server, so buys and sells waited behind it.
-// Season 1 is over: the boards are frozen at this moment and no new rounds or claims are accepted.
+// Season 1 is over: its board is frozen at this moment (kept as the "season1" view).
 // Override with SEASON_END (ISO time) only if the freeze point needs to change.
 const SEASON_END = Date.parse(process.env.SEASON_END || "") || 1792190339106;
-const seasonOver = () => Date.now() >= SEASON_END;
+// Betting and claiming are only open while a cycle is running (see cycles.js).
+const betsOff = () => !cycles.current();
 const BOARD_TTL_MS = Number(process.env.BOARD_CACHE_MS) || 10_000;
 const boardCache = new Map(); // `${period}:${start}` -> { raw, rows, pub }
+function cycleRows() {
+  const c = cycles.shown() || cycles.next();
+  if (!c) return { cycle: null, hit: { rows: [], pub: new Map() } };
+  const key = "cycle:" + c.id;
+  const raw = cached("board:" + key, q.cycleBoard.source, [CURRENCY, c.start, c.end], BOARD_TTL_MS, null);
+  let hit = boardCache.get(key);
+  if (!hit || hit.raw !== raw) {
+    const blocked = auth.blockedIds();
+    const all = raw || [];
+    hit = { raw, rows: blocked.size ? all.filter((r) => !blocked.has(r.player)) : all, pub: new Map() };
+    if (boardCache.size > 20) boardCache.clear();
+    boardCache.set(key, hit);
+  }
+  return { cycle: c, hit };
+}
+function cycleLeaderboard(player, limit = 50) {
+  const { cycle, hit } = cycleRows();
+  const rows = hit.rows;
+  const pub = (id) => { let p = hit.pub.get(id); if (!p) hit.pub.set(id, (p = auth.publicUser(id))); return p; };
+  // score = PnL floored at 0; play = the Play points that feed the cycle score (sqrt keeps one lucky run from dwarfing everything else).
+  const row = (r, i) => ({ rank: i + 1, ...pub(r.player), me: r.player === player, score: r.score, play: Math.round(Math.sqrt(r.score) * 100) / 100, net: r.net, rounds: r.rounds, wins: r.wins, wagered: r.wagered, best: r.best, bestWin: r.bestWin });
+  const i = player ? rows.findIndex((r) => r.player === player) : -1;
+  return {
+    period: "cycle", coin: CURRENCY, top: rows.slice(0, limit).map(row), mine: i >= 0 ? row(rows[i], i) : null, players: rows.length,
+    cycle: cycle && { id: cycle.id, name: cycle.name, start: cycle.start, end: cycle.end, live: !!cycles.current() }, prize: cycles.prize, bankroll: cycles.bankroll,
+  };
+}
 function boardRows(period) {
   const camp = campaign.campaign();
   period = ["day", "week", "month", "all", "campaign"].includes(period) ? period : camp ? "campaign" : "month";
@@ -381,7 +414,7 @@ function ownPlace(player, user) {
 }
 // Just your place and the player count (the top-bar rank pill), no rows built.
 function rankOf(player) {
-  const { rows } = boardRows(null).hit;
+  const { rows } = (cycles.started() ? cycleRows() : boardRows(null)).hit;
   const i = player ? rows.findIndex((r) => r.player === player) : -1;
   return { rank: i >= 0 ? i + 1 : null, players: rows.length };
 }
@@ -404,6 +437,13 @@ const chat = initChat({ db, auth });
 const campaign = initCampaign({
   db, currency: CURRENCY,
   addCredits: (player, n) => { balanceOf(player, CURRENCY); q.setBal.run(player, CURRENCY, (q.bal.get(player, CURRENCY)?.balance || 0) + n); },
+});
+
+const cycles = initCycles({
+  db,
+  balanceOf: (player) => balanceOf(player, CURRENCY),
+  setBalance: (player, n) => q.setBal.run(player, CURRENCY, n),
+  hasOpen: (player) => !!q.open.get(player),
 });
 
 const MIME = { ".html": "text/html; charset=utf-8", ".json": "application/json", ".js": "text/javascript", ".css": "text/css", ".png": "image/png", ".webp": "image/webp", ".svg": "image/svg+xml", ".mp3": "audio/mpeg", ".woff2": "font/woff2" };
@@ -437,14 +477,16 @@ const server = http.createServer(async (req, res) => {
     const player = user ? user.id : null;
 
     if (p === "/api/config") {
-      return send(res, 200, { test: TEST && !CLAIMS, coins: COINS, maxMult: MAX_MULT, edge: EDGE, login: auth.mode, support: auth.supportUrl, seasonOver: seasonOver(), ...campaign.publicCfg(), serverNow: Date.now() });
+      return send(res, 200, { test: TEST && !CLAIMS, coins: COINS, maxMult: MAX_MULT, edge: EDGE, login: auth.mode, support: auth.supportUrl, seasonOver: betsOff(), ...campaign.publicCfg(), ...cycles.publicCfg(), serverNow: Date.now() });
     }
     if (p.startsWith("/api/auth/")) return await auth.api(req, res, p, body, send);
-    if (p === "/api/rank") return send(res, 200, seasonOver() ? { rank: null, players: 0 } : rankOf(player));
+    if (p === "/api/rank") return send(res, 200, betsOff() && !cycles.started() ? { rank: null, players: 0 } : rankOf(player));
     if (p === "/api/leaderboard") {
       const lim = Math.min(500, Math.max(1, Number(u.searchParams.get("limit")) || 50));
-      if (seasonOver()) { const lb = leaderboard("campaign", player, 10); return send(res, 200, { period: "campaign", coin: CURRENCY, top: lb.top, players: lb.players, campaign: null, ...ownPlace(player, user) }); }
-      return send(res, 200, leaderboard(u.searchParams.get("period"), player, lim));
+      const per = u.searchParams.get("period");
+      if (cycles.started() && per !== "season1") return send(res, 200, cycleLeaderboard(player, lim));
+      // Before Cycle 1 (or ?period=season1) the frozen Season 1 view is shown.
+      { const lb = leaderboard("campaign", player, 10); return send(res, 200, { period: "campaign", coin: CURRENCY, top: lb.top, players: lb.players, campaign: null, ...ownPlace(player, user) }); }
     }
     if (p.startsWith("/api/comments")) return chat.api(req, res, p, u, body, user, send);
     if (p === "/api/clientlog" && req.method === "POST") {
@@ -455,8 +497,9 @@ const server = http.createServer(async (req, res) => {
       } catch {}
       return send(res, 200, { ok: true });
     }
-    if (seasonOver() && req.method === "POST" && ["/api/buy", "/api/wallet", "/api/claim", "/api/onboarded"].includes(p)) {
-      return send(res, 403, { error: "Season 1 of PTSD Crash is over. Results are in the leaderboard.", seasonOver: true });
+    if (betsOff() && req.method === "POST" && ["/api/buy", "/api/wallet", "/api/claim", "/api/onboarded"].includes(p)) {
+      const nx = cycles.next();
+      return send(res, 403, { error: nx ? `No cycle is running. ${nx.name} starts soon.` : "Season 1 of PTSD Crash is over. Results are in the leaderboard.", seasonOver: true });
     }
     if (p === "/api/me" && !player) {
       return send(res, 200, { user: null, balances: { [CURRENCY]: 0 }, open: null, recent: [], nextCommit: "", serverNow: Date.now() });
@@ -468,6 +511,7 @@ const server = http.createServer(async (req, res) => {
       if (p === "/api/me") return send(res, 200, { user: auth.publicUser(player), ...auth.blockedBody(), balances: { [CURRENCY]: 0 }, open: null, recent: [], nextCommit: "", serverNow: Date.now() });
       return send(res, 403, auth.blockedBody());
     }
+    cycles.touch(player);
     if (p === "/api/me") {
       const coins = Object.keys(COINS);
       const open = q.open.get(player);

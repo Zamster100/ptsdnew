@@ -110,10 +110,10 @@
 </header>
 <main class="lbp">
   <div class="lbp-head">
-    <div><h1>Leaderboard</h1><p>Ranked by profit (PnL). Every round counts, wins and losses.</p></div>
-    <span class="lbp-play" aria-disabled="true" style="opacity:.4;cursor:not-allowed;box-shadow:none;background:#3a3b40">Season 1 over</span>
+    <div><h1>Leaderboard</h1><p id="lbSub">Ranked by profit (PnL). Every round counts, wins and losses.</p></div>
+    <span class="lbp-play" id="lbPlay" aria-disabled="true" style="opacity:.4;cursor:not-allowed;box-shadow:none;background:#3a3b40">Season 1 over</span>
   </div>
-  <div class="over">
+  <div class="over" id="over">
     <h2>Season 1 of PTSD Crash is over.</h2>
     <p>Congratulations to all the winners. The Top 25 will receive a Free Mint, and the Top 500 will be granted 1 GTD spot on the WL.</p>
     <p>A snapshot has been taken and winners are under review. We are checking every account for botting and fairness, and any botted accounts and duplicates will be removed. Qualifying players from the Top 500 will be added to the WL.</p>
@@ -171,7 +171,7 @@ function handle(u) {
   return `<a class="xl" href="https://x.com/${name}" target="_blank" rel="noopener noreferrer">${txt}</a>`;
 }
 let period = "";
-try { const p = new URLSearchParams(location.search).get("period"); if (["campaign", "day", "week", "month", "all"].includes(p)) period = p; } catch {}
+try { const p = new URLSearchParams(location.search).get("period"); if (["season1", "campaign", "day", "week", "month", "all"].includes(p)) period = p; } catch {}
 // Who's signed in (null if nobody). Loaded once; the board waits for it.
 const mePromise = fetch("api/me").then((r) => r.json()).then((m) => {
   if (!m.user) return null;
@@ -190,11 +190,43 @@ function clock() {
 setInterval(clock, 1000);
 const cls = (n) => (n > 0 ? "w" : n < 0 ? "l" : "");
 
+// ---- cycles: two 10-day windows, same bankroll for everyone, ranked by profit floored at 0 ----
+let cyc = null;
+function cycleClock() {
+  if (!cyc || !$("cycClock")) return;
+  const ms = (cyc.live ? cyc.end : cyc.start) - Date.now();
+  if (ms <= 0) { $("cycClock").innerHTML = cyc.live ? `Cycle ended<small>final results</small>` : `Live now<small>refresh to play</small>`; return; }
+  const d = Math.floor(ms / 864e5), h = Math.floor(ms / 36e5) % 24, m = Math.floor(ms / 6e4) % 60, s = Math.floor(ms / 1e3) % 60;
+  $("cycClock").innerHTML = `${d}d ${String(h).padStart(2, "0")}h ${String(m).padStart(2, "0")}m ${String(s).padStart(2, "0")}s<small>${cyc.live ? "until the cycle ends" : "until the cycle starts"}</small>`;
+}
+setInterval(cycleClock, 1000);
+async function renderCycle(j) {
+  cyc = j.cycle;
+  $("over").hidden = true; $("camp").hidden = true; $("seg").hidden = true;
+  $("lbSub").textContent = "Ranked by profit this cycle. Everyone starts with " + fmt(j.bankroll) + ". A bad run counts as 0, never below.";
+  const play = $("lbPlay");
+  play.textContent = cyc && cyc.live ? "Play" : "Cycle ended"; play.style.cssText = cyc && cyc.live ? "" : "opacity:.4;cursor:not-allowed;box-shadow:none;background:#3a3b40";
+  if (cyc && cyc.live) { play.removeAttribute("aria-disabled"); play.setAttribute("href", "./"); }
+  const when = cyc ? new Date(cyc.start).toLocaleString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric" }) + " - " + new Date(cyc.end).toLocaleString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric" }) : "";
+  const head = `<div class="camp"><div class="camp-top"><b>${esc(cyc ? cyc.name : "Cycle")}</b><span>${esc(when)}</span></div><div class="camp-clock" id="cycClock"></div>
+    <div class="camp-grid"><div><b>${fmt(j.players)}</b><span>Players on the board</span></div><div><b>$${fmt(j.prize)}</b><span>Cash prize · Top 3</span></div></div></div>`;
+  const cur = esc(j.coin);
+  const row = (r) => `<div class="tr${r.me ? " me" : ""}"><span class="rk">${r.rank}</span><span class="who">${avatar(r)}<span>${handle(r)}</span></span><span class="num hide-sm">${fmt(r.rounds)}</span><span class="num hide-sm">${r.best ? r.best.toFixed(2) + "x" : "-"}</span><span class="pnl ${cls(r.score)}">${fmt(r.score)}</span></div>`;
+  const pod = j.top.slice(0, 3), ord = pod.length === 3 ? [pod[1], pod[0], pod[2]] : pod;
+  const podium = pod.length ? `<div class="podium">${ord.map((r) => `<div class="pod p${r.rank}"><span class="medal">${["🥇", "🥈", "🥉"][r.rank - 1]}</span>${avatar(r)}<div class="nm">${handle(r)}</div><div class="pnl ${cls(r.score)}">${fmt(r.score)}</div><div class="sub">${cur} · ${fmt(r.rounds)} rounds</div></div>`).join("")}</div>` : "";
+  const meUser = await mePromise;
+  const you = !meUser ? "" : `<div class="you"><div class="you-h">Your position${j.mine ? ` <b>#${fmt(j.mine.rank)}</b> of ${fmt(j.players)}` : ""}</div><div class="tbl">${j.mine ? row(j.mine) : `<div class="you-none">You're not on this board yet. Play a round to get ranked.</div>`}</div></div>`;
+  const list = j.top.length ? `<div class="tbl"><div class="tr th"><span>#</span><span>Player</span><span class="num hide-sm">Rounds</span><span class="num hide-sm">Best</span><span class="pnl">Profit (${cur})</span></div>${j.top.map(row).join("")}</div>` : `<div class="empty">No rounds this cycle yet. Be the first.</div>`;
+  $("board").innerHTML = head + podium + you + list + `<div class="foot2"><a href="?period=season1" style="color:var(--teal)">Season 1 results</a></div>`;
+  cycleClock();
+}
+
 async function load() {
   document.querySelectorAll("#seg [data-p]").forEach((b) => b.classList.toggle("on", b.dataset.p === period));
   let j;
   try { j = await fetch(`api/leaderboard?${period ? "period=" + period + "&" : ""}limit=500`).then((r) => r.json()); }
   catch { $("board").innerHTML = `<div class="empty">Could not load. Refresh the page.</div>`; return; }
+  if (j.period === "cycle") return renderCycle(j);
   const cur = esc(j.coin);
   if (j.hidden) {
     document.querySelector(".seg").hidden = true; $("camp").hidden = true;

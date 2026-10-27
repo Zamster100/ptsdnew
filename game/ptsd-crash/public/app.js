@@ -775,7 +775,7 @@ function backToIdleSoon() {
 $("chartWrap").addEventListener("click", () => { if (round && round.over && $("pop").hidden) backToIdleSoon(); });
 
 // ---------------- game state ----------------
-let cfg = null, coin = "CREDITS", lim = { min: 1000, max: 10000 }, balance = 0, sessionPnl = 0;
+let cfg = null, coin = "CREDITS", lim = { min: 100, max: 2500 }, balance = 0, sessionPnl = 0;
 let round = null;   // the position on screen
 let history = [];
 
@@ -1588,7 +1588,8 @@ const FAQ = [
   ["What does the leaderboard track?", "PnL"],
   ["Do I need to bet real money?", "No, the game uses credits. Just connect your X account and copy and paste the ETH wallet address you would like to use to mint when you win the WL"],
   ["How much can I play?", "Forever, until you run out of credits"],
-  ["How do I get credits?", "You start the game with 100k credits. Trade them to profit more credits. Every 24 hours you can claim another 100k credits"],
+  ["How do I get credits?", "Every cycle you start with 10k credits. Every 24 hours you can claim another 10k credits. Claimed credits never count as profit."],
+  ["How do cycles work?", "There are two 10 day cycles. Everyone starts each cycle with the same 10k credits, and the leaderboard is ranked by profit made in that cycle. A bad run counts as 0, so you are never buried. The top 3 of each cycle share the $1,000 cash prize."],
   ["What if I don’t get to the 10% of the leaderboard?", "Then you have a skill issue"],
 ];
 $("rules").innerHTML = HOW.map((t) => `<li>${esc(t)}</li>`).join("");
@@ -1614,8 +1615,17 @@ function showBlocked(j) {
   if (url) $("blockedSupport").href = url;
   showOnb("blocked");
 }
+// No cycle running: say when the next one starts (or that Season 1 ended, before Cycle 1 exists).
+function fillOver() {
+  const nx = cfg && cfg.nextCycle;
+  if (!nx) return;
+  const when = new Date(nx.start).toLocaleString("en-US", { timeZone: "America/New_York", weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) + " ET";
+  $("overLabel").textContent = nx.name;
+  $("overTitle").textContent = `${nx.name} starts ${when}`;
+  $("overMsg").textContent = `Everyone starts with ${fmt(cfg.cycleBankroll || 10000)} credits. $${fmt(cfg.cyclePrize || 1000)} goes to the top 3 of each cycle.`;
+}
 function showOnb(step, mode = "flow") {
-  if (cfg && cfg.seasonOver) { step = "over"; mode = "flow"; }
+  if (cfg && cfg.seasonOver) { step = "over"; mode = "flow"; fillOver(); }
   else if (blockedInfo) { step = "blocked"; mode = "flow"; }
   step = step || nextOnbStep();
   if (!step) { $("onb").hidden = true; return; }
@@ -1631,7 +1641,7 @@ function showOnb(step, mode = "flow") {
   if (step === "x") { const demo = cfg && cfg.login === "demo"; $("onbXGo").hidden = demo; $("onbDemo").hidden = !demo; $("onbXErr").textContent = ""; }
   if (step === "wallet") { $("walletErr").textContent = ""; setTimeout(() => $("walletIn").focus(), 80); }
   if (step === "claim") {
-    document.querySelectorAll(".dailyAmt").forEach((e) => (e.textContent = fmt((cfg && cfg.daily || 100000) / 1000) + "k"));
+    document.querySelectorAll(".dailyAmt").forEach((e) => (e.textContent = fmt((cfg && cfg.daily || 10000) / 1000) + "k"));
     $("claimOpen").href = CLAIM_POST;
     $("claimOpen").classList.remove("done"); $("claimGo").disabled = true; $("claimErr").textContent = "";
   }
@@ -1642,7 +1652,7 @@ function showOnb(step, mode = "flow") {
     // The post task only shows once there's an announcement post (ANNOUNCE_POST_URL).
     $("taskPost").hidden = !(cfg && cfg.post);
     if (cfg && cfg.post) $("taskPost").href = cfg.post;
-    document.querySelectorAll(".startAmt").forEach((e) => (e.textContent = fmt((cfg && cfg.start || 100000) / 1000) + "k"));
+    document.querySelectorAll(".startAmt").forEach((e) => (e.textContent = fmt(((cfg && cfg.cycleBankroll) || (cfg && cfg.start) || 10000) / 1000) + "k"));
     $("starterErr").textContent = "";
   }
   $("onb").scrollTop = 0;

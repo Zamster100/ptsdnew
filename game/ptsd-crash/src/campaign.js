@@ -16,7 +16,7 @@ import { cached } from "./bg.js";
 const num = (v, d) => (v != null && v !== "" && Number.isFinite(Number(v)) ? Number(v) : d);
 const time = (v) => { const t = v ? Date.parse(v) : NaN; return Number.isFinite(t) ? t : null; };
 
-export function initCampaign({ db, currency, addCredits }) {
+export function initCampaign({ db, currency, addCredits, hoursOf }) {
   const cfg = {
     claims: process.env.CLAIMS === "1",
     start: num(process.env.START_CREDITS, 100000),
@@ -51,13 +51,14 @@ export function initCampaign({ db, currency, addCredits }) {
     // Blocked (bot) accounts don't count as players, so they don't inflate the WL / free-mint numbers.
     players: db.prepare("SELECT COUNT(*) n FROM (SELECT DISTINCT player FROM crash_rounds WHERE state!='open' AND ts>=? AND ts<?) d LEFT JOIN crash_users u ON u.id=d.player WHERE u.status IS NULL OR u.status!='blocked'"),
   };
-  const hoursMs = cfg.hours * 3600_000;
+  // Hours between free claims for a player. One place to change it: NFT holders will get a shorter wait (Phase 3).
+  const hoursMs = (id) => (hoursOf ? hoursOf(id) : cfg.hours) * 3600_000;
 
   // What the browser needs to know about this player's onboarding + claims.
   function stateOf(id) {
     const u = q.user.get(id);
     if (!u) return null;
-    const next = u.claim_at ? u.claim_at + hoursMs : null;
+    const next = u.claim_at ? u.claim_at + hoursMs(id) : null;
     return {
       wallet: u.wallet || null,
       walletLocked: !!u.starter_at,        // can't be changed after the first claim (support can)
@@ -84,7 +85,7 @@ export function initCampaign({ db, currency, addCredits }) {
     const u = q.user.get(id);
     if (!u.starter_at) return { error: "Finish the first steps to get your credits." };
     const now = Date.now();
-    if (now < u.claim_at + hoursMs) return { error: "Not yet. Come back when the timer runs out.", claimAt: u.claim_at + hoursMs };
+    if (now < u.claim_at + hoursMs(id)) return { error: "Not yet. Come back when the timer runs out.", claimAt: u.claim_at + hoursMs(id) };
     if (!q.daily.run(now, id, u.claim_at).changes) return { error: "Already claimed." };
     addCredits(id, cfg.daily);
     q.logClaim.run(id, "daily", cfg.daily, now);
