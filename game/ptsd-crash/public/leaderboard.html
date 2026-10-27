@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Rubik+Glitch&display=swap" rel="stylesheet">
 <link rel="icon" href="img/ptsd-logo.webp">
-<link rel="stylesheet" href="style.css?v=41">
+<link rel="stylesheet" href="style.css?v=51">
 <style>
   body { min-height: 100svh; }
   .lbp { width: min(760px, 100%); margin: 0 auto; padding: 18px 16px 40px; }
@@ -18,6 +18,7 @@
   .lbp-head h1 { margin: 0; font: 400 34px/1 "Rubik Glitch", Manrope, sans-serif; color: #F05150; }
   .lbp-head p { margin: 4px 0 0; color: var(--mut); font-size: 13px; }
   .lbp-play { margin-left: auto; text-decoration: none; background: var(--up); color: #fff; font-weight: 800; border-radius: 999px; padding: 10px 18px; box-shadow: 0 3px 0 var(--up-d); white-space: nowrap; }
+  .tix { display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 999px; background: #1d2a29; border: 1px solid #1f5c57; color: var(--teal); font-size: 12px; font-weight: 800; white-space: nowrap; vertical-align: middle; }
   .over { background: var(--panel); border: 1px solid #5a2a2b; border-radius: 16px; padding: 16px 18px; margin-bottom: 14px; }
   .over h2 { margin: 0 0 8px; font-size: 18px; color: #F05150; }
   .over p { margin: 0 0 10px; font-size: 14px; line-height: 1.5; color: var(--txt); }
@@ -189,6 +190,8 @@ function clock() {
 }
 setInterval(clock, 1000);
 const cls = (n) => (n > 0 ? "w" : n < 0 ? "l" : "");
+// Tickets held: a small ticket badge next to the name (only for holders).
+const tix = (r) => (r && r.nfts > 0 ? `<span class="tix" title="${r.nfts} PTSD Ticket${r.nfts > 1 ? "s" : ""} held">🎟️ ${r.nfts}</span>` : "");
 
 // ---- cycles: two 10-day windows, same bankroll for everyone, ranked by profit floored at 0 ----
 let cyc = null;
@@ -211,9 +214,9 @@ async function renderCycle(j) {
   const head = `<div class="camp"><div class="camp-top"><b>${esc(cyc ? cyc.name : "Cycle")}</b><span>${esc(when)}</span></div><div class="camp-clock" id="cycClock"></div>
     <div class="camp-grid"><div><b>${fmt(j.players)}</b><span>Players on the board</span></div><div><b>$${fmt(j.prize)}</b><span>Cash prize · Top 3</span></div></div></div>`;
   const cur = esc(j.coin);
-  const row = (r) => `<div class="tr${r.me ? " me" : ""}"><span class="rk">${r.rank}</span><span class="who">${avatar(r)}<span>${handle(r)}</span></span><span class="num hide-sm">${fmt(r.rounds)}</span><span class="num hide-sm">${r.best ? r.best.toFixed(2) + "x" : "-"}</span><span class="pnl ${cls(r.score)}">${fmt(r.score)}</span></div>`;
+  const row = (r) => `<div class="tr${r.me ? " me" : ""}"><span class="rk">${r.rank}</span><span class="who">${avatar(r)}<span>${handle(r)}${tix(r)}</span></span><span class="num hide-sm">${fmt(r.rounds)}</span><span class="num hide-sm">${r.best ? r.best.toFixed(2) + "x" : "-"}</span><span class="pnl ${cls(r.score)}">${fmt(r.score)}</span></div>`;
   const pod = j.top.slice(0, 3), ord = pod.length === 3 ? [pod[1], pod[0], pod[2]] : pod;
-  const podium = pod.length ? `<div class="podium">${ord.map((r) => `<div class="pod p${r.rank}"><span class="medal">${["🥇", "🥈", "🥉"][r.rank - 1]}</span>${avatar(r)}<div class="nm">${handle(r)}</div><div class="pnl ${cls(r.score)}">${fmt(r.score)}</div><div class="sub">${cur} · ${fmt(r.rounds)} rounds</div></div>`).join("")}</div>` : "";
+  const podium = pod.length ? `<div class="podium">${ord.map((r) => `<div class="pod p${r.rank}"><span class="medal">${["🥇", "🥈", "🥉"][r.rank - 1]}</span>${avatar(r)}<div class="nm">${handle(r)}${tix(r)}</div><div class="pnl ${cls(r.score)}">${fmt(r.score)}</div><div class="sub">${cur} · ${fmt(r.rounds)} rounds</div></div>`).join("")}</div>` : "";
   const meUser = await mePromise;
   const you = !meUser ? "" : `<div class="you"><div class="you-h">Your position${j.mine ? ` <b>#${fmt(j.mine.rank)}</b> of ${fmt(j.players)}` : ""}</div><div class="tbl">${j.mine ? row(j.mine) : `<div class="you-none">You're not on this board yet. Play a round to get ranked.</div>`}</div></div>`;
   const list = j.top.length ? `<div class="tbl"><div class="tr th"><span>#</span><span>Player</span><span class="num hide-sm">Rounds</span><span class="num hide-sm">Best</span><span class="pnl">Profit (${cur})</span></div>${j.top.map(row).join("")}</div>` : `<div class="empty">No rounds this cycle yet. Be the first.</div>`;

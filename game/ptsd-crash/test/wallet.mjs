@@ -108,6 +108,15 @@ try {
   const page = await fetch(`http://127.0.0.1:${PORT}/p/timer1`).then((r) => r.text());
   check(page.includes('<base href="/">') && page.includes("PTSD Crash"), "people get the profile page with a base href");
 
+  // the leaderboard shows how many Tickets each listed player holds (count only)
+  await t1.get("me"); await sleep(100);
+  const bb = await t1.post("buy", { coin: "CREDITS", amount: 100, clientSeed: "lb" });
+  if (bb.code === 200) { await sleep(1200); await t1.post("sell", { id: bb.round.id }); let e = await t1.get("wait?id=" + bb.round.id); while (e.pending) e = await t1.get("wait?id=" + bb.round.id); }
+  let row = null;
+  for (let i = 0; i < 40 && !row; i++) { const lb2 = await t1.get("leaderboard?limit=50"); row = (lb2.top || []).find((x) => x.username === "timer1"); if (!row) await sleep(500); }
+  check(bb.code === 200 && row && row.nfts === 1, "leaderboard row carries the Ticket count", row && { nfts: row.nfts });
+  check(row && !JSON.stringify(row).toLowerCase().includes(w1.address.toLowerCase().slice(2)), "leaderboard row has no wallet address");
+
   // swapping to another wallet is held back by the cooldown
   const sw = Wallet.createRandom(); held.set(sw.address.toLowerCase(), 3);
   check((await connect(t1, sw)).code === 400, "wallet swap blocked during the cooldown");

@@ -351,7 +351,7 @@ function cycleLeaderboard(player, limit = 50) {
   const rows = hit.rows;
   const pub = (id) => { let p = hit.pub.get(id); if (!p) hit.pub.set(id, (p = auth.publicUser(id))); return p; };
   // score = PnL floored at 0; play = the Play points that feed the cycle score (sqrt keeps one lucky run from dwarfing everything else).
-  const row = (r, i) => ({ rank: i + 1, ...pub(r.player), me: r.player === player, score: r.score, play: Math.round(Math.sqrt(r.score) * 100) / 100, net: r.net, rounds: r.rounds, wins: r.wins, wagered: r.wagered, best: r.best, bestWin: r.bestWin });
+  const row = (r, i) => ({ rank: i + 1, ...pub(r.player), me: r.player === player, nfts: wallet.countOf(r.player), score: r.score, play: Math.round(Math.sqrt(r.score) * 100) / 100, net: r.net, rounds: r.rounds, wins: r.wins, wagered: r.wagered, best: r.best, bestWin: r.bestWin });
   const i = player ? rows.findIndex((r) => r.player === player) : -1;
   return {
     period: "cycle", coin: CURRENCY, top: rows.slice(0, limit).map(row), mine: i >= 0 ? row(rows[i], i) : null, players: rows.length,
