@@ -1236,9 +1236,8 @@ function finish(r) {
     const cExit = dickOut;
     if (cExit) {
       const cx = paidMult(r.path, cExit.t).toFixed(2) + "x";
-      const owed = addDebt(-lost);
       const v = Math.random() < 0.2 ? null : pickVoice("tilt", paidMult(r.path, cExit.t));
-      const tilt = v ? v.text : Math.random() < 0.6 ? `That's ${fmt(owed)} ${r.coin} you owe me now, PT.` : pick(TILT).replaceAll("{x}", cx);
+      const tilt = v ? v.text : pick(TILT).replaceAll("{x}", cx);
       setTimeout(() => sayVoice(v, true), 1000);
       setTimeout(() => popup({
         kind: "rekt tilt", img: IMG.cousinBody, title: "YOU GOT REKT", badge: "Exit Liquidity",
@@ -1546,17 +1545,6 @@ $("chatList").addEventListener("click", async (e) => {
 });
 
 // ---------------- Cousin Dick's tab ----------------
-// Running joke: every time he sells before you get rekt, your loss goes on his tab.
-// Kept on this device, per player.
-const debtKey = () => "ptsd.debt." + (user ? user.username.toLowerCase() : "anon");
-function getDebt() { try { return Number(localStorage.getItem(debtKey())) || 0; } catch { return 0; } }
-function showDebt() { const d = getDebt(); $("debtBox").hidden = !d; $("debtAmt").textContent = `${fmt(d)} ${coin}`; }
-function addDebt(n) {
-  const d = getDebt() + Math.max(0, Math.round(n));
-  try { localStorage.setItem(debtKey(), String(d)); } catch {}
-  showDebt();
-  return d;
-}
 
 // ---------------- news ticker ----------------
 function fillNews() {
@@ -1815,7 +1803,6 @@ async function boot() {
     user = me.user || null;
     onb = me.onb || null; nft = me.nft || null;
     syncUser(); syncMute(); syncClaim();
-    showDebt();
     setBalance(me.balances[coin] ?? 0);
     history = me.recent || []; renderHistory(); setPnl();
     if (user) loadStats();

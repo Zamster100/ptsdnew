@@ -392,9 +392,7 @@ a.tb-btn { text-decoration: none; display: inline-flex; align-items: center; }
 @media (min-width: 900px) {
   .term { grid-template-rows: auto auto minmax(0, 1fr); grid-template-areas: "tb tb tb tb" "news news news news" "side tools chart trade"; }
 }
-.debt[hidden] { display: none; }
-.debt b { color: #ffb3c7 !important; }
-@media (max-width: 899px) { .trade-stats { flex-wrap: wrap; row-gap: 4px; } .trade-stats .debt { width: 100%; justify-content: center; } .news { height: 24px; } .news b { font-size: 11px; } .news-run span { font-size: 11px; } }
+@media (max-width: 899px) { .trade-stats { flex-wrap: wrap; row-gap: 4px; } .news { height: 24px; } .news b { font-size: 11px; } .news-run span { font-size: 11px; } }
 
 /* ---------- loading screen ---------- */
 .boot { position: fixed; inset: 0; z-index: 100; background: radial-gradient(circle at 50% 40%, #1b1012, #0b0c0e 70%); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; transition: opacity .4s; }
