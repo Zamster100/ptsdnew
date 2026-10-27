@@ -484,3 +484,5 @@ a.tb-btn { text-decoration: none; display: inline-flex; align-items: center; }
 .wl-none a { color: var(--teal, #00D8C6); }
 .wl-skip { display: block; margin: 12px auto 0; background: none; border: 0; color: var(--mut); font-weight: 700; font-size: 14px; text-decoration: underline; cursor: pointer; }
 .wl-list[hidden], .wl-skip[hidden] { display: none; }
+a.dbar-icon { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
+a.dbar-icon[hidden] { display: none; }
