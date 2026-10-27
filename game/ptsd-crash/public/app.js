@@ -868,7 +868,7 @@ async function doBuy() {
   if (busy || (round && !round.over)) return;
   const amt = amount();
   if (!user) { openSignIn(); return; }
-  if (cfg && cfg.claims && onb && (!onb.wallet || !onb.starter)) { showOnb(); return; }
+  if (cfg && cfg.claims && onb && !onb.starter) { showOnb(); return; }
   if (cfg && cfg.claims && balance < lim.min) { toast(IMG.cousin, onb && onb.canClaim ? `Out of credits. Claim your free <b>${fmt(cfg.daily)}</b> below.` : `Out of credits, cousin. Next free <b>${fmt(cfg.daily)}</b> in <b>${untilTxt(onb && onb.claimAt)}</b>.`, 4500); return; }
   if (!amt || amt < lim.min || amt > lim.max) { toast(IMG.cousin, `Bet between <b>${fmt(lim.min)}</b> and <b>${fmt(lim.max)}</b> ${coin}.`); return; }
   if (amt > balance) { toast(IMG.cousin, `Not enough ${coin}. You have <b>${fmt(balance)}</b>.`); return; }
