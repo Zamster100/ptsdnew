@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&family=Manrope:wght@500;600;700;800&family=Nunito:wght@700;800;900&family=Rubik+Glitch&display=swap" rel="stylesheet">
 <link rel="icon" href="img/ptsd-logo.webp">
-<link rel="stylesheet" href="style.css?v=56">
+<link rel="stylesheet" href="style.css?v=57">
 </head>
 <body>
 <div class="boot" id="boot">
@@ -127,6 +127,7 @@
     <div class="trade-stats">
       <div><span><i class="lg" style="font-style:normal">Account </i>Balance:</span><b id="balBottom">…</b></div>
       <div><span>Cycle PnL:</span><b id="pnlBottom">0</b><button class="claim-btn" id="pnlReset" type="button" title="Reset your PNL to 0 by completing a task">Reset</button></div>
+      <div class="claim" id="tasksRow"><span>Tasks:</span><button class="claim-btn" id="tasksBtn" type="button">View</button><b id="tasksCount"></b></div>
       <div class="claim" id="claimRow" hidden><span>Free credits:</span><button class="claim-btn" id="claimBtn" type="button">Claim</button><b id="claimWait"></b></div>
       <div class="claim" id="bonusRow" hidden><span>NFT bonus credits:</span><button class="claim-btn lock" id="bonusLock" type="button" aria-label="Locked. Tap to see how to unlock">🔒</button><button class="claim-btn" id="bonusBtn" type="button" hidden>Claim</button><b id="bonusWait"></b></div>
     </div>
@@ -228,6 +229,14 @@
       <button class="wl-skip" id="nftRecheck" type="button" hidden>Re-check my wallet</button>
     </section>
 
+    <section class="onb-step" data-step="tasks">
+      <div class="onb-label">Task board</div>
+      <h2>Tasks</h2>
+      <p>Complete a task once to earn free credits. Credits never count toward your PNL.</p>
+      <div id="taskList"></div>
+      <div class="sign-err" id="tasksErr"></div>
+    </section>
+
     <section class="onb-step" data-step="pnl">
       <div class="onb-label">Reset PNL</div>
       <h2 id="pnlTitle">Reset your PNL to 0</h2>
@@ -291,6 +300,6 @@
 <div class="foot">18+ · play responsibly</div>
 
 <script src="vendor/lwc.js"></script>
-<script type="module" src="app.js?v=86"></script>
+<script type="module" src="app.js?v=87"></script>
 </body>
 </html>

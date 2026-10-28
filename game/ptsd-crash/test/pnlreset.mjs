@@ -45,18 +45,30 @@ try {
   check((await get("me")).pnl.net === net && (await get("me")).pnl.canReset === false, "no task yet: reset not available");
   check((await post("pnl/reset", { id: "t1" })).code === 400, "reset refused with no task");
 
-  writeTasks([{ id: "t1", title: "Old task", url: "https://x.com/a", added: "2026-01-01T00:00:00Z" }, { id: "t2", title: "Latest task", desc: "Do it", url: "https://x.com/b", added: "2026-02-01T00:00:00Z" }]);
+  writeTasks([{ id: "t1", title: "Old task", url: "https://x.com/a", added: "2026-01-01T00:00:00Z" }, { id: "t2", title: "Latest task", desc: "Do it", reward: 777, url: "https://x.com/b", added: "2026-02-01T00:00:00Z" }]);
   const st = await get("task/latest");
   check(st.task?.id === "t2" && st.canReset === true, "latest task is the newest one", st.task);
   check((await post("pnl/reset", { id: "t2" })).code === 400, "reset refused before opening the task");
-  check((await post("task/open", { id: "t1" })).code === 400, "an older task can't be opened for the reset");
+  const tb = await get("tasks");
+  check(tb.tasks.length === 2 && tb.tasks[0].id === "t2" && tb.tasks[0].latest && tb.tasks[0].reward === 777 && tb.tasks[1].reward === 2500, "board lists tasks newest first with rewards (own or default)", tb.tasks);
+  check((await post("task/complete", { id: "t1" })).code === 400, "can't complete a task before opening it");
+  check((await post("task/open", { id: "nope" })).code === 400, "unknown task can't be opened");
+  check((await post("task/open", { id: "t1" })).code === 200, "an older task can be opened from the board");
+  await sleep(2300);
+  const bal0 = (await get("me")).balances.CREDITS;
+  const c1 = await post("task/complete", { id: "t1" });
+  check(c1.code === 200 && c1.reward === 2500 && (await get("me")).balances.CREDITS === bal0 + 2500, "completing a task pays its reward", c1.reward);
+  check((await post("task/complete", { id: "t1" })).code === 400, "a task pays only once");
+  check((await get("me")).pnl.net === net, "task credits never touch PnL");
   check((await post("task/open", { id: "t2" })).code === 200, "open the latest task");
   const early = await post("pnl/reset", { id: "t2" });
   check(early.code === 400 && early.wait > 0, "reset refused straight after opening (wait)", early.error);
   check((await post("pnl/reset", { id: "t1" })).code === 400, "reset refused for a task that isn't the latest");
   await sleep(2300);
+  const balBefore = (await get("me")).balances.CREDITS;
   const ok = await post("pnl/reset", { id: "t2" });
   check(ok.code === 200 && ok.net === 0 && ok.cooldown === true, "reset after the wait: PnL back to 0, cooldown on", ok);
+  check((await get("tasks")).tasks[0].done === true && (await get("me")).balances.CREDITS === balBefore + 777, "the reset also completes the task and pays its reward");
   lb = await get("leaderboard?limit=10");
   for (let i = 0; i < 40 && !(lb.mine === null || lb.mine.score === 0); i++) { await sleep(500); lb = await get("leaderboard?limit=10"); }
   check(lb.mine === null || lb.mine.score === 0, "board counts from the reset", lb.mine);

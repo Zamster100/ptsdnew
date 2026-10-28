@@ -529,7 +529,7 @@ const cycles = initCycles({
 });
 
 const referrals = initReferrals({ db, cycles, addCredits });
-const pnlReset = initPnlReset({ db, cycles, file: path.join(ROOT, "data/tasks.json") });
+const pnlReset = initPnlReset({ db, cycles, file: path.join(ROOT, "data/tasks.json"), addCredits });
 
 const MIME = { ".html": "text/html; charset=utf-8", ".json": "application/json", ".js": "text/javascript", ".css": "text/css", ".png": "image/png", ".webp": "image/webp", ".svg": "image/svg+xml", ".mp3": "audio/mpeg", ".woff2": "font/woff2" };
 function serveStatic(res, rel) {
@@ -605,7 +605,7 @@ const server = http.createServer(async (req, res) => {
     cycles.touch(player);
     if (p.startsWith("/api/wallet/")) { const out = await wallet.api(req, res, p, body, user, send); if (out !== null) return; }
     if (p.startsWith("/api/referral/")) { const out = referrals.api(req, res, p, body, user, send); if (out !== null) return; }
-    if (p === "/api/task/latest" || p === "/api/task/open" || p === "/api/pnl/reset") { const out = pnlReset.api(req, res, p, body, user, send, CURRENCY); if (out !== null) return; }
+    if (p === "/api/tasks" || p.startsWith("/api/task/") || p === "/api/pnl/reset") { const out = pnlReset.api(req, res, p, body, user, send, CURRENCY); if (out !== null) return; }
     if (p === "/api/me") {
       await wallet.refresh(player);
       const coins = Object.keys(COINS);
