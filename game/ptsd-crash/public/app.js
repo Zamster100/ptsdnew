@@ -1712,7 +1712,7 @@ function fillPnl() {
   $("pnlTask").hidden = false;
 }
 $("pnlReset").onclick = async () => {
-  try { pnlSt = await api("task/latest"); } catch (e) { toast(IMG.me, esc(e.message)); return; }
+  try { pnlSt = await api("task/latest"); sessionPnl = pnlSt.net; setPnl(); } catch (e) { toast(IMG.me, esc(e.message)); return; }
   showOnb("pnl", "info");
 };
 function closeOnb() { if (blockedInfo || (cfg && cfg.seasonOver)) return; $("onb").hidden = true; }
@@ -1866,6 +1866,7 @@ async function boot() {
     syncUser(); syncMute(); syncClaim();
     if (user && ref && ref.canApply && savedRef() && !(cfg && cfg.seasonOver)) useRef(savedRef(), true);
     setBalance(me.balances[coin] ?? 0);
+    sessionPnl = pnlSt ? pnlSt.net : 0; // the same cycle PnL the leaderboard uses (settled rounds since the cycle start or your last reset)
     history = me.recent || []; renderHistory(); setPnl();
     if (user) loadStats();
     resetChart();
