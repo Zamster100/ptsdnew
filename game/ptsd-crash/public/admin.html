@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Team Admin · PTSD Crash</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0e0f11">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Rubik+Glitch&display=swap" rel="stylesheet">
+<link rel="icon" href="img/ptsd-logo.webp">
+<link rel="stylesheet" href="style.css?v=58">
+<style>
+  body { min-height: 100svh; }
+  .ad { width: min(980px, 100%); margin: 0 auto; padding: 18px 16px 50px; }
+  .ad-head { display: flex; align-items: flex-end; gap: 14px; margin-bottom: 14px; flex-wrap: wrap; }
+  .ad-head h1 { margin: 0; font: 400 32px/1 "Rubik Glitch", Manrope, sans-serif; color: #F05150; }
+  .ad-head p { margin: 4px 0 0; color: var(--mut); font-size: 13px; }
+  .ad-head .sp { margin-left: auto; display: flex; gap: 8px; align-items: center; font-size: 13px; color: var(--mut); }
+  .box { background: var(--panel); border: 1px solid var(--bd); border-radius: 16px; padding: 16px 18px; margin-bottom: 14px; }
+  .box h2 { margin: 0 0 10px; font-size: 16px; }
+  .login { width: min(380px, 100%); margin: 60px auto 0; }
+  label { display: block; font-size: 12px; font-weight: 800; color: var(--mut); margin: 10px 0 4px; text-transform: uppercase; letter-spacing: .05em; }
+  input[type=text], input[type=password], input[type=number], input[type=date], input[type=url], select, textarea { width: 100%; box-sizing: border-box; background: #121214; color: var(--txt); border: 1px solid var(--bd); border-radius: 10px; padding: 9px 12px; font: 600 14px Manrope, sans-serif; }
+  textarea { min-height: 64px; resize: vertical; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 0 14px; }
+  .btn { appearance: none; border: 0; cursor: pointer; background: var(--up); color: #fff; font: 800 13px Manrope, sans-serif; border-radius: 999px; padding: 9px 16px; box-shadow: 0 3px 0 var(--up-d); text-decoration: none; display: inline-block; }
+  .btn.gh { background: #26272b; box-shadow: 0 3px 0 #17181a; color: #cfd4dc; }
+  .btn.bad { background: #8d2a2c; box-shadow: 0 3px 0 #5e1c1d; }
+  .btn.sm { padding: 6px 12px; font-size: 12px; }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 12px; }
+  .err { color: #F05150; font-size: 13px; font-weight: 700; margin-top: 8px; min-height: 16px; }
+  .ok { color: var(--up); }
+  .tabs { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+  .tabs button { appearance: none; border: 1px solid var(--bd); background: var(--panel); color: #cfd4dc; font: 800 13px Manrope, sans-serif; border-radius: 999px; padding: 8px 16px; cursor: pointer; }
+  .tabs button.on { background: var(--up); border-color: var(--up); color: #fff; }
+  .tabs .n { margin-left: 6px; background: #F05150; color: #fff; border-radius: 999px; padding: 0 7px; font-size: 11px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; color: var(--mut); font-size: 11px; text-transform: uppercase; letter-spacing: .05em; padding: 6px 8px; }
+  td { padding: 9px 8px; border-top: 1px solid #1f2023; vertical-align: top; overflow-wrap: anywhere; }
+  tr.off td { opacity: .5; }
+  .pill { display: inline-block; border-radius: 999px; padding: 1px 8px; font-size: 11px; font-weight: 800; background: #1d2a29; color: var(--teal); border: 1px solid #1f5c57; }
+  .pill.warn { background: #3b2f0b; color: #ffd54a; border-color: #5d4a1a; }
+  .pill.bad { background: #2a1416; color: #F05150; border-color: #5a2a2b; }
+  .help { color: var(--mut); font-size: 12px; margin: 6px 0 0; line-height: 1.5; }
+  .scroll { overflow-x: auto; }
+  a.lnk { color: var(--up); }
+</style>
+</head>
+<body>
+<main class="ad">
+  <div class="ad-head">
+    <div><h1>Team Admin</h1><p>Set the daily tasks, review proofs, and see who did what.</p></div>
+    <div class="sp" id="who" hidden><span id="whoName"></span><a class="btn gh sm" href="tasks" target="_blank">View tasks page</a><button class="btn gh sm" id="out" type="button">Log out</button></div>
+  </div>
+
+  <section class="box login" id="login" hidden>
+    <h2>Team login</h2>
+    <label for="lu">Name</label><input type="text" id="lu" autocomplete="username">
+    <label for="lp">Password</label><input type="password" id="lp" autocomplete="current-password">
+    <div class="row"><button class="btn" id="lgo" type="button">Log in</button></div>
+    <div class="err" id="lerr"></div>
+  </section>
+
+  <div id="app" hidden>
+    <div class="tabs" id="tabs">
+      <button data-t="tasks" class="on">Tasks</button>
+      <button data-t="review">Review<span class="n" id="rn" hidden>0</span></button>
+      <button data-t="log">Activity</button>
+    </div>
+
+    <section id="t-tasks">
+      <div class="box">
+        <h2 id="formTitle">New task</h2>
+        <div class="grid">
+          <div><label for="fTitle">Title</label><input type="text" id="fTitle" maxlength="120" placeholder="Retweet our pinned post"></div>
+          <div><label for="fType">Type</label><select id="fType"></select></div>
+          <div><label for="fReward">Reward (credits)</label><input type="number" id="fReward" min="0" step="100" value="2500"></div>
+          <div><label for="fVerify">How we check it</label><select id="fVerify"></select></div>
+          <div><label for="fDay">Day (empty = every day)</label><input type="date" id="fDay"></div>
+          <div><label for="fUrl">Link players visit</label><input type="url" id="fUrl" placeholder="https://x.com/ptsdshow/status/…"></div>
+        </div>
+        <label for="fDesc">Short description</label><textarea id="fDesc" maxlength="400" placeholder="What the player should do"></textarea>
+        <p class="help"><b>Timer</b>: the player opens the link, waits a few seconds and confirms (use for likes, follows, reposts, which can't be checked). <b>Proof</b>: they paste the link to their own reply or quote post; we check it's from their X handle, a real post link, not the original post, and not reused; paid at once and you can revoke later. <b>Review</b>: same proof, but paid only after you approve it.</p>
+        <label><input type="checkbox" id="fActive" checked style="width:auto;margin-right:6px"> Active (visible to players)</label>
+        <div class="row"><button class="btn" id="fSave" type="button">Save task</button><button class="btn gh" id="fReset" type="button">Clear</button></div>
+        <div class="err" id="ferr"></div>
+      </div>
+      <div class="box"><h2>All tasks <span class="help" id="dayNote"></span></h2><div class="scroll"><table><thead><tr><th>Task</th><th>Type</th><th>Reward</th><th>Check</th><th>Day</th><th>Done today</th><th>Total</th><th></th></tr></thead><tbody id="tbody"></tbody></table></div></div>
+    </section>
+
+    <section id="t-review" hidden>
+      <div class="box"><h2>Waiting for review</h2><div class="scroll"><table><thead><tr><th>Player</th><th>Task</th><th>Proof</th><th>Reward</th><th>Sent</th><th></th></tr></thead><tbody id="rbody"></tbody></table></div><div class="err" id="rerr"></div></div>
+    </section>
+
+    <section id="t-log" hidden>
+      <div class="box">
+        <h2>Activity</h2>
+        <div class="row" style="margin-top:0"><input type="date" id="lDay" style="width:auto"><select id="lState" style="width:auto"><option value="">Any status</option><option value="done">Done</option><option value="pending">Pending</option><option value="rejected">Rejected</option></select><button class="btn gh sm" id="lGo" type="button">Show</button><a class="btn gh sm" id="csv" href="api/admin/export.csv">Download CSV</a></div>
+        <div class="scroll"><table><thead><tr><th>Time</th><th>Player</th><th>Task</th><th>Status</th><th>Reward</th><th>Proof</th><th></th></tr></thead><tbody id="lbody"></tbody></table></div>
+        <div class="err" id="gerr"></div>
+      </div>
+    </section>
+  </div>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+const fmt = (n) => Math.round(n).toLocaleString("en-US");
+const when = (ts) => new Date(ts).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+const safeUrl = (u) => (/^https?:\/\//i.test(u || "") ? esc(u) : "");
+let meta = null, tasks = [], editing = null;
+
+async function api(path, body) {
+  const r = await fetch("api/admin/" + path, { method: body ? "POST" : "GET", headers: { "content-type": "application/json" }, body: body ? JSON.stringify(body) : undefined });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw Object.assign(new Error(j.error || "Something went wrong."), { status: r.status });
+  return j;
+}
+function showLogin() { $("login").hidden = false; $("app").hidden = true; $("who").hidden = true; }
+async function start() {
+  try { meta = await api("me"); } catch { return showLogin(); }
+  $("login").hidden = true; $("app").hidden = false; $("who").hidden = false; $("whoName").textContent = meta.user;
+  $("fType").innerHTML = meta.types.map((t) => `<option>${t}</option>`).join("");
+  $("fVerify").innerHTML = meta.verify.map((t) => `<option value="${t}">${{ timer: "Timer (honor)", proof: "Proof link (instant)", review: "Proof link + team review" }[t]}</option>`).join("");
+  $("lDay").value = meta.day;
+  await Promise.all([loadTasks(), loadReviews()]);
+}
+$("lgo").onclick = async () => {
+  $("lerr").textContent = "";
+  try { await api("login", { user: $("lu").value, password: $("lp").value }); $("lp").value = ""; start(); } catch (e) { $("lerr").textContent = e.message; }
+};
+$("lp").onkeydown = (e) => { if (e.key === "Enter") $("lgo").click(); };
+$("out").onclick = async () => { try { await api("logout", {}); } catch {} showLogin(); };
+document.querySelectorAll("#tabs button").forEach((b) => (b.onclick = () => {
+  document.querySelectorAll("#tabs button").forEach((x) => x.classList.toggle("on", x === b));
+  for (const t of ["tasks", "review", "log"]) $("t-" + t).hidden = t !== b.dataset.t;
+  if (b.dataset.t === "review") loadReviews(); if (b.dataset.t === "log") loadLog();
+}));
+
+function fill(t) {
+  editing = t ? t.id : null;
+  $("formTitle").textContent = t ? `Edit task #${t.id}` : "New task";
+  $("fTitle").value = t ? t.title : ""; $("fType").value = t ? t.type : "visit"; $("fReward").value = t ? t.reward : 2500;
+  $("fVerify").value = t ? t.verify : "timer"; $("fDay").value = t && t.day ? t.day : ""; $("fUrl").value = t ? t.url : "";
+  $("fDesc").value = t ? t.desc : ""; $("fActive").checked = t ? t.active : true; $("ferr").textContent = "";
+  scrollTo({ top: 0, behavior: "smooth" });
+}
+$("fReset").onclick = () => fill(null);
+$("fSave").onclick = async () => {
+  $("ferr").className = "err";
+  try {
+    await api("task", { id: editing, title: $("fTitle").value, type: $("fType").value, reward: $("fReward").value, verify: $("fVerify").value, day: $("fDay").value, url: $("fUrl").value, desc: $("fDesc").value, active: $("fActive").checked });
+    fill(null); $("ferr").textContent = "Saved."; $("ferr").className = "err ok"; loadTasks();
+  } catch (e) { $("ferr").textContent = e.message; }
+};
+async function loadTasks() {
+  const j = await api("tasks"); tasks = j.tasks; $("dayNote").textContent = `· today is ${j.day}`;
+  $("tbody").innerHTML = tasks.length ? tasks.map((t) => `<tr class="${t.active ? "" : "off"}"><td><b>${esc(t.title)}</b>${t.desc ? `<div class="help">${esc(t.desc)}</div>` : ""}${safeUrl(t.url) ? `<div class="help"><a class="lnk" target="_blank" rel="noopener noreferrer" href="${safeUrl(t.url)}">${safeUrl(t.url)}</a></div>` : ""}</td><td>${esc(t.type)}</td><td>${fmt(t.reward)}</td><td>${esc(t.verify)}</td><td>${t.day ? esc(t.day) : "every day"}${t.active ? "" : ' <span class="pill bad">hidden</span>'}</td><td>${t.doneToday}${t.pendingToday ? ` <span class="pill warn">${t.pendingToday} pending</span>` : ""}</td><td>${t.doneTotal}</td><td style="white-space:nowrap"><button class="btn gh sm" data-edit="${t.id}">Edit</button> <button class="btn gh sm" data-tog="${t.id}">${t.active ? "Hide" : "Show"}</button> <button class="btn bad sm" data-del="${t.id}">Delete</button></td></tr>`).join("") : '<tr><td colspan="8" class="help">No tasks yet. Add the first one above.</td></tr>';
+  $("tbody").querySelectorAll("[data-edit]").forEach((b) => (b.onclick = () => fill(tasks.find((t) => t.id === Number(b.dataset.edit)))));
+  $("tbody").querySelectorAll("[data-tog]").forEach((b) => (b.onclick = async () => { const t = tasks.find((x) => x.id === Number(b.dataset.tog)); await api("task", { id: t.id, active: !t.active }); loadTasks(); }));
+  $("tbody").querySelectorAll("[data-del]").forEach((b) => (b.onclick = async () => { const t = tasks.find((x) => x.id === Number(b.dataset.del)); if (!confirm(`Delete "${t.title}"? If players already did it, it is hidden instead so the history stays.`)) return; const j2 = await api("task/delete", { id: t.id }); if (j2.hidden) alert("It has history, so it was hidden instead of deleted."); loadTasks(); }));
+}
+async function loadReviews() {
+  const j = await api("reviews"), n = j.reviews.length;
+  $("rn").hidden = !n; $("rn").textContent = n;
+  $("rbody").innerHTML = n ? j.reviews.map((r) => `<tr><td>@${esc(r.user)}</td><td>${esc(r.task)}</td><td>${safeUrl(r.proof) ? `<a class="lnk" target="_blank" rel="noopener noreferrer" href="${safeUrl(r.proof)}">${safeUrl(r.proof)}</a>` : esc(r.proof)}</td><td>${fmt(r.reward)}</td><td>${when(r.ts)}</td><td style="white-space:nowrap"><button class="btn sm" data-ok="${r.id}">Approve</button> <button class="btn bad sm" data-no="${r.id}">Reject</button></td></tr>`).join("") : '<tr><td colspan="6" class="help">Nothing waiting.</td></tr>';
+  const act = (attr, approve) => $("rbody").querySelectorAll(`[${attr}]`).forEach((b) => (b.onclick = async () => { $("rerr").textContent = ""; try { await api("review", { id: Number(b.getAttribute(attr)), approve }); loadReviews(); } catch (e) { $("rerr").textContent = e.message; } }));
+  act("data-ok", true); act("data-no", false);
+}
+async function loadLog() {
+  const day = $("lDay").value, st = $("lState").value;
+  const j = await api(`log?limit=300${day ? "&day=" + day : ""}${st ? "&state=" + st : ""}`);
+  $("csv").href = "api/admin/export.csv" + (day ? "?day=" + day : "");
+  $("lbody").innerHTML = j.log.length ? j.log.map((l) => `<tr><td>${when(l.ts)}</td><td>@${esc(l.user)}</td><td>${esc(l.task)}</td><td><span class="pill ${l.state === "done" ? "" : l.state === "pending" ? "warn" : "bad"}">${esc(l.state)}</span>${l.by ? `<div class="help">by ${esc(l.by)}</div>` : ""}</td><td>${fmt(l.reward)}</td><td>${safeUrl(l.proof) ? `<a class="lnk" target="_blank" rel="noopener noreferrer" href="${safeUrl(l.proof)}">open</a>` : "–"}</td><td>${l.state === "done" ? `<button class="btn bad sm" data-rv="${l.id}">Revoke</button>` : ""}</td></tr>`).join("") : '<tr><td colspan="7" class="help">No activity for this filter.</td></tr>';
+  $("lbody").querySelectorAll("[data-rv]").forEach((b) => (b.onclick = async () => { if (!confirm("Revoke this completion and take the credits back (never below 0)?")) return; $("gerr").textContent = ""; try { await api("revoke", { id: Number(b.dataset.rv) }); loadLog(); } catch (e) { $("gerr").textContent = e.message; } }));
+}
+$("lGo").onclick = loadLog;
+start();
+</script>
+</body>
+</html>

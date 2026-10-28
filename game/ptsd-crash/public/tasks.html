@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Daily Tasks · PTSD Crash</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0e0f11">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Rubik+Glitch&display=swap" rel="stylesheet">
+<link rel="icon" href="img/ptsd-logo.webp">
+<link rel="stylesheet" href="style.css?v=58">
+<style>
+  body { min-height: 100svh; }
+  .tp { width: min(760px, 100%); margin: 0 auto; padding: 18px 16px 40px; }
+  .tp-head { display: flex; align-items: flex-end; gap: 14px; margin-bottom: 14px; }
+  .tp-head h1 { margin: 0; font: 400 34px/1 "Rubik Glitch", Manrope, sans-serif; color: #F05150; }
+  .tp-head p { margin: 4px 0 0; color: var(--mut); font-size: 13px; }
+  .tp-play { margin-left: auto; text-decoration: none; background: var(--up); color: #fff; font-weight: 800; border-radius: 999px; padding: 10px 18px; box-shadow: 0 3px 0 var(--up-d); white-space: nowrap; }
+  .tp-card { background: var(--panel); border: 1px solid var(--bd); border-radius: 18px; overflow: hidden; }
+  .tp-prog { padding: 16px 18px 18px; text-align: center; background: #000; border-bottom: 1px solid var(--bd); }
+  .tp-prog b { font-size: 16px; font-weight: 800; }
+  .tp-prog b span { color: #ffc400; }
+  .tp-bar { height: 14px; border: 1px solid #8a6a14; border-radius: 999px; margin: 10px auto 0; max-width: 520px; overflow: hidden; }
+  .tp-bar i { display: block; height: 100%; width: 0; background: #ffc400; border-radius: 999px; transition: width .4s; }
+  .tk { display: grid; grid-template-columns: 38px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 14px 16px; border-bottom: 1px solid #1f2023; }
+  .tk:last-child { border-bottom: 0; }
+  .tk-ic { width: 38px; height: 38px; border-radius: 12px; background: #1b1c1f; display: grid; place-items: center; font-size: 18px; }
+  .tk h3 { margin: 0; font-size: 15px; font-weight: 800; }
+  .tk p { margin: 2px 0 0; font-size: 13px; color: var(--mut); overflow-wrap: anywhere; }
+  .tk .tag { display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 999px; background: #2a1416; border: 1px solid #5a2a2b; color: #F05150; font-size: 11px; font-weight: 800; vertical-align: middle; }
+  .tk-act { display: flex; align-items: center; gap: 10px; }
+  .rw { border: 1px solid #5d4a1a; border-radius: 10px; padding: 5px 9px; font-size: 12px; color: var(--mut); white-space: nowrap; }
+  .rw b { margin-left: 4px; background: #3b2f0b; color: #ffd54a; border-radius: 7px; padding: 2px 7px; font-weight: 800; font-size: 13px; }
+  .tk-btn { appearance: none; border: 0; cursor: pointer; text-decoration: none; background: var(--up); color: #fff; font: 800 14px Manrope, sans-serif; border-radius: 999px; padding: 9px 18px; box-shadow: 0 3px 0 var(--up-d); white-space: nowrap; }
+  .tk-btn[disabled] { opacity: .55; cursor: default; box-shadow: none; }
+  .tk-btn.ghost { background: #26272b; box-shadow: 0 3px 0 #17181a; color: #cfd4dc; }
+  .tk-btn.ok { background: transparent; box-shadow: none; color: var(--up); padding-right: 4px; }
+  .tk-proof { grid-column: 2 / -1; display: flex; gap: 8px; flex-wrap: wrap; }
+  .tk-proof input { flex: 1 1 220px; min-width: 0; background: #121214; color: var(--txt); border: 1px solid var(--bd); border-radius: 10px; padding: 9px 12px; font: 600 13px Manrope, sans-serif; }
+  .tk-err { grid-column: 2 / -1; color: #F05150; font-size: 12px; font-weight: 700; min-height: 0; }
+  .tp-foot { text-align: center; padding: 12px; font-size: 12px; color: #cfd4dc; background: #000; border-top: 1px solid var(--bd); }
+  .tp-foot b { color: #ffc400; }
+  .tp-msg { padding: 28px 18px; text-align: center; color: var(--mut); font-size: 14px; line-height: 1.5; }
+  .tp-msg a { color: var(--up); font-weight: 800; }
+  .tp-note { margin: 12px 4px 0; color: #5d636d; font-size: 12px; text-align: center; }
+  @media (max-width: 560px) {
+    .tk { grid-template-columns: 38px minmax(0, 1fr); }
+    .tk-act { grid-column: 1 / -1; justify-content: space-between; }
+  }
+</style>
+</head>
+<body>
+<main class="tp">
+  <div class="tp-head">
+    <div><h1>Daily Tasks</h1><p id="sub">Do the tasks, earn free credits. Credits never count toward your PNL.</p></div>
+    <a class="tp-play" href="./">Back to game</a>
+  </div>
+  <div class="tp-card">
+    <div class="tp-prog"><b>Your Progress: <span id="pct">0%</span></b><div class="tp-bar"><i id="bar"></i></div></div>
+    <div id="list"><div class="tp-msg">Loading…</div></div>
+    <div class="tp-foot" id="foot"></div>
+  </div>
+  <p class="tp-note">Tasks marked "under review" are paid once the PTSD team checks your post.</p>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+const fmt = (n) => Math.round(n).toLocaleString("en-US");
+const ICON = { visit: "🔗", follow: "➕", like: "❤️", retweet: "🔁", comment: "💬", quote: "📝", custom: "⭐" };
+let data = null, timers = new Map(), footTimer = 0;
+
+async function api(path, body) {
+  const r = await fetch("api/" + path, { method: body ? "POST" : "GET", headers: { "content-type": "application/json" }, body: body ? JSON.stringify(body) : undefined });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw Object.assign(new Error(j.error || "Something went wrong, try again."), { status: r.status, body: j });
+  return j;
+}
+function foot() {
+  clearInterval(footTimer);
+  if (!data) return;
+  const when = (h) => `${h % 12 || 12}:00 ${h < 12 ? "AM" : "PM"} ET`;
+  const tick = () => { const ms = Math.max(0, data.resetsAt - Date.now()), h = Math.floor(ms / 3600000), m = Math.floor(ms / 60000) % 60; $("foot").innerHTML = `A new set of daily tasks every day at <b>${when(data.dayHour)}</b> · next set in ${h}h ${m}m`; };
+  tick(); footTimer = setInterval(tick, 30000);
+}
+function render() {
+  $("pct").textContent = data.progress.pct + "%";
+  $("bar").style.width = data.progress.pct + "%";
+  const list = $("list");
+  if (!data.tasks.length) { list.innerHTML = '<div class="tp-msg">No tasks yet today. Check back soon.</div>'; foot(); return; }
+  list.innerHTML = data.tasks.map((t) => {
+    const proof = t.verify !== "timer";
+    let act;
+    if (t.state === "done") act = '<span class="tk-btn ok">✓ Done</span>';
+    else if (t.state === "pending") act = '<button class="tk-btn ghost" disabled>Under review</button>';
+    else act = `${t.url ? `<a class="tk-btn ghost" data-visit target="_blank" rel="noopener noreferrer" href="${esc(t.url)}">Visit</a>` : ""}<button class="tk-btn" data-go disabled>${proof ? "Submit" : "Confirm"}</button>`;
+    return `<div class="tk" data-id="${t.id}">
+      <div class="tk-ic">${ICON[t.type] || "⭐"}</div>
+      <div><h3>${esc(t.title)}${t.latest ? '<span class="tag">NEW</span>' : ""}</h3>${t.desc ? `<p>${esc(t.desc)}</p>` : ""}${t.state === "rejected" ? "<p>Your last submission was rejected. You can try again.</p>" : ""}</div>
+      <div class="tk-act"><span class="rw">Reward: <b>+${fmt(t.reward)}</b></span>${act}</div>
+      ${t.state === "todo" || t.state === "rejected" ? `${proof ? `<div class="tk-proof"><input data-proof inputmode="url" placeholder="Paste the link to your post on X" autocomplete="off"></div>` : ""}<div class="tk-err" data-err></div>` : ""}
+    </div>`;
+  }).join("");
+  list.querySelectorAll(".tk").forEach(wire);
+  foot();
+}
+function wire(el) {
+  const id = Number(el.dataset.id), t = data.tasks.find((x) => x.id === id);
+  const go = el.querySelector("[data-go]"), visit = el.querySelector("[data-visit]"), inp = el.querySelector("[data-proof]"), err = el.querySelector("[data-err]");
+  if (!go) return;
+  const label = t.verify !== "timer" ? "Submit" : "Confirm";
+  const arm = (sec) => {
+    clearTimeout(timers.get(id)); let left = sec;
+    const tick = () => { if (left > 0) { go.textContent = `${label} in ${left}s`; go.disabled = true; left--; timers.set(id, setTimeout(tick, 1000)); } else { go.textContent = label; go.dataset.armed = "1"; go.disabled = false; } };
+    tick();
+  };
+  if (t.wait != null) arm(t.wait);
+  else if (!t.url) api("task/open", { id }).then((j) => arm(j.minSeconds)).catch(() => {});
+  if (visit) visit.onclick = () => api("task/open", { id }).then((j) => arm(j.minSeconds)).catch((e) => { err.textContent = e.message; });
+  go.onclick = async () => {
+    err.textContent = ""; go.disabled = true;
+    try { data = { ...data, ...(await api("task/complete", { id, proof: inp ? inp.value.trim() : undefined })) }; render(); }
+    catch (e) { err.textContent = e.message; if (e.body && e.body.wait) arm(e.body.wait); else go.disabled = false; }
+  };
+}
+async function load() {
+  try { data = await api("tasks"); render(); }
+  catch (e) {
+    if (e.status === 401) $("list").innerHTML = '<div class="tp-msg">Sign in with X on the <a href="./">game page</a> to see and complete your daily tasks.</div>';
+    else $("list").innerHTML = `<div class="tp-msg">${esc(e.message)}</div>`;
+  }
+}
+load();
+</script>
+</body>
+</html>

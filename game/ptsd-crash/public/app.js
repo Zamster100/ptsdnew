@@ -1662,7 +1662,6 @@ function showOnb(step, mode = "flow") {
     if (!linked) renderWalletButtons($("nftWl"), { api, onError: (m) => ($("nftErr").textContent = m), onDone: async (w) => { nft = w; await refreshMe(); if (nft && nft.count) { closeOnb(); toast(IMG.me, `<b>${nft.count}</b> Ticket${nft.count > 1 ? "s" : ""} found. NFT bonus credits unlocked!`); } else showOnb("nft", "info"); } });
   }
   if (step === "pnl") fillPnl();
-  if (step === "tasks") fillTasks();
   if (step === "claim") {
     document.querySelectorAll(".dailyAmt").forEach((e) => (e.textContent = fmt((cfg && cfg.daily || 10000) / 1000) + "k"));
     $("claimOpen").href = CLAIM_POST;
@@ -1684,62 +1683,35 @@ function showOnb(step, mode = "flow") {
   $("onb").scrollTop = 0;
   $("onb").hidden = false;
 }
-let pnlTimer = 0;
 function fillPnl() {
   const s = pnlSt || {}, t = s.task;
-  clearTimeout(pnlTimer);
   $("pnlErr").textContent = "";
   $("pnlTask").hidden = true;
-  $("pnlDone").disabled = true;
   const hrs = s.hours || 24;
   if (s.cooldown) { const h = Math.max(1, Math.ceil((s.nextAt - Date.now()) / 3600_000)); $("pnlMsg").textContent = `You already reset your PNL. You can reset again in about ${h}h.`; return; }
   if (!(s.net < 0)) { $("pnlMsg").textContent = "Your PNL isn't negative right now, so there's nothing to reset. Resets are for when you're in the red."; return; }
-  if (!t) { $("pnlMsg").textContent = s.used ? "You've already used the latest task. A new task has to drop before you can reset again." : "There's no task up right now. Check back soon."; return; }
-  $("pnlMsg").textContent = `Your cycle PNL is ${sgn(s.net)} ${coin}. Complete the latest task to reset it to 0. You can do this once every ${hrs} hours.`;
+  if (!t) { $("pnlMsg").textContent = "There's no task up right now. Check back soon."; return; }
+  $("pnlMsg").textContent = `Your cycle PNL is ${sgn(s.net)}. To reset it to 0, complete today's latest task on the Tasks page, then come back and reset. You can do this once every ${hrs} hours.`;
   $("pnlTaskTitle").textContent = t.title;
   $("pnlTaskDesc").textContent = t.desc || "";
-  const go = $("pnlTaskGo");
-  go.hidden = !t.url; go.href = t.url || "#";
-  go.onclick = async () => {
-    try { const j = await api("task/open", { id: t.id }); const sec = j.minSeconds || 15; let left = sec; const tick = () => { if (left > 0) { $("pnlDone").textContent = `Confirm in ${left}s…`; left--; pnlTimer = setTimeout(tick, 1000); } else { $("pnlDone").textContent = "I've done it, reset my PNL"; $("pnlDone").disabled = false; } }; tick(); }
-    catch (e) { $("pnlErr").textContent = e.message; }
-  };
-  if (!t.url) go.onclick(); // a task with no link: start the confirm timer straight away
-  $("pnlDone").onclick = async () => {
-    $("pnlDone").disabled = true;
-    try { const j = await api("pnl/reset", { id: t.id }); pnlSt = j; sessionPnl = 0; setPnl(); loadTasks(); refreshMe(); closeOnb(); toast(IMG.me, "PNL reset to <b>0</b>. Fresh start."); }
-    catch (e) { $("pnlErr").textContent = e.message; $("pnlDone").disabled = false; }
+  $("pnlTaskGo").href = "tasks";
+  const btn = $("pnlDone");
+  btn.disabled = false;
+  btn.textContent = s.taskDone ? "Reset my PNL to 0" : "I've done it, check again";
+  btn.onclick = async () => {
+    btn.disabled = true;
+    try {
+      if (!s.taskDone) { pnlSt = await api("pnl/state"); fillPnl(); if (!pnlSt.taskDone) $("pnlErr").textContent = "That task isn't completed yet."; return; }
+      pnlSt = await api("pnl/reset", {}); sessionPnl = 0; setPnl(); refreshMe(); closeOnb(); toast(IMG.me, "PNL reset to <b>0</b>. Fresh start.");
+    } catch (e) { $("pnlErr").textContent = e.message; btn.disabled = false; }
   };
   $("pnlTask").hidden = false;
 }
-let tasksList = [], tasksTimer = 0;
-function syncTasksCount() { const n = tasksList.filter((t) => !t.done).length; $("tasksCount").textContent = n ? `${n} open` : tasksList.length ? "all done" : ""; }
-async function loadTasks() { try { tasksList = (await api("tasks")).tasks || []; } catch { tasksList = []; } syncTasksCount(); }
-async function fillTasks() {
-  clearTimeout(tasksTimer);
-  $("tasksErr").textContent = "";
-  await loadTasks();
-  const box = $("taskList");
-  if (!tasksList.length) { box.innerHTML = '<p>No tasks right now. Check back soon.</p>'; return; }
-  box.innerHTML = tasksList.map((t) => `<div class="task" data-id="${esc(t.id)}"><p><b>${esc(t.title)}</b>${t.latest ? " · latest" : ""}${t.reward ? ` · +${fmt(t.reward)} credits` : ""}</p>${t.desc ? `<p>${esc(t.desc)}</p>` : ""}${t.done ? "<p>✅ Done</p>" : `${t.url ? `<a class="onb-go" data-open href="${esc(t.url)}" target="_blank" rel="noopener noreferrer">Open the task</a>` : ""}<button class="onb-go" data-done type="button" ${t.wait == null && t.url ? "disabled" : ""}>${t.url && t.wait == null ? "Open it first" : "Confirm"}</button>`}</div>`).join("");
-  box.querySelectorAll(".task").forEach((el) => {
-    const id = el.dataset.id, btn = el.querySelector("[data-done]"), open = el.querySelector("[data-open]");
-    if (!btn) return;
-    const arm = (sec) => { let left = sec; const tick = () => { if (left > 0) { btn.textContent = `Confirm in ${left}s…`; btn.disabled = true; left--; tasksTimer = setTimeout(tick, 1000); } else { btn.textContent = "I've done it"; btn.disabled = false; } }; tick(); };
-    const t = tasksList.find((x) => x.id === id);
-    if (t.wait != null) arm(t.wait);
-    if (open) open.onclick = async () => { try { const j = await api("task/open", { id }); arm(j.minSeconds || 15); } catch (e) { $("tasksErr").textContent = e.message; } };
-    else if (t.wait == null) { api("task/open", { id }).then((j) => arm(j.minSeconds || 15)).catch(() => {}); }
-    btn.onclick = async () => {
-      btn.disabled = true;
-      try { const j = await api("task/complete", { id }); tasksList = j.tasks || tasksList; syncTasksCount(); await refreshMe(); toast(IMG.me, j.reward ? `Task done. <b>+${fmt(j.reward)}</b> credits.` : "Task done."); fillTasks(); }
-      catch (e) { $("tasksErr").textContent = e.message; btn.disabled = false; }
-    };
-  });
+async function syncTasksCount() {
+  try { const j = await api("tasks"), n = j.tasks.filter((t) => t.state === "todo" || t.state === "rejected").length; $("tasksCount").textContent = n ? `${n} open` : j.tasks.length ? "all done" : ""; } catch { $("tasksCount").textContent = ""; }
 }
-$("tasksBtn").onclick = () => showOnb("tasks", "info");
 $("pnlReset").onclick = async () => {
-  try { pnlSt = await api("task/latest"); sessionPnl = pnlSt.net; setPnl(); } catch (e) { toast(IMG.me, esc(e.message)); return; }
+  try { pnlSt = await api("pnl/state"); sessionPnl = pnlSt.net; setPnl(); } catch (e) { toast(IMG.me, esc(e.message)); return; }
   showOnb("pnl", "info");
 };
 function closeOnb() { if (blockedInfo || (cfg && cfg.seasonOver)) return; $("onb").hidden = true; }
@@ -1895,7 +1867,7 @@ async function boot() {
     setBalance(me.balances[coin] ?? 0);
     sessionPnl = pnlSt ? pnlSt.net : 0; // the same cycle PnL the leaderboard uses (settled rounds since the cycle start or your last reset)
     history = me.recent || []; renderHistory(); setPnl();
-    if (user) { loadStats(); loadTasks(); }
+    if (user) { loadStats(); syncTasksCount(); }
     resetChart();
     if (me.open) startRound(me.open, true);
     pollChat();

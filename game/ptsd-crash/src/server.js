@@ -16,6 +16,7 @@ import { initCycles } from "./cycles.js";
 import { initWallet, badgeOf, TIERS } from "./wallet.js";
 import { initReferrals } from "./referrals.js";
 import { initPnlReset } from "./pnlreset.js";
+import { initTasks } from "./tasks.js";
 import { startBg, cached } from "./bg.js";
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
@@ -529,7 +530,8 @@ const cycles = initCycles({
 });
 
 const referrals = initReferrals({ db, cycles, addCredits });
-const pnlReset = initPnlReset({ db, cycles, file: path.join(ROOT, "data/tasks.json"), addCredits });
+const tasks = initTasks({ db, cycles, addCredits, balanceOf: (player) => balanceOf(player, CURRENCY) });
+const pnlReset = initPnlReset({ db, cycles, tasks });
 
 const MIME = { ".html": "text/html; charset=utf-8", ".json": "application/json", ".js": "text/javascript", ".css": "text/css", ".png": "image/png", ".webp": "image/webp", ".svg": "image/svg+xml", ".mp3": "audio/mpeg", ".woff2": "font/woff2" };
 function serveStatic(res, rel) {
@@ -556,6 +558,8 @@ const server = http.createServer(async (req, res) => {
     if (p.startsWith("/auth/")) return await auth.route(req, res, p, u);
     if (!p.startsWith("/api/")) {
       if (p === "/leaderboard") return serveStatic(res, "leaderboard.html");
+      if (p === "/tasks") return serveStatic(res, "tasks.html");
+      if (p === "/admin") return serveStatic(res, "admin.html");
       return serveStatic(res, p === "/" ? "index.html" : p);
     }
 
@@ -567,6 +571,7 @@ const server = http.createServer(async (req, res) => {
     const user = auth.userOf(req);
     const player = user ? user.id : null;
 
+    if (p.startsWith("/api/admin/")) return tasks.adminApi(req, res, p, body, u, send);
     if (p === "/api/config") {
       return send(res, 200, { test: TEST && !CLAIMS, coins: COINS, maxMult: MAX_MULT, edge: EDGE, login: auth.mode, support: auth.supportUrl, seasonOver: betsOff(), ...campaign.publicCfg(), ...cycles.publicCfg(), nft: { enabled: wallet.enabled, contract: wallet.contract }, serverNow: Date.now() });
     }
@@ -605,7 +610,8 @@ const server = http.createServer(async (req, res) => {
     cycles.touch(player);
     if (p.startsWith("/api/wallet/")) { const out = await wallet.api(req, res, p, body, user, send); if (out !== null) return; }
     if (p.startsWith("/api/referral/")) { const out = referrals.api(req, res, p, body, user, send); if (out !== null) return; }
-    if (p === "/api/tasks" || p.startsWith("/api/task/") || p === "/api/pnl/reset") { const out = pnlReset.api(req, res, p, body, user, send, CURRENCY); if (out !== null) return; }
+    if (p === "/api/tasks" || p.startsWith("/api/task/")) { const out = tasks.api(req, res, p, body, user, send); if (out !== null) return; }
+    if (p.startsWith("/api/pnl/")) { const out = pnlReset.api(req, res, p, body, user, send, CURRENCY); if (out !== null) return; }
     if (p === "/api/me") {
       await wallet.refresh(player);
       const coins = Object.keys(COINS);
