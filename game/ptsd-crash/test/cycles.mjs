@@ -1,5 +1,5 @@
 // Cycle check: starts its own server on a temp DB with two short cycles and walks through
-// the reset, the PnL floor and the claim/PnL separation.   node test/cycles.mjs
+// the reset, unfloored PnL and the claim/PnL separation.   node test/cycles.mjs
 import { spawn } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
@@ -54,7 +54,7 @@ try {
   for (let i = 0; i < 40 && !lb.mine; i++) { await sleep(500); lb = await get("leaderboard?limit=10"); }
   const mine = lb.mine;
   check(lb.period === "cycle" && lb.cycle?.id === 1 && lb.cycle.live === true && lb.prize === 1000, "leaderboard is the live cycle board");
-  check(mine && mine.score === Math.max(0, end.pnl) && mine.net === end.pnl, "score is PnL floored at 0 (net kept for display)", mine);
+  check(mine && mine.score === end.pnl && mine.net === end.pnl, "score is the real PnL, negative or not", mine);
 
   // cross the boundary
   await sleep(Math.max(0, C1_END - Date.now()) + 800);

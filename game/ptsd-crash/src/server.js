@@ -15,6 +15,7 @@ import { initCampaign } from "./campaign.js";
 import { initCycles } from "./cycles.js";
 import { initWallet, badgeOf, TIERS } from "./wallet.js";
 import { initReferrals } from "./referrals.js";
+import { initPnlReset } from "./pnlreset.js";
 import { startBg, cached } from "./bg.js";
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
@@ -69,6 +70,8 @@ for (const col of ["half_mult REAL", "half_payout INTEGER", "half_ms INTEGER", "
   try { db.exec(`ALTER TABLE crash_rounds ADD COLUMN ${col}`); } catch {}
 }
 
+// The cycle board joins this table (see pnlreset.js), so it must exist before the queries below are prepared.
+db.exec("CREATE TABLE IF NOT EXISTS crash_pnl_resets (id INTEGER PRIMARY KEY AUTOINCREMENT, player TEXT NOT NULL, ts INTEGER NOT NULL, cycle_id INTEGER, task_id TEXT, net INTEGER)");
 const q = {
   bal: db.prepare("SELECT balance FROM crash_balances WHERE player=? AND coin=?"),
   setBal: db.prepare("INSERT INTO crash_balances(player,coin,balance) VALUES(?,?,?) ON CONFLICT(player,coin) DO UPDATE SET balance=excluded.balance"),
@@ -89,10 +92,11 @@ const q = {
   board: db.prepare(`SELECT player, SUM(pnl) net, COUNT(*) rounds, SUM(bet) wagered, SUM(pnl>0) wins,
     MAX(MAX(COALESCE(sold_mult,0), COALESCE(half_mult,0))) best, MAX(pnl) bestWin
     FROM crash_rounds WHERE state!='open' AND coin=? AND ts>=? AND ts<? GROUP BY player ORDER BY net DESC, wagered DESC LIMIT 20000`),
-  // Cycle board: PnL floored at 0, so a bad run is never a hole. Ties (everyone at 0) go to the bigger volume.
-  cycleBoard: db.prepare(`SELECT player, MAX(0, SUM(pnl)) score, SUM(pnl) net, COUNT(*) rounds, SUM(bet) wagered, SUM(pnl>0) wins,
-    MAX(MAX(COALESCE(sold_mult,0), COALESCE(half_mult,0))) best, MAX(pnl) bestWin
-    FROM crash_rounds WHERE state!='open' AND coin=? AND ts>=? AND ts<? GROUP BY player ORDER BY score DESC, wagered DESC LIMIT 20000`),
+  // Cycle board: real PnL (can be negative). Rounds before a player's last PNL reset (see pnlreset.js) don't count.
+  cycleBoard: db.prepare(`SELECT r.player player, SUM(r.pnl) score, SUM(r.pnl) net, COUNT(*) rounds, SUM(r.bet) wagered, SUM(r.pnl>0) wins,
+    MAX(MAX(COALESCE(r.sold_mult,0), COALESCE(r.half_mult,0))) best, MAX(r.pnl) bestWin
+    FROM crash_rounds r LEFT JOIN (SELECT player, MAX(ts) rts FROM crash_pnl_resets GROUP BY player) z ON z.player=r.player
+    WHERE r.state!='open' AND r.coin=? AND r.ts>=? AND r.ts<? AND r.ts>=COALESCE(z.rts,0) GROUP BY r.player ORDER BY score DESC, wagered DESC LIMIT 20000`),
   settle: db.prepare("UPDATE crash_rounds SET state=@state, sold_mult=@sold_mult, payout=@payout, pnl=@pnl, sold_ms=@sold_ms WHERE id=@id AND state='open'"),
   half: db.prepare("UPDATE crash_rounds SET half_mult=?, half_payout=?, half_ms=? WHERE id=? AND state='open' AND half_ms IS NULL"),
   recent: db.prepare("SELECT id,coin,bet,crash,noise_seed,state,sold_mult,payout,pnl,ts,half_mult,half_payout FROM crash_rounds WHERE player=? AND state!='open' ORDER BY ts DESC LIMIT 25"),
@@ -342,7 +346,7 @@ function cycleRowsFor(c) {
     const blocked = auth.blockedIds();
     // Qualified referrals add a fixed amount to the referrer's cycle profit (see referrals.js).
     const bonus = referrals.bonusMap(c.id), seen = new Set();
-    const all = (raw || []).map((r) => { seen.add(r.player); const b = bonus.get(r.player) || 0; return { ...r, bonus: b, score: Math.max(0, r.net + b) }; });
+    const all = (raw || []).map((r) => { seen.add(r.player); const b = bonus.get(r.player) || 0; return { ...r, bonus: b, score: r.net + b }; });
     for (const [player, b] of bonus) if (!seen.has(player)) all.push({ player, net: 0, rounds: 0, wagered: 0, wins: 0, best: 0, bestWin: 0, bonus: b, score: b });
     all.sort((a, b) => b.score - a.score || b.wagered - a.wagered);
     hit = { raw, v: referrals.version(), at: Date.now(), rows: blocked.size ? all.filter((r) => !blocked.has(r.player)) : all, pub: new Map() };
@@ -355,7 +359,7 @@ function cycleLeaderboard(player, limit = 50) {
   const { cycle, hit } = cycleRows();
   const rows = hit.rows;
   const pub = (id) => { let p = hit.pub.get(id); if (!p) hit.pub.set(id, (p = auth.publicUser(id))); return p; };
-  // score = PnL floored at 0; play = the Play points that feed the cycle score (sqrt keeps one lucky run from dwarfing everything else).
+  // score = cycle PnL (+ referral points); play = the Play points that feed the cycle score (sqrt keeps one lucky run from dwarfing everything else).
   const row = (r, i) => ({ rank: i + 1, ...pub(r.player), me: r.player === player, nfts: wallet.countOf(r.player), score: r.score, bonus: r.bonus || 0, play: Math.round(Math.sqrt(Math.max(0, r.net)) * 100) / 100, net: r.net, rounds: r.rounds, wins: r.wins, wagered: r.wagered, best: r.best, bestWin: r.bestWin });
   const i = player ? rows.findIndex((r) => r.player === player) : -1;
   return {
@@ -525,6 +529,7 @@ const cycles = initCycles({
 });
 
 const referrals = initReferrals({ db, cycles, addCredits });
+const pnlReset = initPnlReset({ db, cycles, file: path.join(ROOT, "data/tasks.json") });
 
 const MIME = { ".html": "text/html; charset=utf-8", ".json": "application/json", ".js": "text/javascript", ".css": "text/css", ".png": "image/png", ".webp": "image/webp", ".svg": "image/svg+xml", ".mp3": "audio/mpeg", ".woff2": "font/woff2" };
 function serveStatic(res, rel) {
@@ -600,6 +605,7 @@ const server = http.createServer(async (req, res) => {
     cycles.touch(player);
     if (p.startsWith("/api/wallet/")) { const out = await wallet.api(req, res, p, body, user, send); if (out !== null) return; }
     if (p.startsWith("/api/referral/")) { const out = referrals.api(req, res, p, body, user, send); if (out !== null) return; }
+    if (p === "/api/task/latest" || p === "/api/task/open" || p === "/api/pnl/reset") { const out = pnlReset.api(req, res, p, body, user, send, CURRENCY); if (out !== null) return; }
     if (p === "/api/me") {
       await wallet.refresh(player);
       const coins = Object.keys(COINS);
@@ -607,7 +613,7 @@ const server = http.createServer(async (req, res) => {
       if (open && overdue(open)) endRound(open.id);
       const still = q.open.get(player);
       return send(res, 200, {
-        user: auth.publicUser(player), onb: campaign.stateOf(player), nft: wallet.stateOf(player), ref: referrals.stateOf(player),
+        user: auth.publicUser(player), onb: campaign.stateOf(player), nft: wallet.stateOf(player), ref: referrals.stateOf(player), pnl: pnlReset.stateOf(player, CURRENCY),
         balances: Object.fromEntries(coins.map((c) => [c, balanceOf(player, c)])),
         open: still ? publicRound(still) : null,
         recent: q.recent.all(player).map(histRow), nextCommit: nextSeed(player).commit_hash, serverNow: Date.now(),

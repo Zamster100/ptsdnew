@@ -797,6 +797,7 @@ setInterval(() => { if (document.visibilityState === "visible") refreshRank(); }
 let onb = null; // onboarding + claim state from the server
 let nft = null; // linked wallet + Tickets held (owner view)
 let ref = null; // referral state (owner view)
+let pnlSt = null; // PNL reset state: { net, canReset, cooldown, nextAt, task }
 // A shared link (?ref=handle) is remembered until the player has signed in and can use it.
 try { const c = new URLSearchParams(location.search).get("ref"); if (c && /^[A-Za-z0-9_]{1,15}$/.test(c)) localStorage.setItem("ptsdRef", c); } catch {}
 const savedRef = () => { try { return localStorage.getItem("ptsdRef") || ""; } catch { return ""; } };
@@ -1593,7 +1594,7 @@ const FAQ = [
   ["How do I connect my wallet?", "Open your profile and tap Connect. You sign a free message to prove the wallet is yours, nothing is sent and no funds move. It is optional, and only your Ticket count is ever public, never your wallet address."],
   ["How do referrals work?", "Share your link from your profile. Anyone who joins with your code gets +10k bonus credits on top of their 10k. Each friend who plays at least 5 rounds with a real X account adds +5,000 to your cycle profit, up to 20 friends."],
   ["Why do I need to connect my X account?", "That is how your progress is tracked. You can login on desktop and mobile and play 24/7."],
-  ["What does the leaderboard track?", "Profit (PnL) in the current cycle. Free claims do not count."],
+  ["What does the leaderboard track?", "Profit (PnL) in the current cycle, plus referral points. Free claims do not count. If you are in the red you can reset your PNL to 0 once every 24 hours by completing the latest task."],
   ["Do I need to bet real money?", "No, the game uses credits. Just sign in with X."],
   ["How much can I play?", "As much as your credits allow. Run out and your next free claim is never more than 24 hours away."],
 ];
@@ -1660,6 +1661,7 @@ function showOnb(step, mode = "flow") {
     $("nftWl").hidden = linked;
     if (!linked) renderWalletButtons($("nftWl"), { api, onError: (m) => ($("nftErr").textContent = m), onDone: async (w) => { nft = w; await refreshMe(); if (nft && nft.count) { closeOnb(); toast(IMG.me, `<b>${nft.count}</b> Ticket${nft.count > 1 ? "s" : ""} found. NFT bonus credits unlocked!`); } else showOnb("nft", "info"); } });
   }
+  if (step === "pnl") fillPnl();
   if (step === "claim") {
     document.querySelectorAll(".dailyAmt").forEach((e) => (e.textContent = fmt((cfg && cfg.daily || 10000) / 1000) + "k"));
     $("claimOpen").href = CLAIM_POST;
@@ -1681,6 +1683,38 @@ function showOnb(step, mode = "flow") {
   $("onb").scrollTop = 0;
   $("onb").hidden = false;
 }
+let pnlTimer = 0;
+function fillPnl() {
+  const s = pnlSt || {}, t = s.task;
+  clearTimeout(pnlTimer);
+  $("pnlErr").textContent = "";
+  $("pnlTask").hidden = true;
+  $("pnlDone").disabled = true;
+  const hrs = s.hours || 24;
+  if (s.cooldown) { const h = Math.max(1, Math.ceil((s.nextAt - Date.now()) / 3600_000)); $("pnlMsg").textContent = `You already reset your PNL. You can reset again in about ${h}h.`; return; }
+  if (!(s.net < 0)) { $("pnlMsg").textContent = "Your PNL isn't negative right now, so there's nothing to reset. Resets are for when you're in the red."; return; }
+  if (!t) { $("pnlMsg").textContent = s.used ? "You've already used the latest task. A new task has to drop before you can reset again." : "There's no task up right now. Check back soon."; return; }
+  $("pnlMsg").textContent = `Your cycle PNL is ${sgn(s.net)} ${coin}. Complete the latest task to reset it to 0. You can do this once every ${hrs} hours.`;
+  $("pnlTaskTitle").textContent = t.title;
+  $("pnlTaskDesc").textContent = t.desc || "";
+  const go = $("pnlTaskGo");
+  go.hidden = !t.url; go.href = t.url || "#";
+  go.onclick = async () => {
+    try { const j = await api("task/open", { id: t.id }); const sec = j.minSeconds || 15; let left = sec; const tick = () => { if (left > 0) { $("pnlDone").textContent = `Confirm in ${left}s…`; left--; pnlTimer = setTimeout(tick, 1000); } else { $("pnlDone").textContent = "I've done it, reset my PNL"; $("pnlDone").disabled = false; } }; tick(); }
+    catch (e) { $("pnlErr").textContent = e.message; }
+  };
+  if (!t.url) go.onclick(); // a task with no link: start the confirm timer straight away
+  $("pnlDone").onclick = async () => {
+    $("pnlDone").disabled = true;
+    try { const j = await api("pnl/reset", { id: t.id }); pnlSt = j; sessionPnl = 0; setPnl(); closeOnb(); toast(IMG.me, "PNL reset to <b>0</b>. Fresh start."); }
+    catch (e) { $("pnlErr").textContent = e.message; $("pnlDone").disabled = false; }
+  };
+  $("pnlTask").hidden = false;
+}
+$("pnlReset").onclick = async () => {
+  try { pnlSt = await api("task/latest"); } catch (e) { toast(IMG.me, esc(e.message)); return; }
+  showOnb("pnl", "info");
+};
 function closeOnb() { if (blockedInfo || (cfg && cfg.seasonOver)) return; $("onb").hidden = true; }
 $("onbX").onclick = closeOnb;
 $("howBtn").onclick = () => showOnb("how", "info");
@@ -1781,7 +1815,7 @@ $("claimGo").onclick = async () => {
     sfx.big(); toast(IMG.me, `<b>+${fmt(j.amount)}</b> free credits. Go get rekt.`);
   } catch (err) { refreshMe(); $("claimErr").textContent = err.message; }
 };
-async function refreshMe() { try { const j = await api("me"); onb = j.onb || null; nft = j.nft || null; ref = j.ref || null; setBalance(j.balances[coin] ?? 0); syncClaim(); } catch {} }
+async function refreshMe() { try { const j = await api("me"); onb = j.onb || null; nft = j.nft || null; ref = j.ref || null; pnlSt = j.pnl || null; setBalance(j.balances[coin] ?? 0); syncClaim(); } catch {} }
 
 // ---------------- intro song on page open ----------------
 let introDone = false;
@@ -1828,7 +1862,7 @@ async function boot() {
     $("amtIn").value = fmt(lim.min); markChip();
     const me = await api("me");
     user = me.user || null;
-    onb = me.onb || null; nft = me.nft || null; ref = me.ref || null;
+    onb = me.onb || null; nft = me.nft || null; ref = me.ref || null; pnlSt = me.pnl || null;
     syncUser(); syncMute(); syncClaim();
     if (user && ref && ref.canApply && savedRef() && !(cfg && cfg.seasonOver)) useRef(savedRef(), true);
     setBalance(me.balances[coin] ?? 0);

@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&family=Manrope:wght@500;600;700;800&family=Nunito:wght@700;800;900&family=Rubik+Glitch&display=swap" rel="stylesheet">
 <link rel="icon" href="img/ptsd-logo.webp">
-<link rel="stylesheet" href="style.css?v=55">
+<link rel="stylesheet" href="style.css?v=56">
 </head>
 <body>
 <div class="boot" id="boot">
@@ -126,7 +126,7 @@
     </div>
     <div class="trade-stats">
       <div><span><i class="lg" style="font-style:normal">Account </i>Balance:</span><b id="balBottom">…</b></div>
-      <div><span>Realized PnL:</span><b id="pnlBottom">0</b></div>
+      <div><span>Realized PnL:</span><b id="pnlBottom">0</b><button class="claim-btn" id="pnlReset" type="button" title="Reset your PNL to 0 by completing a task">Reset</button></div>
       <div class="claim" id="claimRow" hidden><span>Free credits:</span><button class="claim-btn" id="claimBtn" type="button">Claim</button><b id="claimWait"></b></div>
       <div class="claim" id="bonusRow" hidden><span>NFT bonus credits:</span><button class="claim-btn lock" id="bonusLock" type="button" aria-label="Locked. Tap to see how to unlock">🔒</button><button class="claim-btn" id="bonusBtn" type="button" hidden>Claim</button><b id="bonusWait"></b></div>
     </div>
@@ -228,6 +228,19 @@
       <button class="wl-skip" id="nftRecheck" type="button" hidden>Re-check my wallet</button>
     </section>
 
+    <section class="onb-step" data-step="pnl">
+      <div class="onb-label">Reset PNL</div>
+      <h2 id="pnlTitle">Reset your PNL to 0</h2>
+      <p id="pnlMsg"></p>
+      <div id="pnlTask" hidden>
+        <p><b id="pnlTaskTitle"></b></p>
+        <p id="pnlTaskDesc"></p>
+        <a class="onb-go" id="pnlTaskGo" href="#" target="_blank" rel="noopener noreferrer">Open the task</a>
+        <button class="onb-go" id="pnlDone" type="button" disabled>I've done it, reset my PNL</button>
+      </div>
+      <div class="sign-err" id="pnlErr"></div>
+    </section>
+
     <section class="onb-step" data-step="blocked">
       <div class="onb-label">Account flagged</div>
       <h2>Account suspended</h2>
@@ -278,6 +291,6 @@
 <div class="foot">18+ · play responsibly</div>
 
 <script src="vendor/lwc.js"></script>
-<script type="module" src="app.js?v=83"></script>
+<script type="module" src="app.js?v=84"></script>
 </body>
 </html>

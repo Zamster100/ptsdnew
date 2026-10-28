@@ -193,7 +193,7 @@ const cls = (n) => (n > 0 ? "w" : n < 0 ? "l" : "");
 // Tickets held: a small ticket badge next to the name (only for holders).
 const tix = (r) => (r && r.nfts > 0 ? `<span class="tix" title="${r.nfts} PTSD Ticket${r.nfts > 1 ? "s" : ""} held">🎟️ ${r.nfts}</span>` : "");
 
-// ---- cycles: two 10-day windows, same bankroll for everyone, ranked by profit floored at 0 ----
+// ---- cycles: two 10-day windows, same bankroll for everyone, ranked by profit ----
 let cyc = null;
 function cycleClock() {
   if (!cyc || !$("cycClock")) return;
@@ -206,7 +206,7 @@ setInterval(cycleClock, 1000);
 async function renderCycle(j) {
   cyc = j.cycle;
   $("over").hidden = true; $("camp").hidden = true; $("seg").hidden = true;
-  $("lbSub").textContent = "Ranked by profit this cycle. Everyone starts with " + fmt(j.bankroll) + ". A bad run counts as 0, never below.";
+  $("lbSub").textContent = "Ranked by profit this cycle. Everyone starts with " + fmt(j.bankroll) + ". In the red? Reset your PNL from the game by completing a task (once every 24h).";
   const play = $("lbPlay");
   play.textContent = cyc && cyc.live ? "Play" : "Cycle ended"; play.style.cssText = cyc && cyc.live ? "" : "opacity:.4;cursor:not-allowed;box-shadow:none;background:#3a3b40";
   if (cyc && cyc.live) { play.removeAttribute("aria-disabled"); play.setAttribute("href", "./"); }
