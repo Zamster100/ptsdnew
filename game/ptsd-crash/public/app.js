@@ -815,7 +815,7 @@ async function useRef(code, quiet) {
   }
 }
 const walletSkipped = () => { try { return localStorage.getItem("ptsdWalletSkip") === "1"; } catch { return false; } };
-function setPnl() { const el = $("pnlBottom"); el.textContent = `${sgn(sessionPnl)} ${coin}`; el.className = sessionPnl > 0 ? "w" : sessionPnl < 0 ? "l" : ""; }
+function setPnl() { const el = $("pnlBottom"); el.textContent = sgn(sessionPnl); el.className = sessionPnl > 0 ? "w" : sessionPnl < 0 ? "l" : ""; }
 
 function chipsUI() {
   const vals = [lim.min, lim.min * 2, lim.min * 5, lim.max].filter((v, i, a) => v <= lim.max && a.indexOf(v) === i);
