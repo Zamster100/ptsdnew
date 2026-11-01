@@ -21,6 +21,8 @@ import { initXp, xpOf, levelInfo, stageOf, STAGES } from "./xp.js";
 import { initStreaks } from "./streaks.js";
 import { initDoubleXp } from "./doublexp.js";
 import { initSentiment } from "./sentiment.js";
+import { initBadBeat } from "./badbeat.js";
+import { initJackpot } from "./jackpot.js";
 import { startBg, cached } from "./bg.js";
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
@@ -168,7 +170,13 @@ const finishOverdue = db.transaction((row) => {
   const payout = (row.half_payout || 0) + fresh;
   const ch = q.settle.run({ id: row.id, state: capped ? "max" : "rekt", sold_mult: capped ? cap : null, payout, pnl: payout - row.bet, sold_ms: capped ? row.end_ms : null });
   if (ch.changes && fresh) q.addBal.run(fresh, row.player, row.coin);
-  if (ch.changes) streaks.onSettled(q.round.get(row.id));
+  if (ch.changes) {
+    streaks.onSettled(q.round.get(row.id));
+    // rugged again and again: the last bet comes back as credits (profit and loss and the round stay as they were)
+    const back = badbeat.check(row);
+    if (back) q.addBal.run(back, row.player, row.coin);
+    jackpot.onLoss(q.round.get(row.id)); // a slice of the loss feeds the community pot, and earns tickets
+  }
 });
 
 const waiters = new Map(); // round id -> [res]
@@ -198,8 +206,10 @@ function histRow(row) {
 }
 function reveal(row) {
   if (row.state === "open") return { id: row.id, state: "open" };
+  const badBeat = badbeat.forRound(row.id);
+  if (badBeat) badbeat.markSeen(row.id);
   return {
-    id: row.id, state: row.state, crash: row.crash, crashShown: crashShown(row), endAt: row.end_ms,
+    id: row.id, state: row.state, badBeat, crash: row.crash, crashShown: crashShown(row), endAt: row.end_ms,
     soldMult: row.sold_mult, halfMult: row.half_mult, halfPayout: row.half_payout, payout: row.payout, pnl: row.pnl,
     serverSeed: row.server_seed, clientSeed: row.client_seed, nonce: row.nonce, commit: row.commit_hash,
   };
@@ -259,7 +269,7 @@ const sell = db.transaction((player, id, half, at) => {
   q.settle.run({ id, state: "sold", sold_mult: mult, payout, pnl: payout - row.bet, sold_ms: now });
   q.addBal.run(fresh, player, row.coin);
   const done = q.round.get(id);
-  return { done, now, arrived, claim: now, award: streaks.onSettled(done) };
+  return { done, now, arrived, claim: now, award: streaks.onSettled(done), jackpot: jackpot.onSold(done, now) };
 });
 
 // Every sell tap, so "I pressed and got rekt" can be checked to the millisecond.
@@ -552,18 +562,24 @@ const cycles = initCycles({
 const dxp = initDoubleXp();
 const xp = initXp({ db, cycles, boost: dxp.mult });
 const sentiment = initSentiment({ db, coin: CURRENCY, baseEdge: EDGE });
+const badbeat = initBadBeat({ db });
 sentiment.tick();
 setInterval(() => { try { sentiment.tick(); } catch (e) { console.error("[sentiment] tick failed", e.message); } }, 10_000).unref();
 const referrals = initReferrals({ db, cycles, addCredits });
 const tasks = initTasks({ db, cycles, addCredits, balanceOf: (player) => balanceOf(player, CURRENCY), boost: dxp.mult, boostTasks: dxp.cfg.tasks,
   // team-only: open a Fear / Greed window now, or end the current one   POST /api/admin/sentiment { kind: "fear"|"greed"|"neutral", minutes }
   adminExtra: (p, body, send, res) => {
+    if (p === "/api/admin/jackpot") { send(res, 200, { win: jackpot.drawNow(), ...jackpot.view(null) }); return true; } // draw today's tickets now (demo / testing)
     if (p !== "/api/admin/sentiment") return false;
     const kind = String(body?.kind || "");
     if (!["fear", "greed", "neutral"].includes(kind)) { send(res, 400, { error: "kind must be fear, greed or neutral." }); return true; }
     sentiment.force(kind, body?.minutes);
     send(res, 200, sentiment.view()); return true;
   } });
+// Community jackpot: losses feed a pot and earn tickets, a daily draw at the tasks reset (9 AM ET), and a Pot Breaker at 50x.
+const jackpot = initJackpot({ db, coin: CURRENCY, dayKey: tasks.dayKey, nextReset: tasks.nextReset, nameOf: (p) => auth.publicUser(p).username, pay: (p, n) => q.addBal.run(n, p, CURRENCY) });
+jackpot.tick();
+setInterval(() => { try { jackpot.tick(); } catch (e) { console.error("[jackpot] draw failed", e.message); } }, 30_000).unref();
 const pnlReset = initPnlReset({ db, cycles, tasks });
 const streaks = initStreaks({ db, xp, dayKey: tasks.dayKey });
 
@@ -592,6 +608,7 @@ const server = http.createServer(async (req, res) => {
     if (p.startsWith("/auth/")) return await auth.route(req, res, p, u);
     if (!p.startsWith("/api/")) {
       if (p === "/leaderboard") return serveStatic(res, "leaderboard.html");
+      if (p === "/jackpot") return serveStatic(res, "jackpot.html");
       if (p === "/tasks") return serveStatic(res, "tasks.html");
       if (p === "/admin") return serveStatic(res, "admin.html");
       return serveStatic(res, p === "/" ? "index.html" : p);
@@ -610,6 +627,7 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, { test: TEST && !CLAIMS, coins: COINS, maxMult: MAX_MULT, edge: EDGE, login: auth.mode, support: auth.supportUrl, seasonOver: betsOff(), ...campaign.publicCfg(), ...cycles.publicCfg(), doubleXp: dxp.state(), sentiment: sentiment.view(), nft: { enabled: wallet.enabled, contract: wallet.contract }, serverNow: Date.now() });
     }
     if (p.startsWith("/api/auth/")) return await auth.api(req, res, p, body, send);
+    if (p === "/api/jackpot") { res.setHeader("cache-control", "no-store"); return send(res, 200, { ...jackpot.view(player), serverNow: Date.now() }); }
     if (p === "/api/sentiment") { res.setHeader("cache-control", "no-store"); return send(res, 200, { ...sentiment.view(), serverNow: Date.now() }); }
     if (p === "/api/rank") return send(res, 200, betsOff() && !cycles.started() ? { rank: null, players: 0, level: player ? xp.levelOf(player) : null } : rankOf(player));
     if (p === "/api/leaderboard") {
@@ -656,6 +674,7 @@ const server = http.createServer(async (req, res) => {
       const login = cycles.current() ? streaks.checkIn(player) : null; // first visit of the task day: login streak bonus
       return send(res, 200, {
         streak: { ...streaks.stateOf(player), loginAward: login && login.isNew ? login.xp : 0, boost: login && login.isNew ? login.boost : 1 },
+        badBeats: badbeat.takeUnseen(player), jackpotWins: jackpot.takeUnseen(player),
         user: auth.publicUser(player), onb: campaign.stateOf(player), nft: wallet.stateOf(player), ref: referrals.stateOf(player), pnl: pnlReset.stateOf(player, CURRENCY),
         balances: Object.fromEntries(coins.map((c) => [c, balanceOf(player, c)])),
         open: still ? publicRound(still) : null,
@@ -686,7 +705,7 @@ const server = http.createServer(async (req, res) => {
       if (out.error) return send(res, 400, { error: out.error });
       const r = out.done;
       logSell(player, r, body, out);
-      return send(res, 200, { state: r.state, half: !!out.half, lateMs: out.late ?? null, halfMult: r.half_mult, halfPayout: r.half_payout, halfAt: r.half_ms, soldMult: r.sold_mult, payout: r.payout, pnl: r.pnl, soldAt: r.sold_ms, award: out.award || null, streak: streaks.stateOf(player), balance: balanceOf(player, r.coin), serverNow: Date.now() });
+      return send(res, 200, { state: r.state, half: !!out.half, lateMs: out.late ?? null, halfMult: r.half_mult, halfPayout: r.half_payout, halfAt: r.half_ms, soldMult: r.sold_mult, payout: r.payout, pnl: r.pnl, soldAt: r.sold_ms, award: out.award || null, jackpot: out.jackpot || null, streak: streaks.stateOf(player), balance: balanceOf(player, r.coin), serverNow: Date.now() });
     }
     if (p === "/api/wait") {
       const row = q.round.get(String(u.searchParams.get("id") || ""));

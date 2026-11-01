@@ -128,6 +128,18 @@ for (const c of CAST) {
   const x = xpOf({ pnl: c.pnl, refs, tasks: c.tasks, activity: c.act }, multOf(c.tix));
   rows.push({ name: c.name, rounds: n, tix: c.tix, refs: c.refs, ...x, lvl: levelInfo(Math.max(x.xp, c.peak || 0)) });
 }
+// Jackpot: a pot, today's tickets for a few characters, and a few past winners (the tables exist because the server started above)
+{
+  const dayFmt = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" });
+  const dk = (t) => dayFmt.format(new Date(t - 9 * 3600_000));
+  db.prepare("UPDATE crash_jackpot SET pot = ? WHERE id = 1").run(1_847_250);
+  const tix = db.prepare("INSERT OR REPLACE INTO crash_jackpot_tix(day, player, n) VALUES(?,?,?)");
+  const mine = { RektRonnie: 41, DegenDana: 12, PaperPenny: 27, NewbieNico: 3, ZeroToHeroZed: 18, ChartCharlie: 9, RugSurvivorRay: 22 };
+  for (const [n, t] of Object.entries(mine)) tix.run(dk(now), "demo:" + n.toLowerCase(), t);
+  const win = db.prepare("INSERT INTO crash_jackpot_wins(day, kind, player, name, amount, tickets, total, ts, seen) VALUES(?,?,?,?,?,?,?,?,1)");
+  const past = [["DiamondDiego", "daily", 612_400, 33, 190, 1], ["RektRonnie", "daily", 488_050, 61, 244, 2], ["WhaleWanda", "breaker", 903_100, null, null, 2.6], ["PaperPenny", "daily", 351_900, 14, 171, 3.2]];
+  for (const [n, kind, amt, tk, tot, daysAgo] of past) { const ts = now - daysAgo * 864e5; win.run(dk(ts), kind, "demo:" + n.toLowerCase(), n, amt, tk, tot, ts); }
+}
 db.exec("COMMIT");
 db.pragma("wal_checkpoint(TRUNCATE)");
 db.close();

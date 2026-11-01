@@ -813,6 +813,16 @@ function awardToast(a) {
   if (a.boost > 1) parts.push(`⚡ <b>${a.boost}× Double XP hour</b>`);
   setTimeout(() => toast(IMG.me, parts.join("<br>"), 4200), 700);
 }
+// A refund that landed while the page was closed.
+// Pot Breaker: sold at the multiplier that takes the whole community pot.
+function jackpotPopup(jp) {
+  if (!jp || !jp.amount) return;
+  sfx.big(); refreshBalance();
+  setTimeout(() => popup({ kind: "big", img: IMG.max, title: "POT BREAKER", badge: "Jackpot Winner", line: "You sold high enough to break the community pot. It's all yours.", num: `+${fmt(jp.amount)} ${coin}`, btn: "Keep going", action: "close" }), 600);
+}
+// A daily draw win that landed while the page was closed.
+function jackpotWinToasts(list) { for (const w of list || []) toast(IMG.max, `🎫 <b>You won the daily jackpot!</b> <b>+${fmt(w.amount)}</b> credits are in your balance.`, 8000); }
+function badBeatToasts(list) { for (const b of list || []) toast(IMG.rekt2, `🍀 <b>Bad beat refund</b>: ${b.rugs} rugs in a row. <b>+${fmt(b.amount)}</b> back in your balance.`, 6000); }
 function loginToast(st) { if (st && st.loginAward) toast(IMG.me, `📅 <b>Day ${st.login} login streak</b> +${fmt(st.loginAward)} XP${st.boost > 1 ? `<br>⚡ <b>${st.boost}× Double XP hour</b>` : ""}`, 4200); }
 function showLevel(lv) {
   if (!lv || !user) { $("lvlPill").hidden = true; return; }
@@ -977,7 +987,7 @@ async function waitEnd(id) {
       if (j.pending) continue;
       if (j.state === "sold") pushHistory({ id, crash: j.crashShown });
       if (!round || round.id !== id) return;
-      round.end = { t: (j.endAt - round.startAt) / 1000, state: j.state, crash: j.crash, shown: j.crashShown, payout: j.payout, pnl: j.pnl, soldMult: j.soldMult };
+      round.end = { t: (j.endAt - round.startAt) / 1000, state: j.state, crash: j.crash, shown: j.crashShown, payout: j.payout, pnl: j.pnl, soldMult: j.soldMult, badBeat: j.badBeat || null };
       return;
     } catch { await new Promise((r) => setTimeout(r, 1000)); }
   }
@@ -1026,7 +1036,7 @@ async function doSell() {
     const j = await api("sell", { id, at });
     if (!round || round.id !== id) return;
     setBalance(j.balance);
-    showStreak(j.streak); awardToast(j.award);
+    showStreak(j.streak); awardToast(j.award); jackpotPopup(j.jackpot);
     if (j.state === "sold") {
       const t = (j.soldAt - round.startAt) / 1000;
       round.sold = { t, mult: j.soldMult, payout: j.payout, pnl: j.pnl };
@@ -1284,10 +1294,22 @@ function finish(r) {
     setTimeout(() => { if ($("pop").hidden) backToIdleSoon(); }, 2000);
   } else {
     sfx.loss();
+    if (window.__jackpotRefresh) setTimeout(window.__jackpotRefresh, 800); // the loss just earned tickets
     const lost = lockedOf(r) - r.bet;
     $("multPnl").textContent = `${sgn(lost)} ${r.coin}`;
     sessionPnl += lost; setPnl();
     pushHistory({ id: r.id, coin: r.coin, bet: r.bet, crash: e.shown, state: "rekt", soldMult: null, halfMult: r.half ? r.half.mult : null, payout: lockedOf(r), pnl: lost, ts: Date.now() });
+    // Rugged again and again: the last bet is already back in the balance, say so instead of the usual rekt popup.
+    if (e.badBeat) {
+      sfx.win(); refreshBalance();
+      setTimeout(() => popup({
+        kind: "big", img: IMG.rekt2, title: "BAD BEAT", badge: "Bad Beat Refund",
+        line: `${e.badBeat.rugs} rugs in a row. Your last bet is back in your balance.`,
+        num: `+${fmt(e.badBeat.amount)} ${r.coin}`, btn: "Run it back",
+      }), 1000);
+      setButtons();
+      return;
+    }
     // Cousin sold before the crash and you didn't: he lets you know about it.
     const cExit = dickOut;
     if (cExit) {
@@ -1855,7 +1877,7 @@ $("claimGo").onclick = async () => {
     sfx.big(); toast(IMG.me, `<b>+${fmt(j.amount)}</b> free credits. Go get rekt.`);
   } catch (err) { refreshMe(); $("claimErr").textContent = err.message; }
 };
-async function refreshMe() { try { const j = await api("me"); onb = j.onb || null; nft = j.nft || null; ref = j.ref || null; pnlSt = j.pnl || null; showStreak(j.streak); loginToast(j.streak); setBalance(j.balances[coin] ?? 0); syncClaim(); } catch {} }
+async function refreshMe() { try { const j = await api("me"); onb = j.onb || null; nft = j.nft || null; ref = j.ref || null; pnlSt = j.pnl || null; showStreak(j.streak); loginToast(j.streak); badBeatToasts(j.badBeats); jackpotWinToasts(j.jackpotWins); setBalance(j.balances[coin] ?? 0); syncClaim(); } catch {} }
 
 // ---------------- intro song on page open ----------------
 let introDone = false;
@@ -1902,7 +1924,7 @@ async function boot() {
     const me = await api("me");
     user = me.user || null;
     onb = me.onb || null; nft = me.nft || null; ref = me.ref || null; pnlSt = me.pnl || null;
-    syncUser(); syncMute(); syncClaim(); showStreak(me.streak); loginToast(me.streak);
+    syncUser(); syncMute(); syncClaim(); showStreak(me.streak); loginToast(me.streak); badBeatToasts(me.badBeats); jackpotWinToasts(me.jackpotWins);
     if (user && ref && ref.canApply && savedRef() && !(cfg && cfg.seasonOver)) useRef(savedRef(), true);
     setBalance(me.balances[coin] ?? 0);
     sessionPnl = pnlSt ? pnlSt.net : 0; // the same cycle PnL the leaderboard uses (settled rounds since the cycle start or your last reset)

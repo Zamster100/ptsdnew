@@ -58,15 +58,22 @@ Rules for every item
 - Env: `SENTIMENT=0` off, `SENTIMENT_GREED_EDGE`, `SENTIMENT_FEAR_EDGE`, `SENTIMENT_MIN/MAX_MINUTES`, `SENTIMENT_MIN_ROUNDS`, `SENTIMENT_MIN_PLAYERS`, `SENTIMENT_GREED_AT/FEAR_AT`, `SENTIMENT_SPAN`.
 - Open: needs a real fairness review before launch (edge changes by time). Needs real traffic to tune (the demo can only be forced). Pre-launch legal check applies (odds vary over time while cash prizes are on).
 
-### 5. Bad beat refund
-- 3 instant rugs in a row (rekt rounds that crashed under 1.1x) refunds the last bet in credits. Balance only, not PNL.
+### 5. Bad beat refund  (BUILT, defaults below are tunable)
+- 3 rugs in a row (each crashed under 1.1x with nothing sold) refunds the last bet as credits. Popup "BAD BEAT" instead of the rekt popup; a toast on the next visit if the page was closed.
+- Credits only: the round and the player's PnL stay as they were (the leaderboard doesn't change). Once per hour per player; the count starts again after a refund.
+- Env: `BAD_BEAT=0` off, `BAD_BEAT_COUNT` (3), `BAD_BEAT_UNDER` (1.1), `BAD_BEAT_COOLDOWN_MIN` (60).
+- Roughly 0.3% of three-round runs in normal odds (more in a Greed window), so it's rare but it happens.
 
-### 6. Community jackpot
-- A share of every player's rekt losses (default 5%) feeds a pot. Players are not charged extra; it is a counter.
-- Lottery tickets: earned from losses; ticket counter in the top bar.
-- Daily draw at 9 AM Eastern: one winner takes a share.
-- Pot Breaker: first player to sell at 50x or higher wins the pot (threshold to confirm).
-- Dedicated Jackpot page: pot counter, countdown to the next draw, list of daily winners.
+### 6. Community jackpot  (BUILT, defaults below are tunable)
+- 5% of every loss feeds a pot (players are never charged extra). The pot never drops below a floor of 100,000 (what it restarts at after a win).
+- Lottery tickets: every losing round earns tickets (1 per 1,000 lost, at least 1, max 500 per player per day). Counter in the top bar of every page, links to the Jackpot page. (Called "lottery tickets" because "Tickets" is already the NFT.)
+- Daily draw at 9 AM Eastern (the tasks reset): one ticket drawn from the day's entries, the owner wins 50% of the pot. Missed days (downtime) are caught up. The winner is told on their next visit.
+- Pot Breaker: the first sell at 50x or higher takes the whole pot (popup, credited at once).
+- Jackpot page (`/jackpot`): pot counter, countdown to the draw, your tickets / all tickets, how it works, winners list.
+- Credits only, paid to the balance: never profit, so no leaderboard or XP effect.
+- Team/demo: `POST /api/admin/jackpot` draws today's tickets now.
+- Env: `JACKPOT=0` off, `JACKPOT_SHARE`, `JACKPOT_SEED`, `JACKPOT_DAILY_SHARE`, `JACKPOT_BREAKER_X`, `JACKPOT_TICKET_PER`, `JACKPOT_MAX_TICKETS_DAY`.
+- Open: the draw uses the server's random number generator (not a published, checkable draw). Fine for credits, but cash-prize rules may want a verifiable draw. Part of the pre-launch fairness/legal review.
 
 ### 7. Underdog boost
 - Players far behind get a comeback bonus on their Activity/Task points (odds stay fair).

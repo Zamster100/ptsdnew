@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Jackpot · PTSD Crash</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0e0f11">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Rubik+Glitch&display=swap" rel="stylesheet">
+<link rel="icon" href="img/ptsd-logo.webp">
+<link rel="stylesheet" href="style.css?v=64">
+<style>
+  body { min-height: 100svh; }
+  .dbar { position: relative; z-index: 5; }
+  .jp-wrap { position: relative; z-index: 1; width: min(760px, 100%); margin: 0 auto; padding: 18px 16px 40px; }
+  .jp-card { border-radius: 24px; overflow: hidden; background: linear-gradient(170deg, #17191e, #0a0b0d); box-shadow: 0 0 0 2px #e8a317, 0 0 38px rgba(232,163,23,.28), 0 18px 50px rgba(0,0,0,.55); }
+  .jp-ban { position: relative; padding: 22px 20px 18px; display: flex; align-items: center; gap: 14px; background: radial-gradient(120% 160% at 10% 0%, rgba(232,163,23,.85), transparent 60%), radial-gradient(90% 140% at 100% 100%, rgba(240,81,80,.5), transparent 65%), #130f06; }
+  .jp-ban h1 { margin: 0; font: 400 38px/1 "Rubik Glitch", Manrope, sans-serif; color: #fff; text-shadow: 0 3px 16px rgba(0,0,0,.55); }
+  .jp-ban p { margin: 6px 0 0; color: rgba(255,255,255,.85); font-size: 13px; font-weight: 600; }
+  .jp-play { margin-left: auto; text-decoration: none; background: rgba(0,0,0,.45); border: 1px solid rgba(255,255,255,.25); color: #fff; font-weight: 800; border-radius: 999px; padding: 10px 18px; white-space: nowrap; }
+  .jp-play:hover { background: rgba(0,0,0,.65); }
+  .jp-pot { text-align: center; padding: 26px 14px 18px; background: #000; border-bottom: 1px solid var(--bd); }
+  .jp-pot small { display: block; font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--mut); }
+  .jp-pot .n { display: block; margin-top: 6px; font: 900 clamp(40px, 11vw, 72px)/1 Manrope, sans-serif; font-variant-numeric: tabular-nums; color: #ffd54a; text-shadow: 0 0 30px rgba(255,213,74,.55); }
+  .jp-pot .u { color: var(--mut); font-size: 13px; font-weight: 700; margin-top: 4px; }
+  .jp-pot.bump .n { animation: jpBump .8s ease-out; }
+  @keyframes jpBump { 30% { transform: scale(1.06); text-shadow: 0 0 46px rgba(255,213,74,.95); } }
+  .jp-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 14px 16px; background: #000; border-bottom: 1px solid var(--bd); }
+  .jp-stat { background: #121316; border: 1px solid var(--bd); border-radius: 14px; padding: 12px 6px; text-align: center; }
+  .jp-stat b { display: block; font: 800 20px/1.1 Manrope, sans-serif; font-variant-numeric: tabular-nums; color: #fff; }
+  .jp-stat span { display: block; margin-top: 4px; font-size: 10px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--mut); }
+  .jp-how { padding: 16px 20px; border-bottom: 1px solid var(--bd); font-size: 13px; color: #cfd4dc; line-height: 1.55; }
+  .jp-how h2, .jp-win h2 { margin: 0 0 8px; font: 800 12px Manrope, sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--mut); }
+  .jp-how li { margin: 3px 0; } .jp-how ul { margin: 0; padding-left: 18px; } .jp-how b { color: #ffd54a; }
+  .jp-win { padding: 14px 8px 8px; }
+  .jp-win h2 { padding: 0 12px; }
+  .jw { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 10px 12px; border-top: 1px solid #1f2023; }
+  .jw .ic { width: 34px; height: 34px; border-radius: 11px; display: grid; place-items: center; background: #2a2210; border: 1px solid #6b5416; font-size: 17px; }
+  .jw.b .ic { background: #2a1416; border-color: #5a2a2b; }
+  .jw a { color: #fff; font-weight: 800; text-decoration: none; overflow-wrap: anywhere; }
+  .jw a:hover { color: #ffd54a; }
+  .jw small { display: block; color: var(--mut); font-size: 12px; font-weight: 600; margin-top: 1px; }
+  .jw .amt { font-weight: 900; color: #3be38a; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .jp-empty { padding: 22px 14px; text-align: center; color: var(--mut); font-size: 14px; }
+  .jp-note { margin: 12px 4px 0; color: #5d636d; font-size: 12px; text-align: center; }
+  @media (max-width: 560px) { .jp-ban h1 { font-size: 28px; } .jp-ban { flex-wrap: wrap; padding: 18px 14px; } }
+  @media (prefers-reduced-motion: reduce) { .jp-pot.bump .n { animation: none; } }
+</style>
+</head>
+<body>
+<header class="dbar">
+  <a class="dbar-title" href="./" style="text-decoration:none"><img src="img/ptsd-logo.webp" alt="PTSD"><span>Crash</span></a>
+  <div class="dbar-right"><nav class="nv-wrap"><a class="nv" href="./">🎮<span> Play</span></a><a class="nv" href="tasks">🎯<span> Bounties</span></a><a class="nv" href="leaderboard">🏆<span> Leaderboard</span></a></nav></div>
+</header>
+<main class="jp-wrap">
+  <div class="jp-card">
+    <div class="jp-ban"><div><h1>Jackpot</h1><p>Every loss feeds the pot. Every loss is a ticket. One winner a day.</p></div><a class="jp-play" href="./">Back to game</a></div>
+    <div class="jp-pot" id="pot"><small>Community pot</small><span class="n" id="potN">0</span><div class="u" id="potU">credits</div></div>
+    <div class="jp-stats">
+      <div class="jp-stat"><b id="next">--:--:--</b><span>Next draw</span></div>
+      <div class="jp-stat"><b id="mine">0</b><span>Your lottery tickets</span></div>
+      <div class="jp-stat"><b id="all">0</b><span>All lottery tickets</span></div>
+    </div>
+    <div class="jp-how"><h2>How it works</h2><ul id="how"></ul></div>
+    <div class="jp-win"><h2>Winners</h2><div id="winners"><div class="jp-empty">Loading…</div></div></div>
+  </div>
+  <p class="jp-note">Jackpot credits go straight to your balance. They never count as profit, so they don't change your leaderboard XP.</p>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+const fmt = (n) => Math.round(n).toLocaleString("en-US");
+const two = (n) => String(n).padStart(2, "0");
+let st = null, skew = 0, shown = 0, anim = 0;
+
+function countTo(target) {
+  cancelAnimationFrame(anim);
+  const from = shown, t0 = performance.now(), dur = from === 0 ? 900 : 1200;
+  if (from && target > from) { $("pot").classList.remove("bump"); void $("pot").offsetWidth; $("pot").classList.add("bump"); }
+  const step = (t) => {
+    const k = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+    shown = from + (target - from) * e; $("potN").textContent = fmt(shown);
+    if (k < 1) anim = requestAnimationFrame(step); else { shown = target; $("potN").textContent = fmt(target); }
+  };
+  anim = requestAnimationFrame(step);
+}
+function clock() {
+  if (!st) return;
+  const s = Math.max(0, Math.ceil((st.nextDrawAt - (Date.now() + skew)) / 1000));
+  $("next").textContent = `${two(Math.floor(s / 3600))}:${two(Math.floor((s % 3600) / 60))}:${two(s % 60)}`;
+}
+const when = (ts) => new Date(ts).toLocaleDateString([], { month: "short", day: "numeric" });
+function draw() {
+  $("mine").textContent = fmt(st.tickets); $("all").textContent = fmt(st.totalTickets);
+  $("potU").textContent = `${fmt(Math.floor(st.pot * st.dailyShare))} goes to the next daily winner`;
+  $("how").innerHTML = [
+    `<b>${Math.round(st.share * 100)}%</b> of every loss goes into the pot. Nobody pays extra.`,
+    `Every loss earns lottery tickets: <b>1 per ${fmt(st.perTicket)}</b> lost, at least 1. You can hold up to ${fmt(st.maxTickets)} a day.`,
+    `Every day at <b>9 AM Eastern</b> one ticket is drawn. Its owner wins <b>${Math.round(st.dailyShare * 100)}%</b> of the pot.`,
+    `<b>Pot Breaker:</b> sell at <b>${st.breakerX}x or higher</b> and you take the whole pot.`,
+  ].map((x) => `<li>${x}</li>`).join("");
+  $("winners").innerHTML = st.winners.length ? st.winners.map((w) => {
+    const nm = String(w.name || "").replace(/^@/, "");
+    return `<div class="jw ${w.kind === "breaker" ? "b" : ""}">
+      <div class="ic">${w.kind === "breaker" ? "💥" : "🎫"}</div>
+      <div><a href="p/${encodeURIComponent(nm)}">@${esc(nm)}</a><small>${w.kind === "breaker" ? "Pot Breaker" : `Daily draw · ${fmt(w.tickets)} of ${fmt(w.total)} tickets`} · ${when(w.ts)}</small></div>
+      <div class="amt">+${fmt(w.amount)}</div></div>`;
+  }).join("") : `<div class="jp-empty">No winners yet. The first draw is at 9 AM Eastern.</div>`;
+  countTo(st.pot); clock();
+}
+async function load() {
+  try { const j = await (await fetch("api/jackpot", { cache: "no-store" })).json(); skew = (j.serverNow || Date.now()) - Date.now(); st = j; draw(); } catch {}
+}
+load(); setInterval(load, 8000); setInterval(clock, 1000);
+</script>
+<script src="doublexp.js?v=1"></script>
+<script src="jackpot.js?v=1"></script>
+<script src="sentiment.js?v=1"></script>
+<script type="module" src="usermenu.js"></script>
+</body>
+</html>
