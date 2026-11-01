@@ -22,7 +22,7 @@
       document.getElementById("jpTix").textContent = j.tickets.toLocaleString("en-US");
       a.title = `Your lottery tickets for the next daily draw. Pot: ${j.pot.toLocaleString("en-US")}`;
       if (last !== null && j.tickets > last) { a.classList.remove("pop"); void a.offsetWidth; a.classList.add("pop"); }
-      last = j.tickets;
+      last = j.tickets; window.__jackpot = j;
     } catch {}
   }
   load();

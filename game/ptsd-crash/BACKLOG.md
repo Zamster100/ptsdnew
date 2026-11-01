@@ -93,5 +93,70 @@ Rules for every item
 - Redemption round (free stake), streak insurance.
 - Other events: happy hour credits, weekend themes, mystery event, event calendar.
 
+## New ideas (added 2026-11-01, assessed: value to players vs complexity for us)
+
+Rating: value / complexity are Low, Med or High. "Legal" = needs the pre-launch legal check before building.
+
+| # | Idea | Value | Complexity | Legal | Verdict |
+|---|------|-------|-----------|-------|---------|
+| A | Big-win popups (bottom right, every sell over 5x) | Med-High | Low | No | Build soon |
+| B | Layout restructure + side panel | High | Med | No | Build before adding more top-bar items |
+| C | Communities (community vs community) | High | Med (simple version) | Prizes | Simple version first |
+| D | Cousin Dick on X + his tickers as game tokens | High | Med-High | Odds | Cheap version first, needs multi-ticker core |
+| E | Market Watch (fake X view, trending posts become tickers) | Med | High | Fake posts | Park |
+| F | Fake launchpad (users launch tickers, creators earn a cut) | High | High | Real $ fee | After multi-ticker core |
+| G | Buy & Burn (buy credits, proceeds to prize pool + NFT buybacks) | Med (money) | High | Yes, big | Needs legal answer first |
+| H | Marketplace (sell leaderboard positions for ETH/SOL) | Low | High | Yes, big | Recommend not building |
+
+### A. Big-win popups
+- Bottom-right popup with the player's name every time someone sells at 5x or more ("@name sold at 7.4x"). Social proof and FOMO.
+- Needs: a small public feed of recent big sells (name, multiplier, no bet size), polled or pushed to every open page. Cheap to build.
+- Open: show bet size or profit? Opt out for players who don't want to be shown? Cap popups per minute so a busy hour doesn't spam the screen.
+
+### B. Layout restructure + side panel
+- The top bar now carries Play, Bounties, Leaderboard, Jackpot, Sentiment, the user chip, sound and Cousin Dick, plus the Double XP banner. It's getting full, especially on phones.
+- Idea: a side panel (menu/dashboard) that holds navigation, level, streak, tickets, sentiment and jackpot, and frees the top bar. Front-end work only, but it touches every page, so do it in one pass and check mobile.
+- Recommend doing this before adding more top-bar items.
+
+### C. Communities
+- Register several communities (projects, groups). Players join one. Community vs community: the community's score is the sum of its members' XP. Each community puts up a prize; a big shared competition.
+- Simple version (recommended first): community tag on the profile, a community leaderboard, prizes paid by the communities outside the game. No money handled by us.
+- Needs: community registry (admin-created), join rules (one community per player, lock after first round?), team scoring, anti-stuffing (members need X rounds to count, or score the average/top N, so a huge community doesn't win by size alone).
+- Big value for growth: every community brings its own audience.
+
+### D. Cousin Dick on X + his tickers as tokens
+- Cousin Dick has his own X account and posts about specific random coins; those tickers appear in the game as tokens. Tokens pay a better edge and allow bigger bets.
+- Today the chart symbol is cosmetic (one game, one odds curve). Real tokens mean a multi-ticker core: each ticker with its own edge and bet limit, chosen when you buy, and shown on rounds and in the round check.
+- Cheap version first: a "featured ticker of the hour" the team sets from admin (no X integration), with a boosted edge window like Fear/Greed. Posting from Cousin Dick's account stays manual at first.
+- Risks: a boosted edge on one ticker with big bets can be farmed (everyone piles in), and it ties into the fairness review. Cap the bet size and the window.
+
+### E. Market Watch
+- A fake X-style view that reads what's trending on X and writes fake posts about it, which turn into random tickers (or users can deploy them).
+- High effort: needs X trend data (API cost/limits), content generation, moderation, and real trends/brands inside fake posts is a reputation and legal risk. Depends on D's multi-ticker core.
+- Park. The value over D is mostly flavor.
+
+### F. Fake launchpad
+- Players launch tickers, paid in credits (or a small real-$ fee to stop spam). Creators earn a slice (e.g. 5%) of all credits gambled on their ticker over a set period.
+- Needs a worked-out economy before building: launch cost, creator cut and who funds it (a cut of the house edge?), time limit, ticker approval and name rules (no impersonation or slurs), anti self-dealing (creator betting on their own ticker to farm the cut), and limits on how many a player can launch.
+- A real-$ launch fee feeding the prize pool and NFT buybacks has the same legal issue as G.
+- Depends on D's multi-ticker core.
+
+### G. Buy & Burn
+- Credit packs: $2.50 = 5,000, $5 = 11,000, $10 = 25,000. All proceeds are split: half into a prize pool for the top 3, half into automatic NFT buys from the OpenSea collection.
+- Open design question: everyone starts each cycle with the same 10,000 bankroll and bets are capped, so what do extra credits actually buy? (Free daily claims are for waiting players: this would let them skip the wait.) If credits can't help the leaderboard, the offer is weak. If they can, it's pay to win.
+- Legal (the big one): real money in, a cash prize pool funded by those payments, and an outcome decided by chance looks like gambling or an illegal lottery in many places. It needs a lawyer's answer, and likely geo-blocking, age checks and a license, before any build. Also payment processing, refunds, tax and an auto-buy bot for OpenSea.
+- Verdict: don't start until the legal answer is in.
+
+### H. Marketplace for leaderboard positions
+- Sell a leaderboard position for ETH/SOL.
+- Concerns: it lets people buy a prize-winning position (cash prize, so it's effectively selling a lottery ticket or an account), payments and disputes in crypto, fraud and stolen accounts, and it undermines the "everyone starts equal" rule that makes the leaderboard fair.
+- Recommend not building. If the goal is trading and speculation, a tradeable NFT or badge would be safer than selling a rank.
+
+### Dependencies and order (suggested)
+1. B (layout) and A (big-win popups): small, safe, visible.
+2. C simple communities.
+3. Multi-ticker core, then D cheap version, then F.
+4. E, G and H wait: G for the legal answer, E for value, H probably never.
+
 ## Before launch
 - Check the legal side: free play with cash prizes, and an NFT that gives a score edge, may count as consideration in some places.

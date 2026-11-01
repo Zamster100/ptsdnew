@@ -456,7 +456,13 @@ function ownPlace(player, user) {
 function rankOf(player) {
   const { rows } = (cycles.started() ? cycleRows() : boardRows(null)).hit;
   const i = player ? rows.findIndex((r) => r.player === player) : -1;
-  return { rank: i >= 0 ? i + 1 : null, players: rows.length, level: player ? xp.levelOf(player) : null };
+  return { rank: i >= 0 ? i + 1 : null, players: rows.length, level: player ? xp.levelOf(player) : null, ...sideOf(player) };
+}
+// What the side panel shows about the signed-in player (no side effects, unlike /api/me).
+function sideOf(player) {
+  if (!player) return { me: null, streak: null };
+  const u = auth.publicUser(player);
+  return { me: { username: u.username, name: u.name, pfp: u.pfp }, streak: streaks.stateOf(player) };
 }
 
 // ---------- profiles ----------
@@ -629,7 +635,7 @@ const server = http.createServer(async (req, res) => {
     if (p.startsWith("/api/auth/")) return await auth.api(req, res, p, body, send);
     if (p === "/api/jackpot") { res.setHeader("cache-control", "no-store"); return send(res, 200, { ...jackpot.view(player), serverNow: Date.now() }); }
     if (p === "/api/sentiment") { res.setHeader("cache-control", "no-store"); return send(res, 200, { ...sentiment.view(), serverNow: Date.now() }); }
-    if (p === "/api/rank") return send(res, 200, betsOff() && !cycles.started() ? { rank: null, players: 0, level: player ? xp.levelOf(player) : null } : rankOf(player));
+    if (p === "/api/rank") return send(res, 200, betsOff() && !cycles.started() ? { rank: null, players: 0, level: player ? xp.levelOf(player) : null, ...sideOf(player) } : rankOf(player));
     if (p === "/api/leaderboard") {
       const lim = Math.min(500, Math.max(1, Number(u.searchParams.get("limit")) || 50));
       const per = u.searchParams.get("period");

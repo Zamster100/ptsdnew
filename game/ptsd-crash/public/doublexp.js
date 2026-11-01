@@ -12,6 +12,7 @@
   #dxp.live .x{background:#1a1200;color:#ffe066;border-radius:6px;padding:1px 8px;font-weight:900}
   @keyframes dxpSlide{to{background-position:200% 0}}
   @keyframes dxpPulse{50%{transform:scale(1.35)}}
+  @media (max-width:640px){#dxp .ap{display:none}#dxp.live{font-size:13px;padding:7px 10px}#dxp.off span+span{display:none}}
   @media (prefers-reduced-motion:reduce){#dxp.live,#dxp.live .bolt{animation:none}}`;
   document.head.appendChild(css);
 
@@ -32,10 +33,11 @@
     if (!st) return;
     const now = Date.now() + skew;
     const cur = [st.current, ...(st.upcoming || [])].find((w) => w && now >= w.start && now < w.end) || null;
-    window.__dxp = { active: !!cur, mult: cur ? st.mult : 1 };
+    const nx = (st.upcoming || []).find((w) => w.start > now);
+    window.__dxp = { active: !!cur, mult: cur ? st.mult : 1, end: cur ? cur.end : null, next: nx ? nx.start : null, skew };
     if (cur) {
       bar.className = "on live";
-      bar.innerHTML = `<span class="bolt">⚡</span><span><b>DOUBLE XP HOUR</b> — ${list(st.applies)} pay <span class="x">${x()}</span></span><span>ends in <b class="t">${clock(cur.end - now)}</b></span>`;
+      bar.innerHTML = `<span class="bolt">⚡</span><span><b>DOUBLE XP HOUR</b><span class="ap"> — ${list(st.applies)} pay</span> <span class="x">${x()}</span></span><span>ends in <b class="t">${clock(cur.end - now)}</b></span>`;
       bar.title = "Profit and referral points are never doubled. Points keep their doubled value.";
       return;
     }
