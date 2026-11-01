@@ -23,6 +23,9 @@ import { initDoubleXp } from "./doublexp.js";
 import { initSentiment } from "./sentiment.js";
 import { initBadBeat } from "./badbeat.js";
 import { initJackpot } from "./jackpot.js";
+import { claimMult, claimPct, PERKS } from "./perks.js";
+import { initAchievements } from "./achievements.js";
+import { initMilestones } from "./milestones.js";
 import { startBg, cached } from "./bg.js";
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
@@ -176,6 +179,7 @@ const finishOverdue = db.transaction((row) => {
     const back = badbeat.check(row);
     if (back) q.addBal.run(back, row.player, row.coin);
     jackpot.onLoss(q.round.get(row.id)); // a slice of the loss feeds the community pot, and earns tickets
+    achievements.evaluate(row.player, row.id); milestones.onSettled();
   }
 });
 
@@ -209,7 +213,7 @@ function reveal(row) {
   const badBeat = badbeat.forRound(row.id);
   if (badBeat) badbeat.markSeen(row.id);
   return {
-    id: row.id, state: row.state, badBeat, crash: row.crash, crashShown: crashShown(row), endAt: row.end_ms,
+    id: row.id, state: row.state, badBeat, achievements: achievements.forRound(row.id), crash: row.crash, crashShown: crashShown(row), endAt: row.end_ms,
     soldMult: row.sold_mult, halfMult: row.half_mult, halfPayout: row.half_payout, payout: row.payout, pnl: row.pnl,
     serverSeed: row.server_seed, clientSeed: row.client_seed, nonce: row.nonce, commit: row.commit_hash,
   };
@@ -269,7 +273,9 @@ const sell = db.transaction((player, id, half, at) => {
   q.settle.run({ id, state: "sold", sold_mult: mult, payout, pnl: payout - row.bet, sold_ms: now });
   q.addBal.run(fresh, player, row.coin);
   const done = q.round.get(id);
-  return { done, now, arrived, claim: now, award: streaks.onSettled(done), jackpot: jackpot.onSold(done, now) };
+  const award = streaks.onSettled(done), jp = jackpot.onSold(done, now);
+  achievements.evaluate(player, id); milestones.onSettled();
+  return { done, now, arrived, claim: now, award, jackpot: jp };
 });
 
 // Every sell tap, so "I pressed and got rekt" can be checked to the millisecond.
@@ -335,6 +341,24 @@ function statsOf(player, coin) {
     else { run = 0; cur = cur < 0 ? cur - 1 : -1; }
   }
   return { rounds: s.n, wins: s.wins, rekt: s.rekt, wagered: s.wagered, net: s.net, bestWin: s.n ? Math.max(0, s.bestWin) : 0, bestMult: s.bestMult || 0, bestStreak, streak: cur };
+}
+// The player's last credit movements, newest first: rounds, free claims, bounty/referral/milestone rewards, jackpot wins, bad beat refunds.
+// (prepared on first use: the tables below are created by modules that start later)
+let txQ = null;
+const txQueries = () => (txQ ||= {
+  rounds: db.prepare("SELECT id, bet, state, sold_mult, pnl, ts FROM crash_rounds WHERE player = ? AND coin = ? AND state != 'open' ORDER BY ts DESC LIMIT ?"),
+  claims: db.prepare("SELECT kind, amount, ts FROM crash_claims WHERE player = ? ORDER BY ts DESC LIMIT ?"),
+  jackpot: db.prepare("SELECT kind, amount, ts FROM crash_jackpot_wins WHERE player = ? ORDER BY ts DESC LIMIT ?"),
+  beats: db.prepare("SELECT amount, ts FROM crash_badbeats WHERE player = ? ORDER BY ts DESC LIMIT ?"),
+});
+const CLAIM_LABEL = { starter: "Starter credits", daily: "Daily claim", bonus: "Ticket bonus claim", task: "Bounty reward", "task-revoked": "Bounty reward taken back", referral: "Referral bonus", milestone: "Community milestone" };
+function transactionsOf(player, coin, limit = 10) {
+  const txQ = txQueries(), rows = [];
+  for (const r of txQ.rounds.all(player, coin, limit)) rows.push({ ts: r.ts, kind: "round", id: r.id, label: r.state === "rekt" ? "Round: rekt" : `Round: sold at ${(r.sold_mult || 0).toFixed(2)}x`, detail: `bet ${r.bet}`, amount: r.pnl || 0 });
+  for (const r of txQ.claims.all(player, limit)) rows.push({ ts: r.ts, kind: "claim", label: CLAIM_LABEL[r.kind] || r.kind, amount: r.amount });
+  for (const r of txQ.jackpot.all(player, limit)) rows.push({ ts: r.ts, kind: "jackpot", label: r.kind === "breaker" ? "Jackpot: Pot Breaker" : "Jackpot: daily draw", amount: r.amount });
+  for (const r of txQ.beats.all(player, limit)) rows.push({ ts: r.ts, kind: "refund", label: "Bad beat refund", amount: r.amount });
+  return rows.sort((a, b) => b.ts - a.ts).slice(0, limit);
 }
 function periodStart(period) {
   const d = new Date();
@@ -462,7 +486,7 @@ function rankOf(player) {
 function sideOf(player) {
   if (!player) return { me: null, streak: null };
   const u = auth.publicUser(player);
-  return { me: { username: u.username, name: u.name, pfp: u.pfp }, streak: streaks.stateOf(player) };
+  return { me: { username: u.username, name: u.name, pfp: u.pfp }, streak: streaks.stateOf(player), rewards: { claimable: milestones.claimableCount(player) } };
 }
 
 // ---------- profiles ----------
@@ -489,7 +513,7 @@ function profileOf(handle) {
     cycle: cur && { id: cur.id, name: cur.name, start: cur.start, end: cur.end, live: !!cycles.current(), upcoming: cur.start > Date.now() },
     rank: now.rank, players: now.players,
     level: { ...xp.levelOf(u.id), stages: STAGES },
-    xp: r ? r.xp : 0, mult: r ? r.mult : 1, ticketMult: multOf(count), refs: r ? r.refs : 0, tasks: r ? r.tasks : 0, activity: r ? r.activity : 0, referrals: referrals.countOf(u.id), net: r ? r.net : 0, rounds: r ? r.rounds : 0, wins: r ? r.wins : 0, best: r ? r.best : 0, bestWin: r ? r.bestWin : 0,
+    xp: r ? r.xp : 0, mult: r ? r.mult : 1, ticketMult: multOf(count), refs: r ? r.refs : 0, tasks: r ? r.tasks : 0, activity: r ? r.activity : 0, referrals: referrals.countOf(u.id), achievements: achievements.summary(u.id), net: r ? r.net : 0, rounds: r ? r.rounds : 0, wins: r ? r.wins : 0, best: r ? r.best : 0, bestWin: r ? r.bestWin : 0,
     lifetime: { rounds: s.rounds, wins: s.wins, wagered: s.wagered, bestMult: s.bestMult, bestStreak: s.bestStreak },
     nft: { count, badge, next: nextTier && { name: nextTier.name, min: nextTier.min, level: nextTier.level }, tiers: [...TIERS].reverse().map((t) => ({ min: t.min, level: t.level, name: t.name, mult: t.mult })) },
     history: cycles.list.filter((c) => c.end <= Date.now()).map((c) => { const x = rankIn(c); return { id: c.id, name: c.name, rank: x.rank, players: x.players, xp: x.row ? x.row.xp : 0 }; }),
@@ -556,6 +580,7 @@ const wallet = initWallet({ db });
 const campaign = initCampaign({
   db, currency: CURRENCY, bonusOf: wallet.bonusHoursOf,
   addCredits,
+  perk: (id) => claimMult(xp.levelOf(id).n), // level perk: a little more on the free claims
 });
 
 const cycles = initCycles({
@@ -588,6 +613,16 @@ jackpot.tick();
 setInterval(() => { try { jackpot.tick(); } catch (e) { console.error("[jackpot] draw failed", e.message); } }, 30_000).unref();
 const pnlReset = initPnlReset({ db, cycles, tasks });
 const streaks = initStreaks({ db, xp, dayKey: tasks.dayKey });
+// Achievements (one-time goals with an XP reward) and community milestones (goals everyone works on, claimable credits)
+const achievements = initAchievements({ db, xp, streaks, nftCount: (p) => wallet.stateOf(p).count || 0, coin: CURRENCY, baseEdge: EDGE });
+const milestones = initMilestones({ db, coin: CURRENCY, addCredits, from: (cycles.list[0] && cycles.list[0].start) || 0 });
+const achAt = new Map(); // player -> last time their non-round achievements were checked
+function achCheck(player) {
+  const now = Date.now();
+  if (now - (achAt.get(player) || 0) < 60_000) return;
+  achAt.set(player, now);
+  achievements.evaluate(player);
+}
 
 const MIME = { ".html": "text/html; charset=utf-8", ".json": "application/json", ".js": "text/javascript", ".css": "text/css", ".png": "image/png", ".webp": "image/webp", ".svg": "image/svg+xml", ".mp3": "audio/mpeg", ".woff2": "font/woff2" };
 function serveStatic(res, rel) {
@@ -615,6 +650,8 @@ const server = http.createServer(async (req, res) => {
     if (!p.startsWith("/api/")) {
       if (p === "/leaderboard") return serveStatic(res, "leaderboard.html");
       if (p === "/jackpot") return serveStatic(res, "jackpot.html");
+      if (p === "/rewards") return serveStatic(res, "rewards.html");
+      if (p === "/stats") return serveStatic(res, "stats.html");
       if (p === "/tasks") return serveStatic(res, "tasks.html");
       if (p === "/admin") return serveStatic(res, "admin.html");
       return serveStatic(res, p === "/" ? "index.html" : p);
@@ -633,6 +670,22 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, { test: TEST && !CLAIMS, coins: COINS, maxMult: MAX_MULT, edge: EDGE, login: auth.mode, support: auth.supportUrl, seasonOver: betsOff(), ...campaign.publicCfg(), ...cycles.publicCfg(), doubleXp: dxp.state(), sentiment: sentiment.view(), nft: { enabled: wallet.enabled, contract: wallet.contract }, serverNow: Date.now() });
     }
     if (p.startsWith("/api/auth/")) return await auth.api(req, res, p, body, send);
+    // Level perks, achievements and community milestones in one place (the Rewards page).
+    if (p === "/api/rewards") {
+      if (player) achievements.evaluate(player);
+      const lv = player ? xp.levelOf(player) : null;
+      res.setHeader("cache-control", "no-store");
+      return send(res, 200, {
+        level: lv, claimPct: lv ? claimPct(lv.n) : 0, perks: PERKS.map((k) => ({ ...k, active: !!lv && lv.n >= k.level })),
+        achievements: achievements.view(player), milestones: milestones.view(player), serverNow: Date.now(),
+      });
+    }
+    if (p === "/api/milestones/claim" && req.method === "POST") {
+      if (!player) return send(res, 401, { error: "Sign in first." });
+      const out = milestones.claim(player, String(body?.key || ""));
+      if (out.error) return send(res, 400, out);
+      return send(res, 200, { ...out, balance: balanceOf(player, CURRENCY) });
+    }
     if (p === "/api/jackpot") { res.setHeader("cache-control", "no-store"); return send(res, 200, { ...jackpot.view(player), serverNow: Date.now() }); }
     if (p === "/api/sentiment") { res.setHeader("cache-control", "no-store"); return send(res, 200, { ...sentiment.view(), serverNow: Date.now() }); }
     if (p === "/api/rank") return send(res, 200, betsOff() && !cycles.started() ? { rank: null, players: 0, level: player ? xp.levelOf(player) : null, ...sideOf(player) } : rankOf(player));
@@ -680,7 +733,7 @@ const server = http.createServer(async (req, res) => {
       const login = cycles.current() ? streaks.checkIn(player) : null; // first visit of the task day: login streak bonus
       return send(res, 200, {
         streak: { ...streaks.stateOf(player), loginAward: login && login.isNew ? login.xp : 0, boost: login && login.isNew ? login.boost : 1 },
-        badBeats: badbeat.takeUnseen(player), jackpotWins: jackpot.takeUnseen(player),
+        badBeats: badbeat.takeUnseen(player), jackpotWins: jackpot.takeUnseen(player), achievements: (achCheck(player), achievements.takeUnseen(player)), milestones: { claimable: milestones.claimableCount(player) },
         user: auth.publicUser(player), onb: campaign.stateOf(player), nft: wallet.stateOf(player), ref: referrals.stateOf(player), pnl: pnlReset.stateOf(player, CURRENCY),
         balances: Object.fromEntries(coins.map((c) => [c, balanceOf(player, c)])),
         open: still ? publicRound(still) : null,
@@ -711,7 +764,7 @@ const server = http.createServer(async (req, res) => {
       if (out.error) return send(res, 400, { error: out.error });
       const r = out.done;
       logSell(player, r, body, out);
-      return send(res, 200, { state: r.state, half: !!out.half, lateMs: out.late ?? null, halfMult: r.half_mult, halfPayout: r.half_payout, halfAt: r.half_ms, soldMult: r.sold_mult, payout: r.payout, pnl: r.pnl, soldAt: r.sold_ms, award: out.award || null, jackpot: out.jackpot || null, streak: streaks.stateOf(player), balance: balanceOf(player, r.coin), serverNow: Date.now() });
+      return send(res, 200, { state: r.state, half: !!out.half, lateMs: out.late ?? null, halfMult: r.half_mult, halfPayout: r.half_payout, halfAt: r.half_ms, soldMult: r.sold_mult, payout: r.payout, pnl: r.pnl, soldAt: r.sold_ms, award: out.award || null, jackpot: out.jackpot || null, achievements: achievements.forRound(r.id), streak: streaks.stateOf(player), balance: balanceOf(player, r.coin), serverNow: Date.now() });
     }
     if (p === "/api/wait") {
       const row = q.round.get(String(u.searchParams.get("id") || ""));
@@ -742,6 +795,11 @@ const server = http.createServer(async (req, res) => {
         shareQ.add.run(id, row.id, sym, color, Date.now());
       }
       return send(res, 200, { url: `${PUBLIC_URL}/win/${id}` });
+    }
+    if (p === "/api/transactions") {
+      const coin = String(u.searchParams.get("coin") || CURRENCY);
+      if (!COINS[coin]) return send(res, 400, { error: "Coin not available." });
+      return send(res, 200, { transactions: transactionsOf(player, coin, 10) });
     }
     if (p === "/api/stats") {
       const coin = String(u.searchParams.get("coin") || CURRENCY);

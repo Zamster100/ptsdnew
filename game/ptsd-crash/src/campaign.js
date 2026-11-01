@@ -16,7 +16,8 @@ import { cached } from "./bg.js";
 const num = (v, d) => (v != null && v !== "" && Number.isFinite(Number(v)) ? Number(v) : d);
 const time = (v) => { const t = v ? Date.parse(v) : NaN; return Number.isFinite(t) ? t : null; };
 
-export function initCampaign({ db, currency, addCredits, bonusOf }) {
+// perk(id) = multiplier on free claims earned by level (see perks.js); 1 when there is none
+export function initCampaign({ db, currency, addCredits, bonusOf, perk = () => 1 }) {
   const cfg = {
     claims: process.env.CLAIMS === "1",
     start: num(process.env.START_CREDITS, 100000),
@@ -72,6 +73,7 @@ export function initCampaign({ db, currency, addCredits, bonusOf }) {
       starter: !!u.starter_at,
       onboarded: !!u.onboarded_at,
       claimAt: next,                       // when the next daily claim opens (null before the starter pack)
+      dailyAmount: Math.round(cfg.daily * perk(id)), // what a free claim pays this player (level perk included)
       canClaim: !!u.starter_at && next != null && Date.now() >= next,
       bonus: bonusState(u),
     };
@@ -94,9 +96,10 @@ export function initCampaign({ db, currency, addCredits, bonusOf }) {
     const now = Date.now();
     if (now < u.claim_at + hoursMs()) return { error: "Not yet. Come back when the timer runs out.", claimAt: u.claim_at + hoursMs() };
     if (!q.daily.run(now, id, u.claim_at).changes) return { error: "Already claimed." };
-    addCredits(id, cfg.daily);
-    q.logClaim.run(id, "daily", cfg.daily, now);
-    return { amount: cfg.daily };
+    const amount = Math.round(cfg.daily * perk(id));
+    addCredits(id, amount);
+    q.logClaim.run(id, "daily", amount, now);
+    return { amount };
   });
 
   const claimBonus = db.transaction((id) => {
@@ -107,9 +110,10 @@ export function initCampaign({ db, currency, addCredits, bonusOf }) {
     const now = Date.now();
     if (now < b.claimAt) return { error: "Not yet. Come back when the timer runs out." };
     if (!q.bonus.run(now, id, u.bonus_at || 0).changes) return { error: "Already claimed." };
-    addCredits(id, cfg.daily);
-    q.logClaim.run(id, "bonus", cfg.daily, now);
-    return { amount: cfg.daily };
+    const amount = Math.round(cfg.daily * perk(id));
+    addCredits(id, amount);
+    q.logClaim.run(id, "bonus", amount, now);
+    return { amount };
   });
 
   // The player count scans the round history, so it runs in the background worker (bg.js) every few seconds (this runs on every /api/config).

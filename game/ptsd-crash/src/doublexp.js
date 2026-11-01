@@ -38,7 +38,7 @@ export function initDoubleXp() {
     }
     return out.sort((a, b) => a.start - b.start);
   }
-  const applies = ["win-streak bonuses", "perfect sells", "the daily login bonus", ...(cfg.tasks ? ["task points"] : [])];
+  const applies = ["win-streak bonuses", "perfect sells", "the daily login bonus", "achievement bonuses", ...(cfg.tasks ? ["task points"] : [])];
 
   // Everything the browser needs: is it on, when does it end, when are the next windows.
   function state(now = Date.now()) {

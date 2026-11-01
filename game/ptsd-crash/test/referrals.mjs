@@ -19,7 +19,7 @@ function startServer(port, extra) {
     DB_PATH: path.join(dir, "t.db"), LOG_DIR: path.join(dir, "logs"), MIN_BET: "100", MAX_BET: "2500", START_CREDITS: "0", DAILY_CREDITS: "10000",
     NFT_CONTRACT: "", NFT_RPC_URL: "",
     CYCLES: JSON.stringify([{ id: 1, name: "Cycle 1", start: new Date(now - 1000).toISOString(), end: new Date(now + 900_000).toISOString() }]),
-    LOGIN_STEP: "0", // the daily login bonus would add Activity points to the exact XP checked here
+    LOGIN_STEP: "0", ACHIEVEMENTS: "0", // the daily login bonus would add Activity points to the exact XP checked here
     ...extra,
   } });
   return { proc, dir, B: `http://127.0.0.1:${port}/api/` };

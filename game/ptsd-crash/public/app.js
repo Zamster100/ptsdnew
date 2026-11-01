@@ -822,6 +822,16 @@ function jackpotPopup(jp) {
 }
 // A daily draw win that landed while the page was closed.
 function jackpotWinToasts(list) { for (const w of list || []) toast(IMG.max, `🎫 <b>You won the daily jackpot!</b> <b>+${fmt(w.amount)}</b> credits are in your balance.`, 8000); }
+// Achievements unlocked (a few at a time, so a burst of them doesn't pile up).
+function achToasts(list) {
+  (list || []).slice(0, 4).forEach((a, i) => setTimeout(() => { sfx.big(); toast(IMG.me, `🏅 <b>Achievement unlocked</b><br>${a.icon} ${a.name} <b>+${fmt(a.xp)} XP</b>`, 5200); }, i * 1400));
+}
+// A community milestone is waiting to be claimed (once per visit).
+function milestoneToast(m) {
+  if (!m || !m.claimable) return;
+  try { if (sessionStorage.getItem("ms-toast")) return; sessionStorage.setItem("ms-toast", "1"); } catch {}
+  setTimeout(() => toast(IMG.max, `🏁 <b>Community milestone reached!</b> <a href="rewards" style="color:#ffd54a">Claim your reward</a>`, 8000), 2500);
+}
 function badBeatToasts(list) { for (const b of list || []) toast(IMG.rekt2, `🍀 <b>Bad beat refund</b>: ${b.rugs} rugs in a row. <b>+${fmt(b.amount)}</b> back in your balance.`, 6000); }
 function loginToast(st) { if (st && st.loginAward) toast(IMG.me, `📅 <b>Day ${st.login} login streak</b> +${fmt(st.loginAward)} XP${st.boost > 1 ? `<br>⚡ <b>${st.boost}× Double XP hour</b>` : ""}`, 4200); }
 function showLevel(lv) {
@@ -987,7 +997,7 @@ async function waitEnd(id) {
       if (j.pending) continue;
       if (j.state === "sold") pushHistory({ id, crash: j.crashShown });
       if (!round || round.id !== id) return;
-      round.end = { t: (j.endAt - round.startAt) / 1000, state: j.state, crash: j.crash, shown: j.crashShown, payout: j.payout, pnl: j.pnl, soldMult: j.soldMult, badBeat: j.badBeat || null };
+      round.end = { t: (j.endAt - round.startAt) / 1000, state: j.state, crash: j.crash, shown: j.crashShown, payout: j.payout, pnl: j.pnl, soldMult: j.soldMult, badBeat: j.badBeat || null, achievements: j.achievements || [] };
       return;
     } catch { await new Promise((r) => setTimeout(r, 1000)); }
   }
@@ -1036,7 +1046,7 @@ async function doSell() {
     const j = await api("sell", { id, at });
     if (!round || round.id !== id) return;
     setBalance(j.balance);
-    showStreak(j.streak); awardToast(j.award); jackpotPopup(j.jackpot);
+    showStreak(j.streak); awardToast(j.award); jackpotPopup(j.jackpot); achToasts(j.achievements);
     if (j.state === "sold") {
       const t = (j.soldAt - round.startAt) / 1000;
       round.sold = { t, mult: j.soldMult, payout: j.payout, pnl: j.pnl };
@@ -1295,6 +1305,7 @@ function finish(r) {
   } else {
     sfx.loss();
     if (window.__jackpotRefresh) setTimeout(window.__jackpotRefresh, 800); // the loss just earned tickets
+    achToasts(e.achievements);
     const lost = lockedOf(r) - r.bet;
     $("multPnl").textContent = `${sgn(lost)} ${r.coin}`;
     sessionPnl += lost; setPnl();
@@ -1489,7 +1500,7 @@ function openSheet(tab, id) {
   if (tab === "stats") loadStats();
   if (tab === "check") renderCheck(id);
 }
-$("statsBtn").onclick = () => openSheet("stats");
+$("statsBtn").onclick = () => { location.href = "stats"; };
 const openChat = () => { if (isPhone()) openSheet("chat"); else { sideTab("chat"); $("chatIn").focus(); } };
 $("sheetX").onclick = closeSheet;
 $("sheet").addEventListener("click", (e) => {
@@ -1836,12 +1847,13 @@ function syncClaim() {
   const bonus = onb.bonus, locked = !bonus || bonus.locked, bReady = !locked && now() >= (bonus.claimAt || 0);
   $("bonusLock").hidden = !locked;
   $("bonusBtn").hidden = !bReady;
-  $("bonusBtn").textContent = `Claim ${fmt(cfg.daily / 1000)}k`;
+  const amt = fmt(((onb && onb.dailyAmount) || cfg.daily) / 1000);
+  $("bonusBtn").textContent = `Claim ${amt}k`;
   $("bonusWait").hidden = locked || bReady;
   if (!locked && !bReady) $("bonusWait").textContent = `next in ${untilTxt(bonus.claimAt)}`;
   const ready = now() >= (onb.claimAt || 0);
   $("claimBtn").hidden = !ready;
-  $("claimBtn").textContent = `Claim ${fmt(cfg.daily / 1000)}k`;
+  $("claimBtn").textContent = `Claim ${amt}k`;
   $("claimWait").hidden = ready;
   $("claimWait").textContent = `next in ${untilTxt(onb.claimAt)}`;
 }
@@ -1877,7 +1889,7 @@ $("claimGo").onclick = async () => {
     sfx.big(); toast(IMG.me, `<b>+${fmt(j.amount)}</b> free credits. Go get rekt.`);
   } catch (err) { refreshMe(); $("claimErr").textContent = err.message; }
 };
-async function refreshMe() { try { const j = await api("me"); onb = j.onb || null; nft = j.nft || null; ref = j.ref || null; pnlSt = j.pnl || null; showStreak(j.streak); loginToast(j.streak); badBeatToasts(j.badBeats); jackpotWinToasts(j.jackpotWins); setBalance(j.balances[coin] ?? 0); syncClaim(); } catch {} }
+async function refreshMe() { try { const j = await api("me"); onb = j.onb || null; nft = j.nft || null; ref = j.ref || null; pnlSt = j.pnl || null; showStreak(j.streak); loginToast(j.streak); badBeatToasts(j.badBeats); jackpotWinToasts(j.jackpotWins); achToasts(j.achievements); milestoneToast(j.milestones); setBalance(j.balances[coin] ?? 0); syncClaim(); } catch {} }
 
 // ---------------- intro song on page open ----------------
 let introDone = false;
@@ -1924,7 +1936,7 @@ async function boot() {
     const me = await api("me");
     user = me.user || null;
     onb = me.onb || null; nft = me.nft || null; ref = me.ref || null; pnlSt = me.pnl || null;
-    syncUser(); syncMute(); syncClaim(); showStreak(me.streak); loginToast(me.streak); badBeatToasts(me.badBeats); jackpotWinToasts(me.jackpotWins);
+    syncUser(); syncMute(); syncClaim(); showStreak(me.streak); loginToast(me.streak); badBeatToasts(me.badBeats); jackpotWinToasts(me.jackpotWins); achToasts(me.achievements); milestoneToast(me.milestones);
     if (user && ref && ref.canApply && savedRef() && !(cfg && cfg.seasonOver)) useRef(savedRef(), true);
     setBalance(me.balances[coin] ?? 0);
     sessionPnl = pnlSt ? pnlSt.net : 0; // the same cycle PnL the leaderboard uses (settled rounds since the cycle start or your last reset)

@@ -25,7 +25,9 @@ Rules for every item
 
 ## Queued (in order)
 
-### 2. Levels, titles, perks, achievements, campaign milestones  (levels + badge stages BUILT, rest still to do)
+### 2. Levels, titles, perks, achievements, campaign milestones  (ALL BUILT)
+- Built: level perks (+5% to +30% on free daily/NFT claims by badge stage; PERKS=0 off), 32 achievements that pay XP once (ACHIEVEMENTS=0 off), community milestones (rounds and players goals, credits for everyone who plays; MILESTONES=0, MILESTONE_ROUNDS, MILESTONE_PLAYERS, MILESTONES_FROM). Page: /rewards.
+- Built: menu rail on every page (separate from the play module) and a Stats page (/stats) with your numbers and last 10 transactions.
 - Built: 30 levels. A player's level XP = the highest XP they reached in each cycle, added up over the campaign, so a level never goes down and Cycle 2 starts from the Cycle 1 level.
 - Built: a new badge stage every 5 levels: Fresh Bag (1), Paper Hands (5), Diamond Hands (10), Chart Reader (15), Degen (20), Rug Survivor (25), Legend (30).
 - Built: "Lv N" pill on the game page with a toast on level up (a popup on a new badge), level chip on the leaderboard, Level section with the badge ladder on the profile.
@@ -83,6 +85,9 @@ Rules for every item
 - After the price passes 5x, a flashing button lets the player add a second stake equal to the original bet, once per round.
 - Fairness: the entry price must use the undipped trend (not the dipped price), otherwise players can buy the bottom of a dip.
 - Touches sell/settle, history, stats, the verify screen, and new columns on `crash_rounds`. Biggest change, built last.
+
+### Stats page: PNL chart (added 2026-11-01)
+- A chart of the player's PNL over time (cumulative, per round and per day) on the Stats page, under the stat tiles. Data already exists in the rounds table.
 
 ## Parked (ideas to come back to)
 - Missions: daily, weekly, rerolls, campaign-wide community goals (needs specifics).

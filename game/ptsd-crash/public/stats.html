@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Stats · PTSD Crash</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0e0f11">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Rubik+Glitch&display=swap" rel="stylesheet">
+<link rel="icon" href="img/ptsd-logo.webp">
+<link rel="stylesheet" href="style.css?v=64">
+<style>
+  body { min-height: 100svh; }
+  .rw-wrap { position: relative; z-index: 1; width: min(860px, 100%); margin: 0 auto; padding: 18px 16px 40px; display: grid; gap: 16px; }
+  .rw-ban { border-radius: 24px; padding: 22px 20px 18px; display: flex; align-items: center; gap: 14px; background: radial-gradient(120% 160% at 10% 0%, rgba(80,140,255,.5), transparent 60%), radial-gradient(90% 140% at 100% 100%, rgba(59,227,138,.4), transparent 65%), #0c1018; box-shadow: 0 0 0 2px #27406e, 0 0 38px rgba(80,140,255,.2); }
+  .rw-ban h1 { margin: 0; font: 400 38px/1 "Rubik Glitch", Manrope, sans-serif; color: #fff; text-shadow: 0 3px 16px rgba(0,0,0,.55); }
+  .rw-ban p { margin: 6px 0 0; color: rgba(255,255,255,.85); font-size: 13px; font-weight: 600; }
+  .rw-play { margin-left: auto; text-decoration: none; background: rgba(0,0,0,.45); border: 1px solid rgba(255,255,255,.25); color: #fff; font-weight: 800; border-radius: 999px; padding: 10px 18px; white-space: nowrap; }
+  .rw-sec { background: linear-gradient(170deg, #17191e, #0a0b0d); border: 1px solid var(--bd); border-radius: 20px; padding: 16px 18px 18px; }
+  .rw-sec h2 { margin: 0 0 10px; font: 800 14px Manrope, sans-serif; letter-spacing: .08em; text-transform: uppercase; }
+  .sgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+  .sk { background: var(--panel2); border: 1px solid var(--bd); border-radius: 12px; padding: 10px 12px; }
+  .sk span { display: block; color: var(--mut); font-size: 11px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
+  .sk b { display: block; margin-top: 4px; font: 800 20px/1.1 Manrope, sans-serif; font-variant-numeric: tabular-nums; }
+  .pos { color: #3be38a; } .neg { color: #F05150; } .gold { color: #ffd54a; }
+  .trx { display: grid; grid-template-columns: 34px minmax(0,1fr) auto; gap: 10px; align-items: center; padding: 9px 4px; border-top: 1px solid #1f2023; }
+  .trx:first-of-type { border-top: 0; }
+  .trx .ic { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; background: #23262d; font-size: 16px; }
+  .trx b { font-weight: 800; } .trx small { display: block; color: var(--mut); font-size: 12px; font-weight: 600; }
+  .trx .amt { font-weight: 900; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .trx a { color: inherit; text-decoration: none; }
+  .msg { color: var(--mut); text-align: center; padding: 20px; }
+  @media (max-width: 560px) { .rw-ban h1 { font-size: 28px; } .rw-ban { flex-wrap: wrap; } }
+</style>
+</head>
+<body>
+<header class="dbar">
+  <a class="dbar-title" href="./" style="text-decoration:none"><img src="img/ptsd-logo.webp" alt="PTSD"><span>Crash</span></a>
+  <div class="dbar-right"><nav class="nv-wrap"><a class="nv" href="./">🎮<span> Play</span></a><a class="nv" href="tasks">🎯<span> Bounties</span></a><a class="nv" href="leaderboard">🏆<span> Leaderboard</span></a><a class="nv on" href="rewards">🏅<span> Rewards</span></a></nav></div>
+</header>
+<main class="rw-wrap">
+  <div class="rw-ban"><div><h1>Stats</h1><p>Your numbers, your last 10 transactions, and how the whole community is doing.</p></div><a class="rw-play" href="./">Back to game</a></div>
+  <section class="rw-sec" id="me"><div class="msg">Loading…</div></section>
+  <section class="rw-sec" id="com"></section>
+  <section class="rw-sec" id="tx"></section>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+const fmt = (n) => Math.round(n).toLocaleString("en-US");
+const sgn = (n) => (n > 0 ? "+" : "") + fmt(n);
+const cls = (n) => (n > 0 ? "pos" : n < 0 ? "neg" : "");
+const get = async (u) => { const r = await fetch(u, { cache: "no-store" }); if (!r.ok) throw new Error(r.status); return r.json(); };
+const ICON = { round: "🎮", claim: "🎁", jackpot: "🎫", refund: "🍀" };
+const tile = (k, v, c = "") => `<div class="sk"><span>${k}</span><b class="${c}">${v}</b></div>`;
+async function load() {
+  try {
+    const [s, r, t] = await Promise.all([get("api/stats"), get("api/rank").catch(() => ({})), get("api/transactions")]);
+    const rate = s.rounds ? Math.round((s.wins / s.rounds) * 100) + "%" : "-";
+    const st = s.streak > 0 ? s.streak + "W" : s.streak < 0 ? -s.streak + "L" : "-";
+    const lv = r.level;
+    $("me").innerHTML = "<h2>Your stats</h2><div class=\"sgrid\">" + [
+      lv ? tile("Level", `${lv.n} · ${esc(lv.name)}`) : "", r.rank ? tile("Rank", `#${r.rank} of ${fmt(r.players)}`) : "",
+      tile("Net PnL", sgn(s.net), cls(s.net)), tile("Rounds", fmt(s.rounds)), tile("Win rate", rate), tile("Wins", fmt(s.wins), "pos"), tile("Rekt", fmt(s.rekt), s.rekt ? "neg" : ""),
+      tile("Wagered", fmt(s.wagered)), tile("Biggest win", s.bestWin ? "+" + fmt(s.bestWin) : "-", "pos"), tile("Best take profit", s.bestMult ? s.bestMult.toFixed(2) + "x" : "-", "gold"),
+      tile("Current streak", st, cls(s.streak)), tile("Best win streak", s.bestStreak || "-"),
+      s.streaks ? tile("Login streak", s.streaks.login ? s.streaks.login + (s.streaks.login === 1 ? " day" : " days") : "-") : "",
+    ].join("") + "</div>";
+    $("tx").innerHTML = "<h2>Last 10 transactions</h2>" + (t.transactions.length ? t.transactions.map((x) => {
+      const when = new Date(x.ts).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+      return `<div class="trx"><div class="ic">${ICON[x.kind] || "•"}</div><div><b>${esc(x.label)}</b><small>${when}${x.detail ? " · " + esc(x.detail) : ""}</small></div><div class="amt ${cls(x.amount)}">${sgn(x.amount)}</div></div>`;
+    }).join("") : "<div class=\"msg\">Nothing yet. Play a round or claim your credits.</div>");
+  } catch { $("me").innerHTML = "<div class=\"msg\">Sign in to see your stats.</div>"; $("tx").innerHTML = ""; }
+  try {
+    const m = (await get("api/rewards")).milestones;
+    $("com").innerHTML = m && m.on ? "<h2>Community</h2><div class=\"sgrid\">" + tile("Rounds played by everyone", fmt(m.rounds)) + tile("Players joined", fmt(m.players)) + "</div>" : "";
+  } catch { $("com").innerHTML = ""; }
+}
+load(); setInterval(load, 20000);
+</script>
+<script src="doublexp.js?v=3"></script>
+<script src="jackpot.js?v=1"></script>
+<script src="sentiment.js?v=1"></script>
+<script src="sidepanel.js?v=3"></script>
+<script type="module" src="usermenu.js"></script>
+</body>
+</html>

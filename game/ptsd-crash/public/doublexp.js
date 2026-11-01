@@ -20,7 +20,7 @@
   bar.id = "dxp";
   bar.setAttribute("role", "status");
   const head = document.querySelector("header");
-  if (head) head.after(bar); else document.body.prepend(bar);
+  document.body.prepend(bar);
 
   let st = null, skew = 0;
   const two = (n) => String(n).padStart(2, "0");

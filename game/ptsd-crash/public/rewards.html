@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rewards · PTSD Crash</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0e0f11">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Rubik+Glitch&display=swap" rel="stylesheet">
+<link rel="icon" href="img/ptsd-logo.webp">
+<link rel="stylesheet" href="style.css?v=64">
+<style>
+  body { min-height: 100svh; }
+  .dbar { position: relative; z-index: 5; }
+  .rw-wrap { position: relative; z-index: 1; width: min(860px, 100%); margin: 0 auto; padding: 18px 16px 40px; display: grid; gap: 16px; }
+  .rw-ban { border-radius: 24px; padding: 22px 20px 18px; display: flex; align-items: center; gap: 14px; background: radial-gradient(120% 160% at 10% 0%, rgba(59,227,138,.55), transparent 60%), radial-gradient(90% 140% at 100% 100%, rgba(232,163,23,.55), transparent 65%), #0c140f; box-shadow: 0 0 0 2px #1d6b49, 0 0 38px rgba(59,227,138,.2); }
+  .rw-ban h1 { margin: 0; font: 400 38px/1 "Rubik Glitch", Manrope, sans-serif; color: #fff; text-shadow: 0 3px 16px rgba(0,0,0,.55); }
+  .rw-ban p { margin: 6px 0 0; color: rgba(255,255,255,.85); font-size: 13px; font-weight: 600; }
+  .rw-play { margin-left: auto; text-decoration: none; background: rgba(0,0,0,.45); border: 1px solid rgba(255,255,255,.25); color: #fff; font-weight: 800; border-radius: 999px; padding: 10px 18px; white-space: nowrap; }
+  .rw-sec { background: linear-gradient(170deg, #17191e, #0a0b0d); border: 1px solid var(--bd); border-radius: 20px; padding: 16px 18px 18px; }
+  .rw-sec h2 { margin: 0 0 4px; font: 800 14px Manrope, sans-serif; letter-spacing: .08em; text-transform: uppercase; }
+  .rw-sec .sub { color: var(--mut); font-size: 13px; font-weight: 600; margin-bottom: 12px; }
+  .pk { display: grid; grid-template-columns: 34px minmax(0,1fr) auto; gap: 10px; align-items: center; padding: 9px 10px; border: 1px solid var(--bd); border-radius: 12px; background: var(--panel2); margin-top: 6px; }
+  .pk.on { border-color: #1d6b49; background: #0f2a1d; } .pk.now { box-shadow: 0 0 0 2px #3be38a; }
+  .pk .ic { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; background: #23262d; font-size: 16px; }
+  .pk.on .ic { background: #123a2a; }
+  .pk b { font-weight: 800; } .pk small { display: block; color: var(--mut); font-size: 12px; font-weight: 600; }
+  .pk .v { font-weight: 900; color: #3be38a; white-space: nowrap; } .pk:not(.on) .v { color: var(--mut); }
+  .ms-track { margin-top: 14px; } .ms-track h3 { margin: 0 0 6px; font: 800 13px Manrope, sans-serif; }
+  .ms-bar { height: 12px; border-radius: 99px; background: #0d0b04; border: 1px solid #8a6a14; overflow: hidden; margin: 6px 0 4px; }
+  .ms-bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #F05150, #ffc400); border-radius: 99px; transition: width .8s; }
+  .ms-row { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 10px; align-items: center; padding: 9px 10px; border: 1px solid var(--bd); border-radius: 12px; background: var(--panel2); margin-top: 6px; }
+  .ms-row.done { border-color: #1d6b49; } .ms-row.open { opacity: .75; }
+  .ms-row b { font-weight: 800; } .ms-row small { display: block; color: var(--mut); font-size: 12px; font-weight: 600; }
+  .btn { appearance: none; border: 0; cursor: pointer; background: var(--up); color: #fff; font: 800 13px Manrope, sans-serif; border-radius: 999px; padding: 8px 16px; box-shadow: 0 3px 0 var(--upd, #0c7d58); }
+  .btn[disabled] { opacity: .5; cursor: default; box-shadow: none; }
+  .tag { font-size: 12px; font-weight: 800; color: var(--mut); white-space: nowrap; } .tag.ok { color: #3be38a; }
+  .ac-group { margin-top: 14px; } .ac-group h3 { margin: 0 0 6px; font: 800 12px Manrope, sans-serif; letter-spacing: .08em; text-transform: uppercase; color: var(--mut); }
+  .ac-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; }
+  .ac { display: grid; grid-template-columns: 40px minmax(0,1fr); gap: 10px; align-items: center; padding: 10px; border: 1px solid var(--bd); border-radius: 12px; background: var(--panel2); }
+  .ac .ic { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; font-size: 20px; background: #23262d; filter: grayscale(1); opacity: .6; }
+  .ac.on { border-color: #6b5416; background: #1e1808; } .ac.on .ic { filter: none; opacity: 1; background: #2a2210; }
+  .ac b { font-weight: 800; font-size: 13px; } .ac small { display: block; color: var(--mut); font-size: 12px; font-weight: 600; }
+  .ac .xp { color: #ffd54a; font-weight: 800; }
+  .ac .pb { height: 5px; border-radius: 99px; background: #23262d; margin-top: 5px; overflow: hidden; } .ac .pb i { display: block; height: 100%; background: #F05150; }
+  .msg { color: var(--mut); text-align: center; padding: 20px; }
+  @media (max-width: 560px) { .rw-ban h1 { font-size: 28px; } .rw-ban { flex-wrap: wrap; } }
+</style>
+</head>
+<body>
+<header class="dbar">
+  <a class="dbar-title" href="./" style="text-decoration:none"><img src="img/ptsd-logo.webp" alt="PTSD"><span>Crash</span></a>
+  <div class="dbar-right"><nav class="nv-wrap"><a class="nv" href="./">🎮<span> Play</span></a><a class="nv" href="tasks">🎯<span> Bounties</span></a><a class="nv" href="leaderboard">🏆<span> Leaderboard</span></a><a class="nv on" href="rewards">🏅<span> Rewards</span></a></nav></div>
+</header>
+<main class="rw-wrap">
+  <div class="rw-ban"><div><h1>Rewards</h1><p>Perks for your level, achievements to collect, and goals the whole community works on together.</p></div><a class="rw-play" href="./">Back to game</a></div>
+  <section class="rw-sec" id="perks"><div class="msg">Loading…</div></section>
+  <section class="rw-sec" id="ms"></section>
+  <section class="rw-sec" id="ach"></section>
+  <p style="text-align:center;color:#5d636d;font-size:12px;margin:0">Rewards are credits and XP only. They never change the odds or what you can bet.</p>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+const fmt = (n) => Math.round(n).toLocaleString("en-US");
+let data = null;
+
+function drawPerks() {
+  const lv = data.level, rows = data.perks;
+  const now = lv ? rows.filter((p) => p.active).pop() : null;
+  $("perks").innerHTML = `<h2>Level perks</h2><div class="sub">${lv ? `You're level ${lv.n} (${esc(lv.name)}). ${data.claimPct ? `Your free credit claims pay <b>+${data.claimPct}%</b>.` : "Reach level 5 to boost your free credit claims."}` : "Sign in to see your level."} Levels never go down.</div>` +
+    rows.map((p) => `<div class="pk ${p.active ? "on" : ""} ${now && now.level === p.level ? "now" : ""}"><div class="ic">${p.active ? "✅" : "🔒"}</div><div><b>${esc(p.name)}</b><small>Level ${p.level}</small></div><div class="v">+${p.claimPct}% free claims</div></div>`).join("");
+}
+function drawMilestones() {
+  const m = data.milestones;
+  if (!m.on) { $("ms").innerHTML = ""; return; }
+  const track = (name, t, unit, have) => {
+    const list = m.list.filter((x) => x.track === t); if (!list.length) return "";
+    const next = list.find((x) => !x.reachedAt), pct = next ? Math.min(100, Math.round((have / next.goal) * 100)) : 100;
+    return `<div class="ms-track"><h3>${name}: ${fmt(have)} ${unit}</h3><div class="ms-bar"><i style="width:${pct}%"></i></div>
+      <small style="color:var(--mut);font-weight:600">${next ? `${fmt(next.goal - have)} to go for the next reward` : "Every goal reached"}</small>` +
+      list.map((x) => `<div class="ms-row ${x.reachedAt ? "done" : "open"}"><div><b>${fmt(x.goal)} ${unit}</b><small>${x.reachedAt ? "Reached" : "Not yet"} · reward ${fmt(x.reward)} credits for everyone who plays</small></div>
+        ${x.claimed ? `<span class="tag ok">Claimed ✓</span>` : x.claimable ? `<button class="btn" data-k="${x.key}">Claim ${fmt(x.reward)}</button>` : x.reachedAt ? `<span class="tag">${m.eligible ? "" : "Play a round to claim"}</span>` : `<span class="tag">🔒</span>`}</div>`).join("") + `</div>`;
+  };
+  $("ms").innerHTML = `<h2>Community milestones</h2><div class="sub">Goals everyone plays towards. When one is reached, every player can claim its reward once.</div>` +
+    track("Rounds played by everyone", "rounds", "rounds", m.rounds) + track("Players joined", "players", "players", m.players);
+}
+function drawAch() {
+  const a = data.achievements, groups = [...new Set(a.list.map((x) => x.group))];
+  $("ach").innerHTML = `<h2>Achievements</h2><div class="sub"><b>${a.unlocked}</b> of ${a.total} unlocked · ${fmt(a.xp)} XP earned. Each one pays XP once.</div>` +
+    groups.map((g) => `<div class="ac-group"><h3>${esc(g)}</h3><div class="ac-grid">` + a.list.filter((x) => x.group === g).map((x) =>
+      `<div class="ac ${x.unlocked ? "on" : ""}"><div class="ic">${x.icon}</div><div><b>${esc(x.name)}</b><small>${esc(x.desc)}</small><small><span class="xp">+${fmt(x.xp)} XP</span>${x.unlocked ? " · unlocked" : ""}</small>${!x.unlocked && x.goal > 1 ? `<div class="pb"><i style="width:${Math.round((x.have / x.goal) * 100)}%"></i></div>` : ""}</div></div>`).join("") + `</div></div>`).join("");
+}
+function draw() { drawPerks(); drawMilestones(); drawAch(); }
+async function load() { try { data = await (await fetch("api/rewards", { cache: "no-store" })).json(); draw(); } catch { $("perks").innerHTML = `<div class="msg">Couldn't load. Try again.</div>`; } }
+document.addEventListener("click", async (e) => {
+  const b = e.target.closest("button[data-k]"); if (!b) return;
+  b.disabled = true;
+  try {
+    const r = await fetch("api/milestones/claim", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ key: b.dataset.k }) }), j = await r.json();
+    if (!r.ok) { b.textContent = j.error || "Couldn't claim"; return; }
+    b.textContent = `+${fmt(j.amount)} claimed ✓`; if (window.__spRefresh) window.__spRefresh(); setTimeout(load, 900);
+  } catch { b.disabled = false; }
+});
+load(); setInterval(load, 30000);
+</script>
+<script src="doublexp.js?v=3"></script>
+<script src="jackpot.js?v=1"></script>
+<script src="sentiment.js?v=1"></script>
+<script src="sidepanel.js?v=3"></script>
+<script type="module" src="usermenu.js"></script>
+</body>
+</html>

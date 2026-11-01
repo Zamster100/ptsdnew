@@ -130,7 +130,7 @@
 <canvas id="fx" aria-hidden="true"></canvas>
 <header class="dbar">
   <a class="dbar-title" href="./" style="text-decoration:none"><img src="img/ptsd-logo.webp" alt="PTSD"><span>Crash</span></a>
-  <div class="dbar-right"><nav class="nv-wrap"><a class="nv" href="./">🎮<span> Play</span></a><a class="nv" href="tasks">🎯<span> Bounties</span></a><a class="nv on" href="leaderboard">🏆<span> Leaderboard</span></a></nav></div>
+  <div class="dbar-right"><nav class="nv-wrap"><a class="nv" href="./">🎮<span> Play</span></a><a class="nv" href="tasks">🎯<span> Bounties</span></a><a class="nv on" href="leaderboard">🏆<span> Leaderboard</span></a><a class="nv" href="rewards">🏅<span> Rewards</span></a></nav></div>
 </header>
 <main class="lbp">
   <div class="lbp-head">
@@ -259,7 +259,8 @@ function hcHtml(r, life) {
   const refs = life ? life.referrals : null;
   const chips = `<span class="lvl" title="Level ${r.level}">Lv ${r.level} · ${esc(r.levelName)}</span>${r.nfts > 0 ? `<span class="tix">🎟️ ${r.nfts} · ${esc(r.badge)}</span>` : ""}`;
   return `<div class="hc-top">${avatar(r)}<div style="min-width:0"><div class="hc-nm">@${esc(r.username)}</div><div class="hc-sub">${esc(cyc ? cyc.name : "")} · rank #${fmt(r.rank)}</div></div></div>
-    <div class="hc-chips">${chips}</div>
+    <div class="hc-chips">${chips}${life && life.achievements ? `<span class="tix" title="Achievements unlocked">🏅 ${life.achievements.unlocked}/${life.achievements.total}</span>` : ""}</div>
+    ${life && life.achievements && life.achievements.recent.length ? `<div class="hc-ach" style="font-size:18px;letter-spacing:4px;margin:2px 0 4px">${life.achievements.recent.slice(0, 8).map((a) => `<span title="${esc(a.name)}">${a.icon}</span>`).join("")}</div>` : ""}
     <div class="hc-xp ${cls(r.xp)}">${fmt(r.xp)}<small>XP</small></div>
     <div class="hc-bd">${xpTip(r)}</div>
     <div class="hc-grid">
@@ -420,10 +421,10 @@ setInterval(() => { if (document.visibilityState === "visible") load(); }, 30000
   size(); raf = requestAnimationFrame(frame);
 })();
 </script>
-<script src="doublexp.js?v=2"></script>
+<script src="doublexp.js?v=3"></script>
 <script src="jackpot.js?v=1"></script>
 <script src="sentiment.js?v=1"></script>
-<script src="sidepanel.js?v=1"></script>
+<script src="sidepanel.js?v=3"></script>
 <script type="module" src="usermenu.js"></script>
 </body>
 </html>

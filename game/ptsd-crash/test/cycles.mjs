@@ -13,7 +13,7 @@ const now = Date.now(), C1_END = now + 40_000;
 const env = {
   ...process.env, PORT: String(PORT), HOST: "127.0.0.1", CRASH_BASE: "", CRASH_TEST: "1", CLAIMS: "1", DEMO_LOGIN: "1",
   DB_PATH: path.join(dir, "t.db"), LOG_DIR: path.join(dir, "logs"), MIN_BET: "100", MAX_BET: "2500",
-  START_CREDITS: "0", DAILY_CREDITS: "10000", CLAIM_HOURS: "24", X_CLIENT_ID: "", LOGIN_STEP: "0",
+  START_CREDITS: "0", DAILY_CREDITS: "10000", CLAIM_HOURS: "24", X_CLIENT_ID: "", LOGIN_STEP: "0", ACHIEVEMENTS: "0",
   CYCLES: JSON.stringify([
     { id: 1, name: "Cycle 1", start: new Date(now - 1000).toISOString(), end: new Date(C1_END).toISOString() },
     { id: 2, name: "Cycle 2", start: new Date(C1_END).toISOString(), end: new Date(C1_END + 60_000).toISOString() },
