@@ -11,33 +11,47 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Rubik+Glitch&display=swap" rel="stylesheet">
 <link rel="icon" href="img/ptsd-logo.webp">
-<link rel="stylesheet" href="style.css?v=51">
+<link rel="stylesheet" href="style.css?v=64">
 <style>
   body { min-height: 100svh; }
   .pf { width: min(720px, 100%); margin: 0 auto; padding: 18px 16px 48px; display: flex; flex-direction: column; gap: 14px; }
-  .pf-card { --c1: #4a4f57; --c2: #2b2e33; --tx: #9aa1ab; position: relative; border-radius: 22px; padding: 22px 20px; background: linear-gradient(160deg, #15171b, #0b0c0e); border: 2px solid transparent;
-    background-clip: padding-box; box-shadow: 0 0 0 2px var(--c1), 0 12px 40px rgba(0,0,0,.45); }
+  .pf-card { --c1: #4a4f57; --c2: #2b2e33; --tx: #9aa1ab; position: relative; border-radius: 24px; overflow: hidden; background: linear-gradient(170deg, #17191e, #0a0b0d); box-shadow: 0 0 0 2px var(--c1), 0 0 38px color-mix(in srgb, var(--c1) 35%, transparent), 0 14px 44px rgba(0,0,0,.5); animation: pf-in .45s ease both; }
   .pf-card.l1 { --c1: #00D8C6; --c2: #08766e; --tx: #00D8C6; } .pf-card.l2 { --c1: #3b82f6; --c2: #1d3f85; --tx: #6ea3ff; }
   .pf-card.l3 { --c1: #a855f7; --c2: #51227a; --tx: #c58bff; } .pf-card.l4 { --c1: #E8A317; --c2: #7a5208; --tx: #ffc94d; }
   .pf-card.l5 { --c1: #F05150; --c2: #8c1d1d; --tx: #ff8a88; }
-  .pf-top { display: flex; align-items: center; gap: 16px; }
-  .pf-av { width: 92px; height: 92px; border-radius: 50%; flex: none; overflow: hidden; box-shadow: 0 0 0 4px var(--c1); background: #222; display: flex; align-items: center; justify-content: center; font: 800 42px Manrope, sans-serif; color: #fff; }
+  @keyframes pf-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  .pf-ban { height: 112px; position: relative; background: radial-gradient(120% 140% at 15% 0%, var(--c1), transparent 60%), radial-gradient(90% 120% at 100% 100%, var(--c2), transparent 65%), #0c0d10;
+    border-bottom: 1px solid color-mix(in srgb, var(--c1) 40%, transparent); }
+  .pf-ban::after { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(135deg, rgba(255,255,255,.05) 0 2px, transparent 2px 14px); }
+  .pf-ban b { position: absolute; right: 16px; top: 12px; z-index: 1; font: 400 20px/1 "Rubik Glitch", Manrope, sans-serif; color: rgba(255,255,255,.85); letter-spacing: .04em; }
+  .pf-body { padding: 0 20px 22px; margin-top: -48px; position: relative; z-index: 1; }
+  .pf-top { display: flex; align-items: flex-end; gap: 16px; }
+  .pf-av { width: 100px; height: 100px; border-radius: 50%; flex: none; overflow: hidden; box-shadow: 0 0 0 4px #0b0c0e, 0 0 0 7px var(--c1), 0 0 24px var(--c1); background: #222; display: flex; align-items: center; justify-content: center; font: 800 44px Manrope, sans-serif; color: #fff; }
   .pf-av img { width: 100%; height: 100%; object-fit: cover; }
-  .pf-name { min-width: 0; }
-  .pf-name h1 { margin: 0; font: 800 26px/1.1 Manrope, sans-serif; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pf-name { min-width: 0; padding-bottom: 4px; }
+  .pf-name h1 { margin: 0; font: 800 28px/1.1 Manrope, sans-serif; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-shadow: 0 2px 12px rgba(0,0,0,.6); }
   .pf-name a { color: var(--mut); text-decoration: none; font-weight: 700; font-size: 14px; }
-  .pf-badge { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; padding: 6px 14px; border-radius: 999px; font: 800 13px Manrope, sans-serif; letter-spacing: .06em; text-transform: uppercase; color: #fff; background: linear-gradient(135deg, var(--c1), var(--c2)); }
-  .pf-sub { margin-top: 6px; color: var(--tx); font-weight: 800; font-size: 14px; }
-  .pf-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 18px; }
-  .pf-stat { background: var(--panel2); border: 1px solid var(--bd); border-radius: 14px; padding: 12px 10px; text-align: center; }
-  .pf-stat b { display: block; font: 800 22px/1.1 Manrope, sans-serif; font-variant-numeric: tabular-nums; }
-  .pf-stat span { display: block; margin-top: 4px; font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--mut); }
-  .pf-stat b.up { color: var(--up); }
+  .pf-lvl { display: inline-block; margin: 8px 0 0 8px; padding: 5px 12px; border-radius: 999px; font: 800 12px Manrope, sans-serif; letter-spacing: .06em; text-transform: uppercase; color: #E8A317; background: #2a2416; border: 1px solid #6b5416; }
+  .pf-badge { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; padding: 6px 14px; border-radius: 999px; font: 800 12px Manrope, sans-serif; letter-spacing: .08em; text-transform: uppercase; color: #fff; background: linear-gradient(135deg, var(--c1), var(--c2)); box-shadow: 0 0 16px color-mix(in srgb, var(--c1) 55%, transparent); }
+  .pf-sub { margin-top: 10px; color: var(--tx); font-weight: 800; font-size: 14px; }
+  .pf-hero { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 18px; }
+  .pf-big { position: relative; overflow: hidden; border-radius: 16px; padding: 14px 14px 12px; background: linear-gradient(150deg, color-mix(in srgb, var(--c1) 22%, #121316), #101114 70%); border: 1px solid color-mix(in srgb, var(--c1) 45%, transparent); }
+  .pf-big em { position: absolute; right: 10px; top: 6px; font-style: normal; font-size: 30px; opacity: .22; }
+  .pf-big b { display: block; font: 800 34px/1.05 Manrope, sans-serif; font-variant-numeric: tabular-nums; }
+  .pf-big span { display: block; margin-top: 6px; font-size: 11px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: var(--mut); }
+  .pf-big b.up, .pf-stat b.up { color: var(--up); } .pf-big b.dn, .pf-stat b.dn { color: var(--down); }
+  .pf-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 10px; }
+  .pf-stat { background: var(--panel2); border: 1px solid var(--bd); border-radius: 14px; padding: 12px 8px; text-align: center; transition: transform .15s, border-color .15s; }
+  .pf-stat:hover { transform: translateY(-2px); border-color: var(--c1); }
+  .pf-stat i { display: block; font-style: normal; font-size: 18px; margin-bottom: 4px; }
+  .pf-stat b { display: block; font: 800 19px/1.1 Manrope, sans-serif; font-variant-numeric: tabular-nums; }
+  .pf-stat span { display: block; margin-top: 4px; font-size: 10px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--mut); }
   .pf-share { display: flex; gap: 8px; margin-top: 16px; }
-  .pf-share a, .pf-share button { flex: 1; text-align: center; text-decoration: none; border: 0; background: var(--up); color: #fff; font-weight: 800; border-radius: 999px; padding: 12px 14px; box-shadow: 0 3px 0 var(--up-d); font-size: 15px; }
+  .pf-share a, .pf-share button { flex: 1; text-align: center; text-decoration: none; border: 0; background: var(--up); color: #fff; font-weight: 800; border-radius: 999px; padding: 12px 14px; box-shadow: 0 3px 0 var(--up-d); font-size: 15px; cursor: pointer; }
   .pf-share button.alt { background: var(--panel2); color: var(--txt); box-shadow: none; border: 1px solid var(--bd); }
-  .pf-sec { background: var(--panel); border: 1px solid var(--bd); border-radius: 18px; padding: 16px; }
-  .pf-sec h2 { margin: 0 0 10px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--mut); }
+  .pf-sec { background: linear-gradient(180deg, #16181c, var(--panel)); border: 1px solid var(--bd); border-radius: 18px; padding: 16px; animation: pf-in .5s ease both; }
+  .pf-sec h2 { margin: 0 0 12px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--txt); display: flex; align-items: center; gap: 8px; }
+  .pf-sec h2::before { content: ""; width: 4px; height: 14px; border-radius: 2px; background: #F05150; }
   .pf-sec p { margin: 0 0 10px; font-size: 14px; line-height: 1.5; }
   .pf-sec p.mut { color: var(--mut); }
   .ladder { display: flex; flex-direction: column; gap: 6px; }
@@ -45,24 +59,34 @@
   .rung i { font-style: normal; width: 26px; height: 26px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; background: #2b2e33; color: #fff; flex: none; }
   .rung em { margin-left: auto; font-style: normal; color: var(--mut); font-size: 12px; }
   .rung.got { opacity: 1; border-color: var(--up); } .rung.got i { background: var(--up); }
-  .rung.now { opacity: 1; border-color: var(--teal); box-shadow: 0 0 0 1px var(--teal); }
+  .rung.now { opacity: 1; border-color: var(--teal); box-shadow: 0 0 0 1px var(--teal), 0 0 18px rgba(0,216,198,.25); } .rung.now i { background: var(--teal); color: #04201d; }
+  .tbar { height: 8px; border-radius: 99px; background: #23252a; overflow: hidden; margin: 12px 0 4px; } .tbar i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, #00D8C6, #E8A317); }
   .hist { width: 100%; border-collapse: collapse; font-size: 14px; }
   .hist td { padding: 8px 4px; border-top: 1px solid var(--bd); } .hist td:last-child { text-align: right; font-weight: 800; }
   .own-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-weight: 700; }
   .own-row code { background: var(--panel2); border: 1px solid var(--bd); border-radius: 8px; padding: 4px 8px; font-size: 13px; }
+  .nft-sec { border-color: color-mix(in srgb, var(--teal) 50%, var(--bd)); background: linear-gradient(160deg, rgba(0,216,198,.10), var(--panel) 60%); }
+  .nft-sec h2 { justify-content: flex-start; }
+  .nft-pill { margin-left: auto; font: 800 11px Manrope, sans-serif; letter-spacing: .06em; padding: 4px 10px; border-radius: 999px; text-transform: uppercase; background: #123a2a; color: #3be38a; border: 1px solid #1d6b49; }
+  .nft-pill.off { background: #2a1d10; color: #ffb454; border-color: #6b4a1d; }
+  .nft-big { display: flex; align-items: center; gap: 12px; margin: 4px 0 10px; }
+  .nft-big b { font: 800 30px/1 Manrope, sans-serif; } .nft-big span { color: var(--mut); font-size: 13px; font-weight: 700; }
   .own-err { color: var(--down); font-size: 13px; min-height: 16px; margin-top: 6px; }
+  #fx { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+  .dbar, .pf { position: relative; z-index: 1; }
   .pf-empty { text-align: center; padding: 60px 0; color: var(--mut); }
-  @media (max-width: 480px) { .pf-grid { grid-template-columns: repeat(2, 1fr); } .pf-av { width: 72px; height: 72px; font-size: 32px; } .pf-name h1 { font-size: 21px; } }
+  @media (max-width: 480px) { .pf-grid { grid-template-columns: repeat(2, 1fr); } .pf-av { width: 78px; height: 78px; font-size: 34px; } .pf-name h1 { font-size: 21px; } .pf-big b { font-size: 26px; } .pf-ban { height: 92px; } .pf-body { margin-top: -38px; padding: 0 14px 18px; } }
 </style>
 </head>
 <body>
 <header class="dbar">
   <a class="dbar-title" href="./" style="text-decoration:none"><img src="img/ptsd-logo.webp" alt="PTSD"><span>Crash</span></a>
-  <div class="dbar-right"><a class="dbar-pill" href="leaderboard" style="text-decoration:none">🏆 Leaderboard</a></div>
+  <div class="dbar-right"><nav class="nv-wrap"><a class="nv" href="./">🎮<span> Play</span></a><a class="nv" href="tasks">🎯<span> Bounties</span></a><a class="nv" href="leaderboard">🏆<span> Leaderboard</span></a></nav></div>
 </header>
+<canvas id="fx" aria-hidden="true"></canvas>
 <main class="pf" id="pf"><div class="pf-empty">Loading…</div></main>
 <script type="module">
-import { renderWalletButtons } from "./wallet.js?v=1";
+import { renderWalletButtons } from "./wallet.js?v=2";
 const $ = (id) => document.getElementById(id);
 const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const fmt = (n) => Math.round(n).toLocaleString("en-US");
@@ -90,27 +114,42 @@ async function load() {
   const tweet = `${p.rank ? `I'm #${fmt(p.rank)} on` : "I'm playing"} PTSD Crash${n ? ` as a ${p.nft.badge.name}` : ""}. Gen wealth awaits.`;
   const share = `https://x.com/intent/tweet?text=${encodeURIComponent(tweet)}&url=${encodeURIComponent(url)}`;
   const xl = p.user.x && /^[A-Za-z0-9_]{1,15}$/.test(p.user.username) ? `<a href="https://x.com/${esc(p.user.username)}" target="_blank" rel="noopener noreferrer">@${esc(p.user.username)}</a>` : `<a>@${esc(p.user.username)}</a>`;
-  const rungs = p.nft.tiers.map((t) => `<div class="rung ${n >= t.min ? "got" : ""} ${t.level === p.nft.badge.level ? "now" : ""}"><i>${t.level}</i>${esc(t.name)}<em>${t.min}+ Ticket${t.min > 1 ? "s" : ""}</em></div>`).join("");
+  const rungs = p.nft.tiers.map((t) => `<div class="rung ${n >= t.min ? "got" : ""} ${t.level === p.nft.badge.level ? "now" : ""}"><i>${t.level}</i>${esc(t.name)}<em>${t.min}+ Ticket${t.min > 1 ? "s" : ""} · ×${t.mult} XP</em></div>`).join("");
+  const prev = [...p.nft.tiers].reverse().find((t) => n >= t.min), pct = p.nft.next ? Math.max(4, Math.min(100, Math.round(((n - (prev ? prev.min : 0)) / (p.nft.next.min - (prev ? prev.min : 0))) * 100))) : 100;
   const next = p.nft.next ? `Hold <b>${p.nft.next.min}</b> Tickets to reach <b>${esc(p.nft.next.name)}</b>.` : "Top tier reached.";
-  const hist = p.history.length ? `<div class="pf-sec"><h2>Past cycles</h2><table class="hist">${p.history.map((h) => `<tr><td>${esc(h.name)}</td><td>${h.rank ? "#" + fmt(h.rank) + " of " + fmt(h.players) : "did not play"}</td><td>${fmt(h.score)}</td></tr>`).join("")}</table></div>` : "";
+  const hist = p.history.length ? `<div class="pf-sec"><h2>Past cycles</h2><table class="hist">${p.history.map((h) => `<tr><td>${esc(h.name)}</td><td>${h.rank ? "#" + fmt(h.rank) + " of " + fmt(h.players) : "did not play"}</td><td>${fmt(h.xp)} XP</td></tr>`).join("")}</table></div>` : "";
   $("pf").innerHTML = `
     <div class="pf-card l${p.nft.badge.level}">
+      <div class="pf-ban"><b>PTSD</b></div><div class="pf-body">
       <div class="pf-top"><div class="pf-av">${avatar(p.user)}</div>
-        <div class="pf-name"><h1>${esc(p.user.name || p.user.username)}</h1>${xl}<br><span class="pf-badge">${esc(p.nft.badge.name)}</span>
-        <div class="pf-sub">${n ? `${n} Ticket${n > 1 ? "s" : ""} held` : "No Tickets yet"}</div></div></div>
-      <div class="pf-grid">
-        <div class="pf-stat"><b>${p.rank ? "#" + fmt(p.rank) : "-"}</b><span>${cyc} rank</span></div>
-        <div class="pf-stat"><b class="${p.score > 0 ? "up" : ""}">${fmt(p.score)}</b><span>Cycle profit</span></div>
-        <div class="pf-stat"><b>${fmt(p.rounds)}</b><span>Rounds</span></div>
-        <div class="pf-stat"><b>${wr}</b><span>Win rate</span></div>
-        <div class="pf-stat"><b>${p.best ? p.best.toFixed(2) + "x" : "-"}</b><span>Best multiplier</span></div>
-        <div class="pf-stat"><b>${fmt(p.lifetime.bestStreak)}</b><span>Best win streak</span></div>
+        <div class="pf-name"><h1>${esc(p.user.name || p.user.username)}</h1>${xl}<br><span class="pf-badge">${esc(p.nft.badge.name)}</span><span class="pf-lvl">Lv ${p.level.n} · ${esc(p.level.name)}</span>
+        <div class="pf-sub" id="pfSub">${n ? `${n} Ticket${n > 1 ? "s" : ""} held` : "No Tickets yet"}</div></div></div>
+      <div class="pf-hero">
+        <div class="pf-big"><em>🏆</em><b>${p.rank ? "#" + fmt(p.rank) : "-"}</b><span>${cyc} rank</span></div>
+        <div class="pf-big"><em>💰</em><b class="${p.xp > 0 ? "up" : p.xp < 0 ? "dn" : ""}">${fmt(p.xp)}</b><span>${cyc} XP</span></div>
       </div>
-      ${p.bonus ? `<div class="pf-sub" style="margin-top:12px">Cycle profit includes <b>+${fmt(p.bonus)}</b> from ${fmt(p.referrals)} referral${p.referrals === 1 ? "" : "s"}.</div>` : ""}
+      <div class="pf-grid">
+        <div class="pf-stat"><i>🎮</i><b>${fmt(p.rounds)}</b><span>Rounds</span></div>
+        <div class="pf-stat"><i>🎯</i><b>${wr}</b><span>Win rate</span></div>
+        <div class="pf-stat"><i>🚀</i><b>${p.best ? p.best.toFixed(2) + "x" : "-"}</b><span>Best multi</span></div>
+        <div class="pf-stat"><i>🔥</i><b>${fmt(p.lifetime.bestStreak)}</b><span>Best streak</span></div>
+      </div>
+      <div class="pf-grid pf-parts">
+        <div class="pf-stat"><i>📈</i><b class="${p.net > 0 ? "up" : p.net < 0 ? "dn" : ""}">${fmt(p.net)}</b><span>Profit</span></div>
+        <div class="pf-stat"><i>✅</i><b>${fmt(p.tasks)}</b><span>Tasks</span></div>
+        <div class="pf-stat"><i>🤝</i><b>${fmt(p.refs)}</b><span>Referrals${p.referrals ? " (" + fmt(p.referrals) + ")" : ""}</span></div>
+        <div class="pf-stat"><i>⚡</i><b>${fmt(p.activity)}</b><span>Bonus</span></div>
+      </div>
+      <div class="pf-sub" style="margin-top:12px">XP = (profit + tasks + referrals + bonus) × Ticket multiplier${p.ticketMult > 1 ? ` · <b>×${p.ticketMult}</b> with your Tickets${p.mult > 1 ? "" : " (applies once your total is above 0)"}` : ""}.</div>
       <div class="pf-share"><a href="${share}" target="_blank" rel="noopener noreferrer">Share on X</a><button class="alt" id="copyBtn" type="button">Copy link</button></div>
-    </div>
-    <div class="pf-sec"><h2>Ticket levels</h2><p class="mut">Hold PTSD Ticket NFTs to level up. Tickets also unlock the NFT bonus: an extra 10k free credits claim, once a day with 1 Ticket, twice with 2, three times with 3 or more.</p><div class="ladder">${rungs}</div><p class="mut" style="margin-top:10px">${next}</p></div>
-    ${mine ? `<div class="pf-sec" id="own"></div><div class="pf-sec" id="refs"></div>` : ""}
+    </div></div>
+    <div class="pf-sec"><h2>Level ${p.level.n}</h2><p class="mut">Your level comes from the most XP you reach in each cycle, added up. It only goes up: a bad run, a PNL reset or a revoked task can't take it away.</p>
+      <div class="tbar"><i style="width:${Math.max(3, p.level.pct)}%"></i></div>
+      <p class="mut" style="margin-top:8px">${p.level.next ? `<b>${fmt(p.level.xp)}</b> / ${fmt(p.level.next)} level XP to level ${p.level.n + 1}${p.level.nextStage ? ` · <b>${esc(p.level.nextStage.name)}</b> badge at level ${p.level.nextStage.from}` : ""}` : "Max level reached."}</p>
+      <div class="ladder" style="margin-top:10px">${p.level.stages.map((s) => `<div class="rung ${p.level.n >= s.from ? "got" : ""} ${p.level.name === s.name ? "now" : ""}"><i>${s.from}</i>${esc(s.name)}<em>Level ${s.from}+</em></div>`).join("")}</div></div>
+    ${mine ? `<div class="pf-sec nft-sec" id="own"></div>` : ""}
+    <div class="pf-sec"><h2>Ticket levels</h2><p class="mut">Hold PTSD Ticket NFTs to level up. Tickets boost your XP while it is above zero, and also unlock the NFT bonus: an extra 10k free credits claim, once a day with 1 Ticket, twice with 2, three times with 3 or more.</p><div class="ladder">${rungs}</div><div class="tbar"><i style="width:${pct}%"></i></div><p class="mut" style="margin-top:8px">${next}</p></div>
+    ${mine ? `<div class="pf-sec" id="refs"></div>` : ""}
     ${hist}`;
   $("copyBtn").onclick = async () => { try { await navigator.clipboard.writeText(url); $("copyBtn").textContent = "Copied!"; setTimeout(() => ($("copyBtn").textContent = "Copy link"), 1500); } catch { prompt("Copy this link", url); } };
   if (mine) { ownPanel(); refPanel(); }
@@ -137,26 +176,67 @@ async function refPanel() {
 async function ownPanel() {
   const box = $("own");
   let m;
-  try { m = await api("me"); } catch { return; }
+  try { m = await api("me"); } catch { box.remove(); return; }
   const w = m.nft, short = (a) => a.slice(0, 6) + "…" + a.slice(-4);
   const claim = m.onb && m.onb.starter ? (m.onb.canClaim ? "Your free credits are ready to claim in the game." : `Next free claim: ${dateTxt(m.onb.claimAt)}.`) : "";
-  if (!w || !w.enabled) { box.innerHTML = `<h2>Your account</h2><p class="mut">${claim}</p>`; return; }
+  if (!w || !w.enabled) { box.classList.remove("nft-sec"); box.innerHTML = `<h2>Your account</h2><p class="mut">${claim || "NFT linking is not switched on yet."}</p>`; return; }
+  const err = () => $("ownErr");
   if (w.address) {
     const swap = w.canSwapAt && w.canSwapAt > Date.now() ? `You can switch wallets after ${dateTxt(w.canSwapAt)}.` : "You can switch to another wallet any time.";
-    box.innerHTML = `<h2>Your wallet</h2><div class="own-row">Linked <code>${esc(short(w.address))}</code> · ${w.count} Ticket${w.count === 1 ? "" : "s"}${w.bonusHours ? ` · NFT bonus every ${w.bonusHours}h` : ""}</div>
-      <p class="mut" style="margin-top:10px">Only your Ticket count is public, never your address. ${swap} ${claim}</p>
+    box.innerHTML = `<h2>🎟️ Your NFT Tickets<span class="nft-pill">✓ Wallet connected</span></h2>
+      <div class="nft-big"><b>${w.count}</b><span>Ticket${w.count === 1 ? "" : "s"} in <code style="background:var(--panel2);border:1px solid var(--bd);border-radius:8px;padding:3px 7px">${esc(short(w.address))}</code></span></div>
+      <p>${w.bonusHours ? `NFT bonus claim unlocked: an extra 10k free credits every <b>${w.bonusHours}h</b>.` : "No Tickets in this wallet right now, so no NFT bonus yet."}</p>
+      <p class="mut">Only your Ticket count is public, never your address. ${swap} ${claim}</p>
       <div class="pf-share"><button class="alt" id="recheck" type="button">Re-check my Tickets</button></div><div class="own-err" id="ownErr"></div>`;
-    $("recheck").onclick = async () => { $("recheck").disabled = true; try { await api("wallet/refresh", {}); } catch (e) { $("ownErr").textContent = e.message; } load(); };
+    $("recheck").onclick = async () => { $("recheck").disabled = true; try { await api("wallet/refresh", {}); } catch (e) { err().textContent = e.message; } load(); };
     if (!(w.canSwapAt && w.canSwapAt > Date.now())) {
       box.insertAdjacentHTML("beforeend", `<p class="mut" style="margin-top:12px">Switch to a different wallet:</p><div class="wl-list" id="own-wl"></div>`);
-      renderWalletButtons($("own-wl"), { api, onError: (t) => ($("ownErr").textContent = t), onDone: () => load() });
+      renderWalletButtons($("own-wl"), { api, onError: (t) => (err().textContent = t), onDone: () => load() });
     }
     return;
   }
-  box.innerHTML = `<h2>Connect your wallet</h2><p>Optional. <b>For NFT boosts, connect a wallet holding PTSD Ticket NFTs.</b> You only sign a message, it's free.</p><div class="wl-list" id="own-wl"></div><div class="own-err" id="ownErr"></div><p class="mut" style="margin-top:8px">${claim}</p>`;
-  renderWalletButtons($("own-wl"), { api, onError: (t) => ($("ownErr").textContent = t), onDone: () => load() });
+  const sub = $("pfSub"); if (sub) sub.textContent = "Connect a wallet to show your Tickets";
+  box.innerHTML = `<h2>🎟️ Your NFT Tickets<span class="nft-pill off">Not connected</span></h2>
+    <p><b>Own PTSD Tickets? Connect your wallet</b> to show your Ticket level on the leaderboard and unlock the NFT bonus claim (extra 10k free credits, up to 3 times a day). You only sign a message. It's free and can't move anything.</p>
+    <div class="wl-list" id="own-wl"></div><div class="own-err" id="ownErr"></div><p class="mut" style="margin-top:8px">${claim}</p>`;
+  renderWalletButtons($("own-wl"), { api, onError: (t) => (err().textContent = t), onDone: () => load() });
 }
 load();
 </script>
+<script>
+// Floating particles behind the profile: soft glowing dots drifting upward in the PTSD colors.
+(() => {
+  const cv = document.getElementById("fx"), cx = cv.getContext("2d");
+  if (!cx || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const COLORS = ["240,81,80", "232,163,23", "0,216,198", "168,85,247"];
+  let w = 0, h = 0, dots = [], raf = 0;
+  const make = (anywhere) => ({ x: Math.random() * w, y: anywhere ? Math.random() * h : h + 10, r: 1 + Math.random() * 2.6, vy: 0.15 + Math.random() * 0.45, ph: Math.random() * 6.28, sw: 0.2 + Math.random() * 0.5, c: COLORS[(Math.random() * COLORS.length) | 0], a: 0.25 + Math.random() * 0.5 });
+  function size() {
+    const d = Math.min(devicePixelRatio || 1, 2);
+    w = innerWidth; h = innerHeight; cv.width = w * d; cv.height = h * d; cx.setTransform(d, 0, 0, d, 0, 0);
+    const n = Math.round(Math.min(70, Math.max(24, (w * h) / 22000)));
+    while (dots.length < n) dots.push(make(true));
+    dots.length = n;
+  }
+  function frame(t) {
+    cx.clearRect(0, 0, w, h);
+    for (const p of dots) {
+      p.y -= p.vy; p.x += Math.sin(t / 1800 + p.ph) * p.sw;
+      if (p.y < -10) Object.assign(p, make(false));
+      const tw = 0.6 + 0.4 * Math.sin(t / 700 + p.ph);
+      const g = cx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r * 4);
+      g.addColorStop(0, `rgba(${p.c},${p.a * tw})`); g.addColorStop(1, `rgba(${p.c},0)`);
+      cx.fillStyle = g; cx.beginPath(); cx.arc(p.x, p.y, p.r * 4, 0, 6.2832); cx.fill();
+    }
+    raf = requestAnimationFrame(frame);
+  }
+  addEventListener("resize", size);
+  document.addEventListener("visibilitychange", () => { cancelAnimationFrame(raf); if (!document.hidden) raf = requestAnimationFrame(frame); });
+  size(); raf = requestAnimationFrame(frame);
+})();
+</script>
+<script src="doublexp.js?v=1"></script>
+<script src="sentiment.js?v=1"></script>
+<script type="module" src="usermenu.js"></script>
 </body>
 </html>

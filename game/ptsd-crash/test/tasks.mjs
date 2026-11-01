@@ -12,7 +12,7 @@ const now = Date.now();
 const srv = spawn(process.execPath, [path.join(ROOT, "src/server.js")], { cwd: ROOT, stdio: "ignore", env: {
   ...process.env, PORT: String(PORT), HOST: "127.0.0.1", CRASH_BASE: "", CRASH_TEST: "1", CLAIMS: "1", DEMO_LOGIN: "1", X_CLIENT_ID: "",
   DB_PATH: path.join(dir, "t.db"), LOG_DIR: path.join(dir, "logs"), MIN_BET: "100", MAX_BET: "2500", START_CREDITS: "0", DAILY_CREDITS: "10000",
-  NFT_CONTRACT: "", NFT_RPC_URL: "", TASK_MIN_SECONDS: "2", TASKS_REQUIRE_X: "0", ADMIN_USERS: "boss:pw-123,second:pw-456",
+  NFT_CONTRACT: "", NFT_RPC_URL: "", LOGIN_STEP: "0", TASK_MIN_SECONDS: "2", TASKS_REQUIRE_X: "0", ADMIN_USERS: "boss:pw-123,second:pw-456",
   CYCLES: JSON.stringify([{ id: 1, name: "Cycle 1", start: new Date(now - 1000).toISOString(), end: new Date(now + 900_000).toISOString() }]),
 } });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -33,6 +33,8 @@ async function player(name) {
   return pl;
 }
 const bal = async (pl) => (await pl.get("me")).balances.CREDITS;
+// the board is cached for a few seconds: poll until this player's Task points show the wanted value
+const rowWith = async (pl, tasks) => { let lb; for (let i = 0; i < 40; i++) { lb = await pl.get("leaderboard?limit=10"); if (lb.mine && lb.mine.tasks === tasks) break; await sleep(500); } return lb.mine; };
 try {
   for (let i = 0; i < 50; i++) { try { await fetch(B + "config"); break; } catch { await sleep(200); } }
 
@@ -53,7 +55,7 @@ try {
   check((await ad.post("admin/task", { title: "x", url: "javascript:alert(1)" })).code === 400, "non-http links are refused");
   check((await ad.post("admin/task", { title: "x", day: "tomorrow" })).code === 400, "bad day is refused");
   const A = (await ad.post("admin/task", { title: "Like the pinned post", desc: "Like it", type: "like", url: "https://x.com/ptsdshow", reward: 1000, verify: "timer" })).id;
-  const Bt = (await ad.post("admin/task", { title: "Quote our post", type: "quote", url: "https://x.com/ptsdshow/status/1234567890", reward: 500, verify: "proof" })).id;
+  const Bt = (await ad.post("admin/task", { title: "Quote our post", type: "quote", url: "https://x.com/ptsdshow/status/1234567890", reward: 500, points: 2000, verify: "proof" })).id;
   const C = (await ad.post("admin/task", { title: "Reply with your best loss", type: "comment", url: "https://x.com/ptsdshow/status/1234567891", reward: 300, verify: "review" })).id;
   const old = (await ad.post("admin/task", { title: "Yesterday only", day: "2020-01-01", reward: 100 })).id;
   check(A && Bt && C && old, "four tasks created", { A, Bt, C, old });
@@ -96,6 +98,10 @@ try {
   check((await pl.get("admin/reviews")).code === 401, "players can't reach the review queue");
   check((await ad.post("admin/review", { id: rq.reviews[0].id, approve: true })).ok && (await bal(pl)) === b2 + 300, "approving pays the reward");
   check((await ad.post("admin/review", { id: rq.reviews[0].id, approve: true })).code === 400, "can't approve twice");
+  // XP: Task points = 1000 (points default to the reward) + 2000 (custom points) + 300 (approved review) = 3300, not the credit rewards (1800)
+  const mine1 = await rowWith(pl, 3300);
+  check(mine1 && mine1.tasks === 3300 && mine1.net === 0 && mine1.xp === 3300 && mine1.rounds === 0, "task points feed XP (custom points, default = reward, review counts once approved)", mine1);
+  check((await pl.get("tasks")).tasks.find((t) => t.id === Bt).points === 2000, "the player sees the XP a task is worth");
 
   // reject path + retry
   const pl2 = await player("tpl2");
@@ -113,6 +119,8 @@ try {
   check(lg2.log.length >= 4 && aLog && aLog.state === "done", "activity log lists completions", lg2.log.length);
   const b4 = await bal(pl);
   check((await ad.post("admin/revoke", { id: aLog.id })).ok && (await bal(pl)) === b4 - 1000, "revoke takes the credits back");
+  const mine2 = await rowWith(pl, 2300);
+  check(mine2 && mine2.tasks === 2300 && mine2.xp === 2300, "a revoked task loses its XP points too", mine2);
   const csv = await ad.raw("admin/export.csv");
   check(csv.status === 200 && (csv.headers.get("content-type") || "").includes("text/csv") && (await csv.text()).startsWith("time,day,user,task,state"), "CSV export");
   check((await ad.post("admin/task/delete", { id: A })).hidden === true && !(await pl.get("tasks")).tasks.some((t) => t.id === A), "deleting a task with history hides it");
@@ -132,7 +140,7 @@ try {
   let st = await rs.get("pnl/state");
   check(st.net === net && st.task?.id === D && st.taskDone === false && st.canReset === false, "latest task is not done: reset not available", st);
   const no = await rs.post("pnl/reset", {});
-  check(no.code === 400 && /latest task/i.test(no.error), "reset refused until the latest task is completed", no.error);
+  check(no.code === 400 && /latest bounty/i.test(no.error), "reset refused until the latest task is completed", no.error);
   await rs.post("task/open", { id: D }); await sleep(2300);
   check((await rs.post("task/complete", { id: D })).code === 200, "complete the latest task");
   st = await rs.get("pnl/state");
@@ -141,8 +149,9 @@ try {
   check(ok.code === 200 && ok.net === 0 && ok.cooldown === true, "reset: PnL back to 0, cooldown on", ok);
   check((await rs.post("pnl/reset", {})).code === 400, "second reset refused inside 24h");
   let lb = await rs.get("leaderboard?limit=10");
-  for (let i = 0; i < 40 && !(lb.mine === null || lb.mine.score === 0); i++) { await sleep(500); lb = await rs.get("leaderboard?limit=10"); }
-  check(lb.mine === null || lb.mine.score === 0, "leaderboard counts from the reset", lb.mine);
+  for (let i = 0; i < 40 && !(lb.mine === null || lb.mine.net === 0); i++) { await sleep(500); lb = await rs.get("leaderboard?limit=10"); }
+  // the PNL part restarts at 0, but the task points already earned (the bounty that unlocked the reset) are kept
+  check(lb.mine && lb.mine.net === 0 && lb.mine.tasks === 200 && lb.mine.xp === 200, "reset zeroes PNL only: task points stay in XP", lb.mine);
 
   // ---- pages ----
   for (const pth of ["tasks", "admin"]) { const r = await fetch(`http://127.0.0.1:${PORT}/${pth}`); check(r.status === 200 && (await r.text()).includes("PTSD Crash"), `/${pth} page is served`); }

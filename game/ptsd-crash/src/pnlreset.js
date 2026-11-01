@@ -47,8 +47,8 @@ export function initPnlReset({ db, cycles, tasks }) {
       if (!cycles.current(now)) return send(res, 403, { error: "No cycle is running." });
       if (s.cooldown) return send(res, 400, { error: "You can reset once every " + cfg.hours + " hours.", ...s });
       if (s.net >= 0) return send(res, 400, { error: "Your PNL isn't negative, nothing to reset.", ...s });
-      if (!s.task) return send(res, 400, { error: "No task is up right now. Check back soon.", ...s });
-      if (!s.taskDone) return send(res, 400, { error: "Complete the latest task first.", ...s });
+      if (!s.task) return send(res, 400, { error: "No bounty is up right now. Check back soon.", ...s });
+      if (!s.taskDone) return send(res, 400, { error: "Clear the latest bounty first.", ...s });
       q.add.run(user.id, now, cycles.current(now).id, String(s.task.id), s.net);
       return send(res, 200, { ok: true, ...stateOf(user.id, coin, now) });
     }

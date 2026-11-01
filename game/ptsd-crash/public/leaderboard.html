@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Rubik+Glitch&display=swap" rel="stylesheet">
 <link rel="icon" href="img/ptsd-logo.webp">
-<link rel="stylesheet" href="style.css?v=51">
+<link rel="stylesheet" href="style.css?v=64">
 <style>
   body { min-height: 100svh; }
   .lbp { width: min(760px, 100%); margin: 0 auto; padding: 18px 16px 40px; }
@@ -18,6 +18,26 @@
   .lbp-head h1 { margin: 0; font: 400 34px/1 "Rubik Glitch", Manrope, sans-serif; color: #F05150; }
   .lbp-head p { margin: 4px 0 0; color: var(--mut); font-size: 13px; }
   .lbp-play { margin-left: auto; text-decoration: none; background: var(--up); color: #fff; font-weight: 800; border-radius: 999px; padding: 10px 18px; box-shadow: 0 3px 0 var(--up-d); white-space: nowrap; }
+  .lvl { display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 999px; background: #2a2416; border: 1px solid #6b5416; color: #E8A317; font-size: 12px; font-weight: 800; white-space: nowrap; vertical-align: middle; }
+  /* hover card */
+  #hc { position: fixed; z-index: 60; width: 300px; max-width: calc(100vw - 16px); background: #15171b; border: 1px solid #2b2e33; border-radius: 16px; padding: 14px; box-shadow: 0 14px 40px rgba(0,0,0,.6); font-size: 13px; }
+  #hc[hidden] { display: none; }
+  #hc .hc-top { display: flex; align-items: center; gap: 10px; }
+  #hc .av { width: 46px; height: 46px; font-size: 18px; flex: none; }
+  #hc .hc-nm { font-weight: 800; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #hc .hc-sub { color: var(--mut); font-size: 12px; font-weight: 700; margin-top: 2px; }
+  #hc .hc-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 2px; }
+  #hc .hc-chips .lvl, #hc .hc-chips .tix { margin: 0; }
+  #hc .hc-xp { margin-top: 10px; font: 800 26px/1 Manrope, sans-serif; font-variant-numeric: tabular-nums; }
+  #hc .hc-xp small { font-size: 12px; color: var(--mut); letter-spacing: .06em; margin-left: 4px; }
+  #hc .hc-bd { color: var(--mut); font-size: 11.5px; margin-top: 4px; line-height: 1.45; }
+  #hc .hc-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-top: 10px; }
+  #hc .hc-grid div { background: #1b1d22; border-radius: 10px; padding: 7px 8px; }
+  #hc .hc-grid b { display: block; font-weight: 800; font-size: 14px; font-variant-numeric: tabular-nums; }
+  #hc .hc-grid span { display: block; color: var(--mut); font-size: 10px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; margin-top: 2px; }
+  #hc .hc-links { display: flex; gap: 14px; margin-top: 12px; padding-top: 10px; border-top: 1px solid #23252a; font-weight: 800; }
+  #hc .hc-links a { color: var(--teal); text-decoration: none; } #hc .hc-links a:hover { text-decoration: underline; }
+  [data-u] { cursor: default; }
   .tix { display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 999px; background: #1d2a29; border: 1px solid #1f5c57; color: var(--teal); font-size: 12px; font-weight: 800; white-space: nowrap; vertical-align: middle; }
   .over { background: var(--panel); border: 1px solid #5a2a2b; border-radius: 16px; padding: 16px 18px; margin-bottom: 14px; }
   .over h2 { margin: 0 0 8px; font-size: 18px; color: #F05150; }
@@ -41,7 +61,7 @@
   .pod .medal { font-size: 22px; display: block; margin-bottom: 6px; }
   .xl { color: inherit; text-decoration: none; }
   .xl:hover { color: #fff; text-decoration: underline; }
-  .pod .nm { font-weight: 800; font-size: 14px; margin-top: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pod .nm { font-weight: 800; font-size: 14px; margin-top: 8px; line-height: 1.6; overflow-wrap: anywhere; }
   .pod .pnl { font-weight: 800; font-size: 18px; margin-top: 4px; font-variant-numeric: tabular-nums; }
   .pod .sub { color: var(--mut); font-size: 11px; font-weight: 700; margin-top: 2px; }
   .tbl { background: var(--panel); border: 1px solid var(--bd); border-radius: 16px; overflow: hidden; }
@@ -102,12 +122,15 @@
     .pod { padding: 12px 6px; } .pod .pnl { font-size: 15px; }
     .pod .av { width: 46px; height: 46px; } .pod.p1 .av { width: 58px; height: 58px; }
   }
+  #fx { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+  .lbp { position: relative; z-index: 1; }
 </style>
 </head>
 <body>
+<canvas id="fx" aria-hidden="true"></canvas>
 <header class="dbar">
   <a class="dbar-title" href="./" style="text-decoration:none"><img src="img/ptsd-logo.webp" alt="PTSD"><span>Crash</span></a>
-  <div class="dbar-right"><span class="me-chip" id="meChip" hidden></span></div>
+  <div class="dbar-right"><nav class="nv-wrap"><a class="nv" href="./">🎮<span> Play</span></a><a class="nv" href="tasks">🎯<span> Bounties</span></a><a class="nv on" href="leaderboard">🏆<span> Leaderboard</span></a></nav></div>
 </header>
 <main class="lbp">
   <div class="lbp-head">
@@ -176,8 +199,6 @@ try { const p = new URLSearchParams(location.search).get("period"); if (["season
 // Who's signed in (null if nobody). Loaded once; the board waits for it.
 const mePromise = fetch("api/me").then((r) => r.json()).then((m) => {
   if (!m.user) return null;
-  $("meChip").innerHTML = avatar(m.user) + `<b>@${esc(m.user.username)}</b>`;
-  $("meChip").hidden = false;
   return m.user;
 }).catch(() => null);
 let camp = null;
@@ -191,6 +212,7 @@ function clock() {
 setInterval(clock, 1000);
 const cls = (n) => (n > 0 ? "w" : n < 0 ? "l" : "");
 // Tickets held: a small ticket badge next to the name (only for holders).
+const lv = (r) => (r && r.level ? `<span class="lvl" title="${esc(r.levelName)}">Lv ${r.level}</span>` : "");
 const tix = (r) => (r && r.nfts > 0 ? `<span class="tix" title="${r.nfts} PTSD Ticket${r.nfts > 1 ? "s" : ""} held">🎟️ ${r.nfts}</span>` : "");
 
 // ---- cycles: two 10-day windows, same bankroll for everyone, ranked by profit ----
@@ -203,10 +225,12 @@ function cycleClock() {
   $("cycClock").innerHTML = `${d}d ${String(h).padStart(2, "0")}h ${String(m).padStart(2, "0")}m ${String(s).padStart(2, "0")}s<small>${cyc.live ? "until the cycle ends" : "until the cycle starts"}</small>`;
 }
 setInterval(cycleClock, 1000);
+const xpTip = (r) => esc(`Profit ${fmt(r.net)} + Referrals ${fmt(r.refs)} + Tasks ${fmt(r.tasks)}` + (r.activity ? ` + Bonus ${fmt(r.activity)}` : "") + (r.mult > 1 ? ` x ${r.mult} Tickets` : ""));
 async function renderCycle(j) {
   cyc = j.cycle;
+  cardRows.clear(); for (const r of [...j.top, ...(j.mine ? [j.mine] : [])]) cardRows.set(String(r.username).toLowerCase(), r);
   $("over").hidden = true; $("camp").hidden = true; $("seg").hidden = true;
-  $("lbSub").textContent = "Ranked by profit this cycle. Everyone starts with " + fmt(j.bankroll) + ". In the red? Reset your PNL from the game by completing a task (once every 24h).";
+  $("lbSub").textContent = "Ranked by XP this cycle: your profit + referral points + task points, boosted by your Tickets. Everyone starts with " + fmt(j.bankroll) + ". In the red? Reset your PNL from the game by clearing a bounty (once every 24h). Your task and referral points stay.";
   const play = $("lbPlay");
   play.textContent = cyc && cyc.live ? "Play" : "Cycle ended"; play.style.cssText = cyc && cyc.live ? "" : "opacity:.4;cursor:not-allowed;box-shadow:none;background:#3a3b40";
   if (cyc && cyc.live) { play.removeAttribute("aria-disabled"); play.setAttribute("href", "./"); }
@@ -214,15 +238,79 @@ async function renderCycle(j) {
   const head = `<div class="camp"><div class="camp-top"><b>${esc(cyc ? cyc.name : "Cycle")}</b><span>${esc(when)}</span></div><div class="camp-clock" id="cycClock"></div>
     <div class="camp-grid"><div><b>${fmt(j.players)}</b><span>Players on the board</span></div><div><b>$${fmt(j.prize)}</b><span>Cash prize · Top 3</span></div></div></div>`;
   const cur = esc(j.coin);
-  const row = (r) => `<div class="tr${r.me ? " me" : ""}"><span class="rk">${r.rank}</span><span class="who">${avatar(r)}<span>${handle(r)}${tix(r)}</span></span><span class="num hide-sm">${fmt(r.rounds)}</span><span class="num hide-sm">${r.best ? r.best.toFixed(2) + "x" : "-"}</span><span class="pnl ${cls(r.score)}">${fmt(r.score)}</span></div>`;
+  const row = (r) => `<div class="tr${r.me ? " me" : ""}" data-u="${esc(r.username)}"><span class="rk">${r.rank}</span><span class="who">${avatar(r)}<span>${handle(r)}${lv(r)}${tix(r)}</span></span><span class="num hide-sm">${fmt(r.rounds)}</span><span class="num hide-sm">${r.best ? r.best.toFixed(2) + "x" : "-"}</span><span class="pnl ${cls(r.xp)}" title="${xpTip(r)}">${fmt(r.xp)}</span></div>`;
   const pod = j.top.slice(0, 3), ord = pod.length === 3 ? [pod[1], pod[0], pod[2]] : pod;
-  const podium = pod.length ? `<div class="podium">${ord.map((r) => `<div class="pod p${r.rank}"><span class="medal">${["🥇", "🥈", "🥉"][r.rank - 1]}</span>${avatar(r)}<div class="nm">${handle(r)}${tix(r)}</div><div class="pnl ${cls(r.score)}">${fmt(r.score)}</div><div class="sub">${cur} · ${fmt(r.rounds)} rounds</div></div>`).join("")}</div>` : "";
+  const podium = pod.length ? `<div class="podium">${ord.map((r) => `<div class="pod p${r.rank}" data-u="${esc(r.username)}"><span class="medal">${["🥇", "🥈", "🥉"][r.rank - 1]}</span>${avatar(r)}<div class="nm">${handle(r)}${lv(r)}${tix(r)}</div><div class="pnl ${cls(r.xp)}" title="${xpTip(r)}">${fmt(r.xp)} XP</div><div class="sub">${fmt(r.rounds)} rounds</div></div>`).join("")}</div>` : "";
   const meUser = await mePromise;
   const you = !meUser ? "" : `<div class="you"><div class="you-h">Your position${j.mine ? ` <b>#${fmt(j.mine.rank)}</b> of ${fmt(j.players)}` : ""}</div><div class="tbl">${j.mine ? row(j.mine) : `<div class="you-none">You're not on this board yet. Play a round to get ranked.</div>`}</div></div>`;
-  const list = j.top.length ? `<div class="tbl"><div class="tr th"><span>#</span><span>Player</span><span class="num hide-sm">Rounds</span><span class="num hide-sm">Best</span><span class="pnl">Profit (${cur})</span></div>${j.top.map(row).join("")}</div>` : `<div class="empty">No rounds this cycle yet. Be the first.</div>`;
+  const list = j.top.length ? `<div class="tbl"><div class="tr th"><span>#</span><span>Player</span><span class="num hide-sm">Rounds</span><span class="num hide-sm">Best</span><span class="pnl">XP</span></div>${j.top.map(row).join("")}</div>` : `<div class="empty">No rounds this cycle yet. Be the first.</div>`;
   $("board").innerHTML = head + podium + you + list + `<div class="foot2"><a href="?period=season1" style="color:var(--teal)">Season 1 results</a></div>`;
   cycleClock();
 }
+
+// ---- hover card: level, badges, XP breakdown and best hits for the player under the mouse (tap on touch screens) ----
+const cardRows = new Map(); // username (lower case) -> leaderboard row
+const cardLife = new Map(); // username -> lifetime numbers from the profile (loaded on first hover)
+const hc = document.createElement("div"); hc.id = "hc"; hc.hidden = true; document.body.appendChild(hc);
+let hcFor = "", hcShowT = 0, hcHideT = 0;
+function hcHtml(r, life) {
+  const best = life ? life.lifetime.bestMult : r.best, streak = life ? fmt(life.lifetime.bestStreak) : "…";
+  const wr = r.rounds ? Math.round((r.wins / r.rounds) * 100) + "%" : "-";
+  const refs = life ? life.referrals : null;
+  const chips = `<span class="lvl" title="Level ${r.level}">Lv ${r.level} · ${esc(r.levelName)}</span>${r.nfts > 0 ? `<span class="tix">🎟️ ${r.nfts} · ${esc(r.badge)}</span>` : ""}`;
+  return `<div class="hc-top">${avatar(r)}<div style="min-width:0"><div class="hc-nm">@${esc(r.username)}</div><div class="hc-sub">${esc(cyc ? cyc.name : "")} · rank #${fmt(r.rank)}</div></div></div>
+    <div class="hc-chips">${chips}</div>
+    <div class="hc-xp ${cls(r.xp)}">${fmt(r.xp)}<small>XP</small></div>
+    <div class="hc-bd">${xpTip(r)}</div>
+    <div class="hc-grid">
+      <div><b>${best ? Number(best).toFixed(2) + "x" : "-"}</b><span>Best hit</span></div>
+      <div><b>${wr}</b><span>Win rate</span></div>
+      <div><b>${fmt(r.rounds)}</b><span>Rounds</span></div>
+      <div><b>${streak}</b><span>Best streak</span></div>
+      <div><b>${refs == null ? "…" : fmt(refs)}</b><span>Referrals</span></div>
+      <div><b>${fmt(r.tasks)}</b><span>Task pts</span></div>
+    </div>
+    <div class="hc-links"><a href="p/${encodeURIComponent(r.username)}">Game profile</a>${r.x && /^[A-Za-z0-9_]{1,15}$/.test(r.username) ? `<a href="https://x.com/${r.username}" target="_blank" rel="noopener noreferrer">X profile ↗</a>` : ""}</div>`;
+}
+function hcPlace(el) {
+  const b = el.getBoundingClientRect(), w = hc.offsetWidth, h = hc.offsetHeight;
+  const left = Math.min(Math.max(8, b.left + 30), window.innerWidth - w - 8);
+  let top = b.bottom + 6;
+  if (top + h > window.innerHeight - 8) top = Math.max(8, b.top - h - 6);
+  hc.style.left = left + "px"; hc.style.top = top + "px";
+}
+async function hcShow(el) {
+  const key = String(el.dataset.u).toLowerCase(), r = cardRows.get(key);
+  if (!r) return;
+  hcFor = key;
+  hc.innerHTML = hcHtml(r, cardLife.get(key)); hc.hidden = false; hcPlace(el);
+  if (!cardLife.has(key)) {
+    cardLife.set(key, null);
+    try {
+      const p = await fetch("api/profile/" + encodeURIComponent(r.username)).then((x) => (x.ok ? x.json() : null));
+      if (p) cardLife.set(key, p); else cardLife.delete(key);
+    } catch { cardLife.delete(key); }
+    if (hcFor === key && !hc.hidden && cardLife.get(key)) { hc.innerHTML = hcHtml(r, cardLife.get(key)); hcPlace(el); }
+  }
+}
+function hcHide() { hc.hidden = true; hcFor = ""; }
+const canHover = window.matchMedia && window.matchMedia("(hover: hover)").matches;
+document.addEventListener("mouseover", (e) => {
+  if (!canHover) return;
+  const el = e.target.closest && e.target.closest("[data-u], #hc");
+  clearTimeout(hcHideT);
+  if (!el) { clearTimeout(hcShowT); hcHideT = setTimeout(hcHide, 220); return; }
+  if (el.id === "hc" || String(el.dataset.u).toLowerCase() === hcFor) { clearTimeout(hcShowT); return; }
+  clearTimeout(hcShowT); hcShowT = setTimeout(() => hcShow(el), 160);
+});
+// touch screens have no hover: tap a row (not the name link) to open the card, tap anywhere else to close it
+document.addEventListener("click", (e) => {
+  if (canHover) return;
+  const el = e.target.closest && e.target.closest("[data-u], #hc");
+  if (el && el.id === "hc") return;
+  if (el && !e.target.closest("a")) { if (String(el.dataset.u).toLowerCase() === hcFor && !hc.hidden) hcHide(); else hcShow(el); } else if (!el) hcHide();
+});
+window.addEventListener("scroll", hcHide, { passive: true });
 
 async function load() {
   document.querySelectorAll("#seg [data-p]").forEach((b) => b.classList.toggle("on", b.dataset.p === period));
@@ -300,5 +388,40 @@ $("seg").addEventListener("click", (e) => {
 load();
 setInterval(() => { if (document.visibilityState === "visible") load(); }, 30000);
 </script>
+<script>
+// Floating particles behind the profile: soft glowing dots drifting upward in the PTSD colors.
+(() => {
+  const cv = document.getElementById("fx"), cx = cv.getContext("2d");
+  if (!cx || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const COLORS = ["240,81,80", "232,163,23", "0,216,198", "168,85,247"];
+  let w = 0, h = 0, dots = [], raf = 0;
+  const make = (anywhere) => ({ x: Math.random() * w, y: anywhere ? Math.random() * h : h + 10, r: 1 + Math.random() * 2.6, vy: 0.15 + Math.random() * 0.45, ph: Math.random() * 6.28, sw: 0.2 + Math.random() * 0.5, c: COLORS[(Math.random() * COLORS.length) | 0], a: 0.25 + Math.random() * 0.5 });
+  function size() {
+    const d = Math.min(devicePixelRatio || 1, 2);
+    w = innerWidth; h = innerHeight; cv.width = w * d; cv.height = h * d; cx.setTransform(d, 0, 0, d, 0, 0);
+    const n = Math.round(Math.min(70, Math.max(24, (w * h) / 22000)));
+    while (dots.length < n) dots.push(make(true));
+    dots.length = n;
+  }
+  function frame(t) {
+    cx.clearRect(0, 0, w, h);
+    for (const p of dots) {
+      p.y -= p.vy; p.x += Math.sin(t / 1800 + p.ph) * p.sw;
+      if (p.y < -10) Object.assign(p, make(false));
+      const tw = 0.6 + 0.4 * Math.sin(t / 700 + p.ph);
+      const g = cx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r * 4);
+      g.addColorStop(0, `rgba(${p.c},${p.a * tw})`); g.addColorStop(1, `rgba(${p.c},0)`);
+      cx.fillStyle = g; cx.beginPath(); cx.arc(p.x, p.y, p.r * 4, 0, 6.2832); cx.fill();
+    }
+    raf = requestAnimationFrame(frame);
+  }
+  addEventListener("resize", size);
+  document.addEventListener("visibilitychange", () => { cancelAnimationFrame(raf); if (!document.hidden) raf = requestAnimationFrame(frame); });
+  size(); raf = requestAnimationFrame(frame);
+})();
+</script>
+<script src="doublexp.js?v=1"></script>
+<script src="sentiment.js?v=1"></script>
+<script type="module" src="usermenu.js"></script>
 </body>
 </html>

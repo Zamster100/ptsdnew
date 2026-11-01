@@ -2,7 +2,9 @@
 //
 // Tasks live in the DB (crash_tasks) and are edited from /admin. A task with no "day" repeats every day; a task with a
 // "day" (YYYY-MM-DD) only shows on that day. The task day rolls over at TASK_DAY_HOUR Eastern (default 9, same as the cycles).
-// Completing a task pays credits once per player and day (balance only, never PnL).
+// Completing a task pays credits once per player and day (balance only, never PnL) and adds Task points to the player's XP
+// (see xp.js). A task's points default to its credit reward; the team can set them higher in /admin. Points are stored on the
+// completion, so editing a task later never changes what players already earned, and they are not cleared by a PNL reset.
 //
 // How a completion is tracked (per task, "verify"):
 //   timer   open the link, wait TASK_MIN_SECONDS, confirm. Pays at once. For things that can't be checked (like, follow, repost).
@@ -23,7 +25,7 @@ const TYPES = ["visit", "follow", "like", "retweet", "comment", "quote", "custom
 const VERIFY = ["timer", "proof", "review"];
 const STATUS_RE = /^https?:\/\/(?:www\.|mobile\.)?(?:x|twitter)\.com\/([A-Za-z0-9_]{1,15})\/status\/(\d{5,25})(?:[/?#].*)?$/i;
 
-export function initTasks({ db, cycles, addCredits, balanceOf }) {
+export function initTasks({ db, cycles, addCredits, balanceOf, boost = () => 1, boostTasks = false, adminExtra = () => false }) {
   const cfg = {
     dayHour: num(process.env.TASK_DAY_HOUR, 9),
     minSeconds: num(process.env.TASK_MIN_SECONDS, 15),
@@ -44,13 +46,17 @@ export function initTasks({ db, cycles, addCredits, balanceOf }) {
   db.exec("CREATE UNIQUE INDEX IF NOT EXISTS crash_task_proof ON crash_task_log(task_id, proof_id) WHERE proof_id IS NOT NULL AND state!='rejected'");
   db.exec("CREATE INDEX IF NOT EXISTS crash_task_log_day ON crash_task_log(day, task_id)");
   db.exec("CREATE INDEX IF NOT EXISTS crash_task_log_state ON crash_task_log(state)");
+  // points: XP the task is worth (null = same as its credit reward). On the log it is what the player actually earned.
+  for (const col of ["crash_tasks ADD COLUMN points INTEGER", "crash_task_log ADD COLUMN points INTEGER"]) {
+    try { db.exec(`ALTER TABLE ${col}`); } catch {}
+  }
 
   const q = {
     today: db.prepare("SELECT * FROM crash_tasks WHERE active=1 AND (day IS NULL OR day=?) ORDER BY id DESC"),
     all: db.prepare("SELECT * FROM crash_tasks ORDER BY active DESC, id DESC"),
     get: db.prepare("SELECT * FROM crash_tasks WHERE id=?"),
-    insert: db.prepare("INSERT INTO crash_tasks(title,descr,type,url,reward,verify,day,active,created,created_by,updated) VALUES(@title,@descr,@type,@url,@reward,@verify,@day,@active,@now,@by,@now)"),
-    update: db.prepare("UPDATE crash_tasks SET title=@title,descr=@descr,type=@type,url=@url,reward=@reward,verify=@verify,day=@day,active=@active,updated=@now WHERE id=@id"),
+    insert: db.prepare("INSERT INTO crash_tasks(title,descr,type,url,reward,points,verify,day,active,created,created_by,updated) VALUES(@title,@descr,@type,@url,@reward,@points,@verify,@day,@active,@now,@by,@now)"),
+    update: db.prepare("UPDATE crash_tasks SET title=@title,descr=@descr,type=@type,url=@url,reward=@reward,points=@points,verify=@verify,day=@day,active=@active,updated=@now WHERE id=@id"),
     del: db.prepare("DELETE FROM crash_tasks WHERE id=?"),
     logsOfTask: db.prepare("SELECT COUNT(*) n FROM crash_task_log WHERE task_id=?"),
     open: db.prepare("INSERT INTO crash_task_opens(player,task_id,day,ts) VALUES(?,?,?,?) ON CONFLICT(player,task_id,day) DO NOTHING"),
@@ -59,8 +65,8 @@ export function initTasks({ db, cycles, addCredits, balanceOf }) {
     logOf: db.prepare("SELECT * FROM crash_task_log WHERE player=? AND task_id=? AND day=?"),
     logsToday: db.prepare("SELECT * FROM crash_task_log WHERE player=? AND day=?"),
     byId: db.prepare("SELECT l.*, u.username, u.name FROM crash_task_log l LEFT JOIN crash_users u ON u.id=l.player WHERE l.id=?"),
-    upsert: db.prepare(`INSERT INTO crash_task_log(player,task_id,day,state,proof,proof_id,reward,ts) VALUES(@player,@task_id,@day,@state,@proof,@proof_id,@reward,@ts)
-      ON CONFLICT(player,task_id,day) DO UPDATE SET state=@state, proof=@proof, proof_id=@proof_id, reward=@reward, ts=@ts, reviewed_by=NULL, reviewed_at=NULL`),
+    upsert: db.prepare(`INSERT INTO crash_task_log(player,task_id,day,state,proof,proof_id,reward,points,ts) VALUES(@player,@task_id,@day,@state,@proof,@proof_id,@reward,@points,@ts)
+      ON CONFLICT(player,task_id,day) DO UPDATE SET state=@state, proof=@proof, proof_id=@proof_id, reward=@reward, points=@points, ts=@ts, reviewed_by=NULL, reviewed_at=NULL`),
     setState: db.prepare("UPDATE crash_task_log SET state=?, reviewed_by=?, reviewed_at=? WHERE id=?"),
     pending: db.prepare(`SELECT l.*, u.username, u.name, t.title, t.url task_url FROM crash_task_log l LEFT JOIN crash_users u ON u.id=l.player LEFT JOIN crash_tasks t ON t.id=l.task_id
       WHERE l.state='pending' ORDER BY l.ts ASC LIMIT 200`),
@@ -69,6 +75,9 @@ export function initTasks({ db, cycles, addCredits, balanceOf }) {
     counts: db.prepare("SELECT task_id, state, day, COUNT(*) n FROM crash_task_log GROUP BY task_id, state, day"),
     user: db.prepare("SELECT id, username, provider FROM crash_users WHERE id=?"),
     logClaim: db.prepare("INSERT INTO crash_claims(player,kind,amount,ts) VALUES(?,?,?,?)"),
+    // Task points per player inside a cycle window: completed tasks only (a revoked or rejected task stops counting at once).
+    // A completion counts from when it was paid (approval time for reviewed tasks). Rows saved before points existed use their reward.
+    pointsIn: db.prepare("SELECT player, SUM(COALESCE(points, reward)) n FROM crash_task_log WHERE state='done' AND COALESCE(reviewed_at, ts)>=? AND COALESCE(reviewed_at, ts)<? GROUP BY player"),
   };
 
   // ---- the task day ----
@@ -81,7 +90,10 @@ export function initTasks({ db, cycles, addCredits, balanceOf }) {
     return hi;
   }
 
-  const pubTask = (t) => ({ id: t.id, title: t.title, desc: t.descr || "", type: t.type, url: t.url || "", reward: t.reward, verify: t.verify });
+  const pointsOf = (t) => (t.points == null ? t.reward : t.points);
+  // what completing the task is worth right now (doubled during Double XP hour when DOUBLE_XP_TASKS=1)
+  const earns = (t, now) => Math.round(pointsOf(t) * (boostTasks ? boost(now) : 1));
+  const pubTask = (t) => ({ id: t.id, title: t.title, desc: t.descr || "", type: t.type, url: t.url || "", reward: t.reward, points: pointsOf(t), verify: t.verify });
   const todays = (now = Date.now()) => q.today.all(dayKey(now));
   const latest = (now = Date.now()) => todays(now)[0] || null;
   // When the player completed (and was paid for) this task today, else null. Used by the PNL reset.
@@ -92,7 +104,7 @@ export function initTasks({ db, cycles, addCredits, balanceOf }) {
 
   const pay = (player, n, now) => { if (n > 0) { addCredits(player, n); q.logClaim.run(player, "task", n, now); } };
   const finish = db.transaction((player, t, day, proof, proofId, state, now) => {
-    q.upsert.run({ player, task_id: t.id, day, state, proof, proof_id: proofId, reward: t.reward, ts: now });
+    q.upsert.run({ player, task_id: t.id, day, state, proof, proof_id: proofId, reward: t.reward, points: earns(t, now), ts: now });
     if (state === "done") pay(player, t.reward, now);
   });
 
@@ -102,7 +114,7 @@ export function initTasks({ db, cycles, addCredits, balanceOf }) {
     const opens = new Map(q.opensToday.all(player, day).map((o) => [o.task_id, o.ts]));
     const rows = list.map((t, i) => {
       const l = logs.get(t.id), o = opens.get(t.id);
-      return { ...pubTask(t), latest: i === 0, state: l ? l.state : "todo", proof: l ? l.proof : null, wait: o && !l ? Math.max(0, Math.ceil((cfg.minSeconds * 1000 - (now - o)) / 1000)) : null };
+      return { ...pubTask(t), points: earns(t, now), boosted: boostTasks && boost(now) > 1, latest: i === 0, state: l ? l.state : "todo", proof: l ? l.proof : null, wait: o && !l ? Math.max(0, Math.ceil((cfg.minSeconds * 1000 - (now - o)) / 1000)) : null };
     });
     const done = rows.filter((r) => r.state === "done").length;
     return { day, resetsAt: nextReset(now), dayHour: cfg.dayHour, minSeconds: cfg.minSeconds, tasks: rows, progress: { done, total: rows.length, pct: rows.length ? Math.round((done / rows.length) * 100) : 0 } };
@@ -111,14 +123,14 @@ export function initTasks({ db, cycles, addCredits, balanceOf }) {
   function complete(user, body, now) {
     const t = q.get.get(Number(body?.id));
     const day = dayKey(now);
-    if (!t || !t.active || (t.day && t.day !== day)) return { code: 404, error: "That task isn't available today." };
+    if (!t || !t.active || (t.day && t.day !== day)) return { code: 404, error: "That bounty isn't available today." };
     if (!cycles.current(now)) return { code: 403, error: "No cycle is running." };
     const have = q.logOf.get(user.id, t.id, day);
-    if (have && have.state !== "rejected") return { code: 400, error: have.state === "pending" ? "Already submitted, waiting for review." : "You already completed this task today." };
+    if (have && have.state !== "rejected") return { code: 400, error: have.state === "pending" ? "Already submitted, waiting for review." : "You already claimed this bounty today." };
     const o = q.opened.get(user.id, t.id, day);
-    if (!o) return { code: 400, error: "Open the task first." };
+    if (!o) return { code: 400, error: "Open the bounty first." };
     const w = Math.ceil((cfg.minSeconds * 1000 - (now - o.ts)) / 1000);
-    if (w > 0) return { code: 400, error: "Give the task a moment, then confirm.", wait: w };
+    if (w > 0) return { code: 400, error: "Give it a moment, then claim.", wait: w };
     let proof = null, proofId = null;
     if (t.verify !== "timer") {
       proof = String(body?.proof || "").trim().slice(0, 300);
@@ -132,7 +144,7 @@ export function initTasks({ db, cycles, addCredits, balanceOf }) {
       proofId = m[2];
     }
     try { finish(user.id, t, day, proof, proofId, t.verify === "review" ? "pending" : "done", now); }
-    catch (e) { if (String(e.message).includes("UNIQUE")) return { code: 400, error: "That post was already used for this task." }; throw e; }
+    catch (e) { if (String(e.message).includes("UNIQUE")) return { code: 400, error: "That post was already used for this bounty." }; throw e; }
     return { code: 200, ok: true, state: t.verify === "review" ? "pending" : "done", reward: t.verify === "review" ? 0 : t.reward, ...board(user.id, now) };
   }
 
@@ -141,7 +153,7 @@ export function initTasks({ db, cycles, addCredits, balanceOf }) {
     if (p === "/api/tasks" && req.method === "GET") return send(res, 200, board(user.id, now));
     if (p === "/api/task/open" && req.method === "POST") {
       const t = q.get.get(Number(body?.id)), day = dayKey(now);
-      if (!t || !t.active || (t.day && t.day !== day)) return send(res, 404, { error: "That task isn't available today." });
+      if (!t || !t.active || (t.day && t.day !== day)) return send(res, 404, { error: "That bounty isn't available today." });
       q.open.run(user.id, t.id, day, now);
       return send(res, 200, { ok: true, minSeconds: cfg.minSeconds });
     }
@@ -168,9 +180,11 @@ export function initTasks({ db, cycles, addCredits, balanceOf }) {
     const day = b.day === "" || b.day == null ? (b.day === undefined ? old?.day ?? null : null) : String(b.day);
     if (day && !/^\d{4}-\d{2}-\d{2}$/.test(day)) return { error: "Day must look like 2026-11-03, or be empty to repeat every day." };
     const reward = Math.max(0, Math.min(1_000_000, Math.floor(num(b.reward, old?.reward ?? 0))));
-    return { title, descr: String(b.desc ?? old?.descr ?? "").trim().slice(0, 400), type, url, reward, verify, day, active: b.active === undefined ? old?.active ?? 1 : b.active ? 1 : 0 };
+    // blank points = same as the reward
+    const points = b.points === "" || b.points === null ? null : b.points === undefined ? old?.points ?? null : Math.max(0, Math.min(10_000_000, Math.floor(num(b.points, 0))));
+    return { title, descr: String(b.desc ?? old?.descr ?? "").trim().slice(0, 400), type, url, reward, points, verify, day, active: b.active === undefined ? old?.active ?? 1 : b.active ? 1 : 0 };
   }
-  const adminTask = (t, counts) => ({ id: t.id, title: t.title, desc: t.descr || "", type: t.type, url: t.url || "", reward: t.reward, verify: t.verify, day: t.day, active: !!t.active, created: t.created, createdBy: t.created_by, ...counts });
+  const adminTask = (t, counts) => ({ id: t.id, title: t.title, desc: t.descr || "", type: t.type, url: t.url || "", reward: t.reward, points: t.points, verify: t.verify, day: t.day, active: !!t.active, created: t.created, createdBy: t.created_by, ...counts });
 
   function adminApi(req, res, p, body, u, send) {
     const ip = ipOf(req), now = Date.now();
@@ -190,6 +204,7 @@ export function initTasks({ db, cycles, addCredits, balanceOf }) {
     const s = adminOf(req);
     if (!s) return send(res, 401, { error: "Log in first.", login: true });
     if (p === "/api/admin/logout" && req.method === "POST") { sessions.delete(cookieOf(req, "crashadmin")); res.setHeader("set-cookie", "crashadmin=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0"); return send(res, 200, { ok: true }); }
+    if (adminExtra(p, body, send, res)) return;
     if (p === "/api/admin/me") return send(res, 200, { user: s.user, day: dayKey(now), resetsAt: nextReset(now), dayHour: cfg.dayHour, types: TYPES, verify: VERIFY });
     if (p === "/api/admin/tasks" && req.method === "GET") {
       const today = dayKey(now), by = new Map();
@@ -208,7 +223,7 @@ export function initTasks({ db, cycles, addCredits, balanceOf }) {
     if (p === "/api/admin/task/delete" && req.method === "POST") {
       const t = q.get.get(Number(body?.id));
       if (!t) return send(res, 404, { error: "Task not found." });
-      if (q.logsOfTask.get(t.id).n) { q.update.run({ title: t.title, descr: t.descr, type: t.type, url: t.url, reward: t.reward, verify: t.verify, day: t.day, active: 0, id: t.id, now }); return send(res, 200, { ok: true, hidden: true }); }
+      if (q.logsOfTask.get(t.id).n) { q.update.run({ title: t.title, descr: t.descr, type: t.type, url: t.url, reward: t.reward, points: t.points, verify: t.verify, day: t.day, active: 0, id: t.id, now }); return send(res, 200, { ok: true, hidden: true }); }
       q.del.run(t.id);
       return send(res, 200, { ok: true });
     }
@@ -240,5 +255,12 @@ export function initTasks({ db, cycles, addCredits, balanceOf }) {
     return send(res, 404, { error: "not found" });
   }
 
-  return { cfg, dayKey, nextReset, todays, latest, doneAt, board, api, adminApi, adminEnabled: admins.size > 0 };
+  // player -> Task points earned inside a cycle window
+  function pointsMap(start, end) {
+    const m = new Map();
+    for (const r of q.pointsIn.all(start, end)) m.set(r.player, r.n);
+    return m;
+  }
+
+  return { cfg, dayKey, nextReset, todays, latest, doneAt, board, pointsMap, api, adminApi, adminEnabled: admins.size > 0 };
 }

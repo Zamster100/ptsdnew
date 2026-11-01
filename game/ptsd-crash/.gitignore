@@ -4,3 +4,4 @@ data/*.db-*
 data/cards/
 data/logs/
 .env
+data/*-logs/

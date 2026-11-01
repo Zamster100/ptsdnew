@@ -13,10 +13,14 @@ import { initAuth } from "./auth.js";
 import { initChat } from "./chat.js";
 import { initCampaign } from "./campaign.js";
 import { initCycles } from "./cycles.js";
-import { initWallet, badgeOf, TIERS } from "./wallet.js";
+import { initWallet, badgeOf, multOf, TIERS } from "./wallet.js";
 import { initReferrals } from "./referrals.js";
 import { initPnlReset } from "./pnlreset.js";
 import { initTasks } from "./tasks.js";
+import { initXp, xpOf, levelInfo, stageOf, STAGES } from "./xp.js";
+import { initStreaks } from "./streaks.js";
+import { initDoubleXp } from "./doublexp.js";
+import { initSentiment } from "./sentiment.js";
 import { startBg, cached } from "./bg.js";
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
@@ -93,11 +97,11 @@ const q = {
   board: db.prepare(`SELECT player, SUM(pnl) net, COUNT(*) rounds, SUM(bet) wagered, SUM(pnl>0) wins,
     MAX(MAX(COALESCE(sold_mult,0), COALESCE(half_mult,0))) best, MAX(pnl) bestWin
     FROM crash_rounds WHERE state!='open' AND coin=? AND ts>=? AND ts<? GROUP BY player ORDER BY net DESC, wagered DESC LIMIT 20000`),
-  // Cycle board: real PnL (can be negative). Rounds before a player's last PNL reset (see pnlreset.js) don't count.
-  cycleBoard: db.prepare(`SELECT r.player player, SUM(r.pnl) score, SUM(r.pnl) net, COUNT(*) rounds, SUM(r.bet) wagered, SUM(r.pnl>0) wins,
+  // Cycle board: the PNL part of XP (real, can be negative). Rounds before a player's last PNL reset (see pnlreset.js) don't count.
+  cycleBoard: db.prepare(`SELECT r.player player, SUM(r.pnl) net, COUNT(*) rounds, SUM(r.bet) wagered, SUM(r.pnl>0) wins,
     MAX(MAX(COALESCE(r.sold_mult,0), COALESCE(r.half_mult,0))) best, MAX(r.pnl) bestWin
     FROM crash_rounds r LEFT JOIN (SELECT player, MAX(ts) rts FROM crash_pnl_resets GROUP BY player) z ON z.player=r.player
-    WHERE r.state!='open' AND r.coin=? AND r.ts>=? AND r.ts<? AND r.ts>=COALESCE(z.rts,0) GROUP BY r.player ORDER BY score DESC, wagered DESC LIMIT 20000`),
+    WHERE r.state!='open' AND r.coin=? AND r.ts>=? AND r.ts<? AND r.ts>=COALESCE(z.rts,0) GROUP BY r.player ORDER BY net DESC, wagered DESC LIMIT 20000`),
   settle: db.prepare("UPDATE crash_rounds SET state=@state, sold_mult=@sold_mult, payout=@payout, pnl=@pnl, sold_ms=@sold_ms WHERE id=@id AND state='open'"),
   half: db.prepare("UPDATE crash_rounds SET half_mult=?, half_payout=?, half_ms=? WHERE id=? AND state='open' AND half_ms IS NULL"),
   recent: db.prepare("SELECT id,coin,bet,crash,noise_seed,state,sold_mult,payout,pnl,ts,half_mult,half_payout FROM crash_rounds WHERE player=? AND state!='open' ORDER BY ts DESC LIMIT 25"),
@@ -164,6 +168,7 @@ const finishOverdue = db.transaction((row) => {
   const payout = (row.half_payout || 0) + fresh;
   const ch = q.settle.run({ id: row.id, state: capped ? "max" : "rekt", sold_mult: capped ? cap : null, payout, pnl: payout - row.bet, sold_ms: capped ? row.end_ms : null });
   if (ch.changes && fresh) q.addBal.run(fresh, row.player, row.coin);
+  if (ch.changes) streaks.onSettled(q.round.get(row.id));
 });
 
 const waiters = new Map(); // round id -> [res]
@@ -200,7 +205,7 @@ function reveal(row) {
   };
 }
 function publicRound(row) {
-  return { id: row.id, coin: row.coin, bet: row.bet, startAt: row.start_ms, noiseSeed: row.noise_seed, commit: row.commit_hash, state: row.state, halfMult: row.half_mult, halfPayout: row.half_payout, halfAt: row.half_ms };
+  return { id: row.id, coin: row.coin, bet: row.bet, startAt: row.start_ms, noiseSeed: row.noise_seed, commit: row.commit_hash, state: row.state, halfMult: row.half_mult, halfPayout: row.half_payout, halfAt: row.half_ms, edge: row.edge, regime: sentiment.kindOfEdge(row.edge) };
 }
 
 const buy = db.transaction((player, coin, amount, clientSeed, commit) => {
@@ -213,13 +218,14 @@ const buy = db.transaction((player, coin, amount, clientSeed, commit) => {
   if (commit && commit !== seed.commit_hash) return { error: "New round seed, tap Buy again.", code: 409, nextCommit: seed.commit_hash };
   const serverSeed = seed.server_seed;
   const nonce = q.nonce.get(player).n;
-  const crash = crashPoint(serverSeed, clientSeed, nonce);
+  const edge = sentiment.edgeNow(); // Fear / Greed window in force at the moment of the bet (public, and stored on the round)
+  const crash = crashPoint(serverSeed, clientSeed, nonce, edge);
   const start = Date.now() + 250;
   const row = {
     id: crypto.randomBytes(9).toString("base64url"), player, coin, bet: amount,
     server_seed: serverSeed, commit_hash: seed.commit_hash,
     client_seed: clientSeed, nonce, noise_seed: noiseSeed(serverSeed, clientSeed, nonce), crash,
-    start_ms: start, end_ms: start + Math.round(timeForMult(crash) * 1000) + (crash >= MAX_MULT ? CAP_HOLD_MS : 0), ts: Date.now(), edge: EDGE,
+    start_ms: start, end_ms: start + Math.round(timeForMult(crash) * 1000) + (crash >= MAX_MULT ? CAP_HOLD_MS : 0), ts: Date.now(), edge,
   };
   q.addBal.run(-amount, player, coin);
   q.insert.run(row);
@@ -252,7 +258,8 @@ const sell = db.transaction((player, id, half, at) => {
   const payout = (row.half_payout || 0) + fresh;
   q.settle.run({ id, state: "sold", sold_mult: mult, payout, pnl: payout - row.bet, sold_ms: now });
   q.addBal.run(fresh, player, row.coin);
-  return { done: q.round.get(id), now, arrived, claim: now };
+  const done = q.round.get(id);
+  return { done, now, arrived, claim: now, award: streaks.onSettled(done) };
 });
 
 // Every sell tap, so "I pressed and got rekt" can be checked to the millisecond.
@@ -338,19 +345,31 @@ const betsOff = () => !cycles.current();
 const BOARD_TTL_MS = Number(process.env.BOARD_CACHE_MS) || 10_000;
 const boardCache = new Map(); // `${period}:${start}` -> { raw, rows, pub }
 function cycleRows() { return cycleRowsFor(cycles.shown() || cycles.next()); }
+// The cycle board ranks on XP = (PNL + Referral points + Task points + Activity points) x Ticket multiplier (see xp.js).
+// PNL comes from the rounds (after the player's last PNL reset); the other three are their own counters and a reset never clears them.
+const xpVersion = () => referrals.version() + xp.version();
 function cycleRowsFor(c) {
   if (!c) return { cycle: null, hit: { rows: [], pub: new Map() } };
   const key = "cycle:" + c.id;
   const raw = cached("board:" + key, q.cycleBoard.source, [CURRENCY, c.start, c.end], BOARD_TTL_MS, null);
   let hit = boardCache.get(key);
-  if (!hit || hit.raw !== raw || hit.v !== referrals.version() || Date.now() - hit.at > BOARD_TTL_MS) {
+  if (!hit || hit.raw !== raw || hit.v !== xpVersion() || Date.now() - hit.at > BOARD_TTL_MS) {
     const blocked = auth.blockedIds();
-    // Qualified referrals add a fixed amount to the referrer's cycle profit (see referrals.js).
-    const bonus = referrals.bonusMap(c.id), seen = new Set();
-    const all = (raw || []).map((r) => { seen.add(r.player); const b = bonus.get(r.player) || 0; return { ...r, bonus: b, score: r.net + b }; });
-    for (const [player, b] of bonus) if (!seen.has(player)) all.push({ player, net: 0, rounds: 0, wagered: 0, wins: 0, best: 0, bestWin: 0, bonus: b, score: b });
-    all.sort((a, b) => b.score - a.score || b.wagered - a.wagered);
-    hit = { raw, v: referrals.version(), at: Date.now(), rows: blocked.size ? all.filter((r) => !blocked.has(r.player)) : all, pub: new Map() };
+    const by = new Map();
+    for (const r of raw || []) by.set(r.player, { ...r, refs: 0, tasks: 0, activity: 0 });
+    // players with points but no rounds this cycle still rank
+    const add = (map, field) => { for (const [player, n] of map) { let r = by.get(player); if (!r) by.set(player, (r = { player, net: 0, rounds: 0, wagered: 0, wins: 0, best: 0, bestWin: 0, refs: 0, tasks: 0, activity: 0 })); r[field] = n; } };
+    add(referrals.bonusMap(c.id), "refs"); add(tasks.pointsMap(c.start, c.end), "tasks"); add(xp.activityMap(c.id), "activity");
+    const tickets = wallet.countsMap();
+    const all = [...by.values()].map((r) => { const x = xpOf({ pnl: r.net, refs: r.refs, tasks: r.tasks, activity: r.activity }, multOf(tickets.get(r.player) || 0)); return { ...r, total: x.total, mult: x.mult, xp: x.xp }; });
+    all.sort((a, b) => b.xp - a.xp || b.wagered - a.wagered);
+    const rows = blocked.size ? all.filter((r) => !blocked.has(r.player)) : all;
+    // Levels come from each player's highest XP per cycle (see xp.js): record new highs while the cycle is live, then tag every row.
+    // (not while the round data is still loading: XP would be missing its PNL part and a player in the red would look better than they are)
+    if (raw && cycles.current()?.id === c.id) xp.recordPeaks(c.id, rows);
+    const lx = xp.levelXpMap();
+    for (const r of rows) r.level = levelInfo(lx.get(r.player)).n;
+    hit = { raw, v: xpVersion(), at: Date.now(), rows, pub: new Map() };
     if (boardCache.size > 20) boardCache.clear();
     boardCache.set(key, hit);
   }
@@ -360,8 +379,8 @@ function cycleLeaderboard(player, limit = 50) {
   const { cycle, hit } = cycleRows();
   const rows = hit.rows;
   const pub = (id) => { let p = hit.pub.get(id); if (!p) hit.pub.set(id, (p = auth.publicUser(id))); return p; };
-  // score = cycle PnL (+ referral points); play = the Play points that feed the cycle score (sqrt keeps one lucky run from dwarfing everything else).
-  const row = (r, i) => ({ rank: i + 1, ...pub(r.player), me: r.player === player, nfts: wallet.countOf(r.player), score: r.score, bonus: r.bonus || 0, play: Math.round(Math.sqrt(Math.max(0, r.net)) * 100) / 100, net: r.net, rounds: r.rounds, wins: r.wins, wagered: r.wagered, best: r.best, bestWin: r.bestWin });
+  // xp = the ranking number; net (PNL), refs, tasks and activity are the parts it is built from, mult the Ticket multiplier that applied.
+  const row = (r, i) => ({ rank: i + 1, ...pub(r.player), me: r.player === player, nfts: wallet.countOf(r.player), badge: badgeOf(wallet.countOf(r.player)).name, xp: r.xp, level: r.level, levelName: stageOf(r.level).name, mult: r.mult, net: r.net, refs: r.refs, tasks: r.tasks, activity: r.activity, rounds: r.rounds, wins: r.wins, wagered: r.wagered, best: r.best, bestWin: r.bestWin });
   const i = player ? rows.findIndex((r) => r.player === player) : -1;
   return {
     period: "cycle", coin: CURRENCY, top: rows.slice(0, limit).map(row), mine: i >= 0 ? row(rows[i], i) : null, players: rows.length,
@@ -427,7 +446,7 @@ function ownPlace(player, user) {
 function rankOf(player) {
   const { rows } = (cycles.started() ? cycleRows() : boardRows(null)).hit;
   const i = player ? rows.findIndex((r) => r.player === player) : -1;
-  return { rank: i >= 0 ? i + 1 : null, players: rows.length };
+  return { rank: i >= 0 ? i + 1 : null, players: rows.length, level: player ? xp.levelOf(player) : null };
 }
 
 // ---------- profiles ----------
@@ -453,10 +472,11 @@ function profileOf(handle) {
     user: auth.publicUser(u.id), joined: u.created,
     cycle: cur && { id: cur.id, name: cur.name, start: cur.start, end: cur.end, live: !!cycles.current(), upcoming: cur.start > Date.now() },
     rank: now.rank, players: now.players,
-    score: r ? r.score : 0, bonus: r ? r.bonus || 0 : 0, referrals: referrals.countOf(u.id), play: r ? Math.round(Math.sqrt(Math.max(0, r.net)) * 100) / 100 : 0, net: r ? r.net : 0, rounds: r ? r.rounds : 0, wins: r ? r.wins : 0, best: r ? r.best : 0, bestWin: r ? r.bestWin : 0,
+    level: { ...xp.levelOf(u.id), stages: STAGES },
+    xp: r ? r.xp : 0, mult: r ? r.mult : 1, ticketMult: multOf(count), refs: r ? r.refs : 0, tasks: r ? r.tasks : 0, activity: r ? r.activity : 0, referrals: referrals.countOf(u.id), net: r ? r.net : 0, rounds: r ? r.rounds : 0, wins: r ? r.wins : 0, best: r ? r.best : 0, bestWin: r ? r.bestWin : 0,
     lifetime: { rounds: s.rounds, wins: s.wins, wagered: s.wagered, bestMult: s.bestMult, bestStreak: s.bestStreak },
-    nft: { count, badge, next: nextTier && { name: nextTier.name, min: nextTier.min, level: nextTier.level }, tiers: [...TIERS].reverse().map((t) => ({ min: t.min, level: t.level, name: t.name })) },
-    history: cycles.list.filter((c) => c.end <= Date.now()).map((c) => { const x = rankIn(c); return { id: c.id, name: c.name, rank: x.rank, players: x.players, score: x.row ? x.row.score : 0 }; }),
+    nft: { count, badge, next: nextTier && { name: nextTier.name, min: nextTier.min, level: nextTier.level }, tiers: [...TIERS].reverse().map((t) => ({ min: t.min, level: t.level, name: t.name, mult: t.mult })) },
+    history: cycles.list.filter((c) => c.end <= Date.now()).map((c) => { const x = rankIn(c); return { id: c.id, name: c.name, rank: x.rank, players: x.players, xp: x.row ? x.row.xp : 0 }; }),
   };
   if (profCache.size > 500) profCache.clear();
   profCache.set(u.id, { at: Date.now(), data });
@@ -529,9 +549,23 @@ const cycles = initCycles({
   hasOpen: (player) => !!q.open.get(player),
 });
 
+const dxp = initDoubleXp();
+const xp = initXp({ db, cycles, boost: dxp.mult });
+const sentiment = initSentiment({ db, coin: CURRENCY, baseEdge: EDGE });
+sentiment.tick();
+setInterval(() => { try { sentiment.tick(); } catch (e) { console.error("[sentiment] tick failed", e.message); } }, 10_000).unref();
 const referrals = initReferrals({ db, cycles, addCredits });
-const tasks = initTasks({ db, cycles, addCredits, balanceOf: (player) => balanceOf(player, CURRENCY) });
+const tasks = initTasks({ db, cycles, addCredits, balanceOf: (player) => balanceOf(player, CURRENCY), boost: dxp.mult, boostTasks: dxp.cfg.tasks,
+  // team-only: open a Fear / Greed window now, or end the current one   POST /api/admin/sentiment { kind: "fear"|"greed"|"neutral", minutes }
+  adminExtra: (p, body, send, res) => {
+    if (p !== "/api/admin/sentiment") return false;
+    const kind = String(body?.kind || "");
+    if (!["fear", "greed", "neutral"].includes(kind)) { send(res, 400, { error: "kind must be fear, greed or neutral." }); return true; }
+    sentiment.force(kind, body?.minutes);
+    send(res, 200, sentiment.view()); return true;
+  } });
 const pnlReset = initPnlReset({ db, cycles, tasks });
+const streaks = initStreaks({ db, xp, dayKey: tasks.dayKey });
 
 const MIME = { ".html": "text/html; charset=utf-8", ".json": "application/json", ".js": "text/javascript", ".css": "text/css", ".png": "image/png", ".webp": "image/webp", ".svg": "image/svg+xml", ".mp3": "audio/mpeg", ".woff2": "font/woff2" };
 function serveStatic(res, rel) {
@@ -573,10 +607,11 @@ const server = http.createServer(async (req, res) => {
 
     if (p.startsWith("/api/admin/")) return tasks.adminApi(req, res, p, body, u, send);
     if (p === "/api/config") {
-      return send(res, 200, { test: TEST && !CLAIMS, coins: COINS, maxMult: MAX_MULT, edge: EDGE, login: auth.mode, support: auth.supportUrl, seasonOver: betsOff(), ...campaign.publicCfg(), ...cycles.publicCfg(), nft: { enabled: wallet.enabled, contract: wallet.contract }, serverNow: Date.now() });
+      return send(res, 200, { test: TEST && !CLAIMS, coins: COINS, maxMult: MAX_MULT, edge: EDGE, login: auth.mode, support: auth.supportUrl, seasonOver: betsOff(), ...campaign.publicCfg(), ...cycles.publicCfg(), doubleXp: dxp.state(), sentiment: sentiment.view(), nft: { enabled: wallet.enabled, contract: wallet.contract }, serverNow: Date.now() });
     }
     if (p.startsWith("/api/auth/")) return await auth.api(req, res, p, body, send);
-    if (p === "/api/rank") return send(res, 200, betsOff() && !cycles.started() ? { rank: null, players: 0 } : rankOf(player));
+    if (p === "/api/sentiment") { res.setHeader("cache-control", "no-store"); return send(res, 200, { ...sentiment.view(), serverNow: Date.now() }); }
+    if (p === "/api/rank") return send(res, 200, betsOff() && !cycles.started() ? { rank: null, players: 0, level: player ? xp.levelOf(player) : null } : rankOf(player));
     if (p === "/api/leaderboard") {
       const lim = Math.min(500, Math.max(1, Number(u.searchParams.get("limit")) || 50));
       const per = u.searchParams.get("period");
@@ -608,7 +643,7 @@ const server = http.createServer(async (req, res) => {
       return send(res, 403, auth.blockedBody());
     }
     cycles.touch(player);
-    if (p.startsWith("/api/wallet/")) { const out = await wallet.api(req, res, p, body, user, send); if (out !== null) return; }
+    if (p.startsWith("/api/wallet/")) { const out = await wallet.api(req, res, p, body, user, send); profCache.delete(user.id); cardCache.clear(); if (out !== null) return; }
     if (p.startsWith("/api/referral/")) { const out = referrals.api(req, res, p, body, user, send); if (out !== null) return; }
     if (p === "/api/tasks" || p.startsWith("/api/task/")) { const out = tasks.api(req, res, p, body, user, send); if (out !== null) return; }
     if (p.startsWith("/api/pnl/")) { const out = pnlReset.api(req, res, p, body, user, send, CURRENCY); if (out !== null) return; }
@@ -618,7 +653,9 @@ const server = http.createServer(async (req, res) => {
       const open = q.open.get(player);
       if (open && overdue(open)) endRound(open.id);
       const still = q.open.get(player);
+      const login = cycles.current() ? streaks.checkIn(player) : null; // first visit of the task day: login streak bonus
       return send(res, 200, {
+        streak: { ...streaks.stateOf(player), loginAward: login && login.isNew ? login.xp : 0, boost: login && login.isNew ? login.boost : 1 },
         user: auth.publicUser(player), onb: campaign.stateOf(player), nft: wallet.stateOf(player), ref: referrals.stateOf(player), pnl: pnlReset.stateOf(player, CURRENCY),
         balances: Object.fromEntries(coins.map((c) => [c, balanceOf(player, c)])),
         open: still ? publicRound(still) : null,
@@ -649,7 +686,7 @@ const server = http.createServer(async (req, res) => {
       if (out.error) return send(res, 400, { error: out.error });
       const r = out.done;
       logSell(player, r, body, out);
-      return send(res, 200, { state: r.state, half: !!out.half, lateMs: out.late ?? null, halfMult: r.half_mult, halfPayout: r.half_payout, halfAt: r.half_ms, soldMult: r.sold_mult, payout: r.payout, pnl: r.pnl, soldAt: r.sold_ms, balance: balanceOf(player, r.coin), serverNow: Date.now() });
+      return send(res, 200, { state: r.state, half: !!out.half, lateMs: out.late ?? null, halfMult: r.half_mult, halfPayout: r.half_payout, halfAt: r.half_ms, soldMult: r.sold_mult, payout: r.payout, pnl: r.pnl, soldAt: r.sold_ms, award: out.award || null, streak: streaks.stateOf(player), balance: balanceOf(player, r.coin), serverNow: Date.now() });
     }
     if (p === "/api/wait") {
       const row = q.round.get(String(u.searchParams.get("id") || ""));
@@ -666,7 +703,7 @@ const server = http.createServer(async (req, res) => {
       const row = q.round.get(String(u.searchParams.get("id") || ""));
       if (!row || row.player !== player) return send(res, 404, { error: "No such round." });
       if (row.state === "open") return send(res, 400, { error: "Round still running." });
-      return send(res, 200, { ...reveal(row), coin: row.coin, bet: row.bet, ts: row.ts, noiseSeed: row.noise_seed, edge: row.edge ?? 0.1, fair: row.fair || 1, curve: row.curve || 1, maxMult: capOf(row) });
+      return send(res, 200, { ...reveal(row), coin: row.coin, bet: row.bet, ts: row.ts, noiseSeed: row.noise_seed, edge: row.edge ?? 0.1, regime: sentiment.kindOfEdge(row.edge ?? 0.1), fair: row.fair || 1, curve: row.curve || 1, maxMult: capOf(row) });
     }
     // A link to show off a win. Only real sold rounds of this player.
     if (p === "/api/share" && req.method === "POST") {
@@ -684,7 +721,7 @@ const server = http.createServer(async (req, res) => {
     if (p === "/api/stats") {
       const coin = String(u.searchParams.get("coin") || CURRENCY);
       if (!COINS[coin]) return send(res, 400, { error: "Coin not available." });
-      return send(res, 200, statsOf(player, coin));
+      return send(res, 200, { ...statsOf(player, coin), streaks: streaks.stateOf(player) });
     }
     if (TEST && !CLAIMS && p === "/api/refill" && req.method === "POST") {
       q.setBal.run(player, CURRENCY, TEST_START);
@@ -703,5 +740,7 @@ for (const row of q.allOpen.all()) {
 }
 const HOST = process.env.HOST || "127.0.0.1";
 server.listen(PORT, HOST, () => console.log(`[ptsd-crash] ${HOST}:${PORT} base ${BASE || "/"} test=${TEST} login=${auth.mode}`));
+// Keep the cycle board fresh even when nobody is looking at it, so new XP highs (and so levels) are recorded within seconds.
+setInterval(() => { try { if (cycles.current()) cycleRows(); } catch (e) { console.error("[xp] refresh failed", e.message); } }, 20_000).unref();
 // Warm the leaderboards so the first visitors after a restart don't see an empty board.
 for (const p of ["campaign", "day", "week", "month", "all"]) boardRows(p);

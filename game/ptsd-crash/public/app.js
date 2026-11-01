@@ -1,5 +1,5 @@
 import { buildPath, multAtTick, tickIndex, paidMult, crashFromR, MAX_MULT } from "./path.js?v=10";
-import { renderWalletButtons } from "./wallet.js?v=1";
+import { renderWalletButtons } from "./wallet.js?v=2";
 
 const $ = (id) => document.getElementById(id);
 const LWC = window.LightweightCharts;
@@ -780,18 +780,55 @@ let cfg = null, coin = "CREDITS", lim = { min: 100, max: 2500 }, balance = 0, se
 let round = null;   // the position on screen
 let history = [];
 
-function setBalance(b) { balance = b; $("balTop").textContent = fmt(b); $("balBottom").textContent = `${fmt(b)} ${coin}`; if (user) rankSoon(); }
+function setBalance(b) { balance = b; $("balBottom").textContent = `${fmt(b)} ${coin}`; if (user) rankSoon(); }
 // Top-bar rank: your place on the leaderboard (the campaign board while a campaign runs).
 let rankTimer = 0;
 async function refreshRank() {
   if (!user) { $("rankPill").hidden = true; return; }
   try {
     const j = await api("rank");
-    $("rankNum").textContent = j.rank || "–";
+    $("rankNum").textContent = j.rank ? "#" + j.rank : "–";
     $("rankTot").textContent = j.players || "–";
     $("rankPill").hidden = false;
+    showLevel(j.level);
   } catch {}
 }
+// Level pill + a toast when the level goes up (a popup when it reaches a new badge stage). A level never goes down.
+let lastLevel = null, lastStage = "";
+// Streak pill: current win streak (flames grow with it) and the daily login streak. The hover text says what the next step pays.
+function showStreak(st) {
+  if (!st || !user) { $("stkPill").hidden = true; return; }
+  $("stkWin").textContent = st.win > 0 ? `${st.win >= 10 ? "🔥🔥🔥" : st.win >= 5 ? "🔥🔥" : "🔥"} ${st.win}` : "–";
+  $("stkWin").className = st.win > 0 ? "w" : "";
+  $("stkLogin").textContent = st.login > 0 ? `· 📅 Day ${st.login}` : "";
+  $("stkPill").title = `Win streak: ${st.win} (best ${st.bestWin}). ${st.nextWin ? `Your next win pays +${fmt(st.nextWin)} XP.` : "Win two in a row to start earning XP."} Perfect sell (within ${st.perfect.pct}% of the crash, ${st.perfect.minX}x or more): +${fmt(st.perfect.xp)} XP. Daily login streak: ${st.login} day${st.login === 1 ? "" : "s"}, tomorrow +${fmt(st.nextLogin)} XP.`;
+  $("stkPill").hidden = false;
+}
+// XP paid for a sell (win streak and/or perfect sell) and for the first visit of the day.
+function awardToast(a) {
+  if (!a || !(a.streakXp || a.perfectXp)) return;
+  const parts = [];
+  if (a.streakXp) parts.push(`🔥 <b>${a.streak}-win streak</b> +${fmt(a.streakXp)} XP`);
+  if (a.perfectXp) parts.push(`🎯 <b>Perfect sell!</b> +${fmt(a.perfectXp)} XP`);
+  if (a.boost > 1) parts.push(`⚡ <b>${a.boost}× Double XP hour</b>`);
+  setTimeout(() => toast(IMG.me, parts.join("<br>"), 4200), 700);
+}
+function loginToast(st) { if (st && st.loginAward) toast(IMG.me, `📅 <b>Day ${st.login} login streak</b> +${fmt(st.loginAward)} XP${st.boost > 1 ? `<br>⚡ <b>${st.boost}× Double XP hour</b>` : ""}`, 4200); }
+function showLevel(lv) {
+  if (!lv || !user) { $("lvlPill").hidden = true; return; }
+  $("lvlNum").textContent = lv.n;
+  $("lvlName").textContent = `· ${lv.name}${lv.next ? ` · ${lv.pct}%` : ""}`;
+  $("lvlLink").href = `p/${encodeURIComponent(user.username)}`;
+  $("lvlPill").hidden = false;
+  if (lastLevel !== null && lv.n > lastLevel) {
+    const newStage = lv.name !== lastStage;
+    sfx.win();
+    if (newStage) popup({ kind: "big", img: IMG.win4, title: `LEVEL ${lv.n}`, line: `New badge: ${lv.name}. Levels never go down.`, num: lv.name, btn: "Keep watching", action: "close", autoClose: 8000, badge: lv.name });
+    else toast(IMG.me, `Level up! You're now <b>level ${lv.n}</b>.`);
+  }
+  lastLevel = lv.n; lastStage = lv.name;
+}
+
 function rankSoon() { clearTimeout(rankTimer); rankTimer = setTimeout(refreshRank, 1500); }
 setInterval(() => { if (document.visibilityState === "visible") refreshRank(); }, 60000);
 let onb = null; // onboarding + claim state from the server
@@ -815,7 +852,7 @@ async function useRef(code, quiet) {
   }
 }
 const walletSkipped = () => { try { return localStorage.getItem("ptsdWalletSkip") === "1"; } catch { return false; } };
-function setPnl() { const el = $("pnlBottom"); el.textContent = sgn(sessionPnl); el.className = sessionPnl > 0 ? "w" : sessionPnl < 0 ? "l" : ""; }
+function setPnl() { const el = $("pnlBottom"); el.textContent = sgn(sessionPnl); el.className = sessionPnl > 0 ? "w" : sessionPnl < 0 ? "l" : ""; $("pnlReset").hidden = !(user && sessionPnl < 0); }
 
 function chipsUI() {
   const vals = [lim.min, lim.min * 2, lim.min * 5, lim.max].filter((v, i, a) => v <= lim.max && a.indexOf(v) === i);
@@ -989,6 +1026,7 @@ async function doSell() {
     const j = await api("sell", { id, at });
     if (!round || round.id !== id) return;
     setBalance(j.balance);
+    showStreak(j.streak); awardToast(j.award);
     if (j.state === "sold") {
       const t = (j.soldAt - round.startAt) / 1000;
       round.sold = { t, mult: j.soldMult, payout: j.payout, pnl: j.pnl };
@@ -1335,6 +1373,7 @@ let sheetTab = "stats", myStats = null;
 
 async function loadStats() {
   try { myStats = await api("stats?coin=" + coin); } catch { return; }
+  showStreak(myStats.streaks);
   renderSideStats();
   if (!$("sheet").hidden && sheetTab === "stats") renderSheet();
 }
@@ -1396,7 +1435,7 @@ async function renderCheck(id) {
   const dipNote = j.crashShown && Math.abs(j.crashShown - j.crash) >= 0.01 ? `<div class="lb-note">The chart showed ${j.crashShown.toFixed(2)}x when it crashed because it was in a dip right then.</div>` : "";
   const old = fair ? "" : `<div class="lb-note">This round is from before results were locked in ahead of the bet.</div>`;
   const res = j.state === "rekt" ? "Rekt" : j.state === "max" ? `${j.maxMult}x max` : `Sold at ${xf(j.soldMult)}`;
-  body.innerHTML = `<div class="ck-head"><b>${res}</b><span>bet ${fmt(j.bet)} ${esc(j.coin)} · ${new Date(j.ts).toLocaleString()} · house edge ${Math.round(j.edge * 100)}%</span></div>
+  body.innerHTML = `<div class="ck-head"><b>${res}</b><span>bet ${fmt(j.bet)} ${esc(j.coin)} · ${new Date(j.ts).toLocaleString()} · ${j.regime === "fear" ? "Fear window, " : j.regime === "greed" ? "Greed window, " : ""}house edge ${Math.round(j.edge * 1000) / 10}%</span></div>
     ${checks.join("")}${dipNote}${old}
     <details class="raw"><summary>Raw seeds</summary>
       <div><span>Server seed</span><code>${esc(j.serverSeed)}</code></div>
@@ -1429,7 +1468,7 @@ function openSheet(tab, id) {
   if (tab === "check") renderCheck(id);
 }
 $("statsBtn").onclick = () => openSheet("stats");
-$("chatBtn").onclick = () => { if (isPhone()) openSheet("chat"); else { sideTab("chat"); $("chatIn").focus(); } };
+const openChat = () => { if (isPhone()) openSheet("chat"); else { sideTab("chat"); $("chatIn").focus(); } };
 $("sheetX").onclick = closeSheet;
 $("sheet").addEventListener("click", (e) => {
   if (e.target === $("sheet")) { closeSheet(); return; }
@@ -1465,8 +1504,8 @@ function avatar(u, cls = "av") {
 // ---------------- sign-in ----------------
 function syncUser() {
   $("signInBtn").hidden = !!user;
-  $("meChip").hidden = !user;
-  $("profileBtn").hidden = !user; if (user) $("profileBtn").href = "p/" + encodeURIComponent(user.username);
+  $("meMenu").hidden = !user;
+  if (user) $("umProfile").href = "p/" + encodeURIComponent(user.username);
   $("rankPill").hidden = true; refreshRank();
   if (user) { $("meAv").outerHTML = avatar(user, "av").replace('class="av', 'id="meAv" class="av'); $("meName").textContent = "@" + user.username; }
   $("chatForm").classList.toggle("off", !user);
@@ -1492,8 +1531,10 @@ $("signDemo").addEventListener("submit", async (e) => {
     location.reload();
   } catch (err) { $("signErr").textContent = err.message; }
 });
-$("meChip").onclick = async () => {
-  if (!confirmBox("Sign out of @" + user.username + "?")) return;
+$("meChip").onclick = () => $("meMenu").classList.toggle("open");
+document.addEventListener("click", (e) => { if (!$("meMenu").contains(e.target)) $("meMenu").classList.remove("open"); });
+$("umOut").onclick = async () => {
+  if (!confirmBox("Log out of @" + user.username + "?")) return;
   try { await api("auth/logout", {}); } catch {}
   location.reload();
 };
@@ -1508,7 +1549,7 @@ function chatVisible() {
   if (!$("sheet").hidden && sheetTab === "chat") return true;
   return !isPhone() && !$("paneChat").hidden && $("chat").parentElement === $("paneChat");
 }
-function chatSeen() { chatUnread = 0; $("chatDot").hidden = true; }
+function chatSeen() { chatUnread = 0;  }
 function scrollChat(force) {
   const l = $("chatList");
   if (force || l.scrollHeight - l.scrollTop - l.clientHeight < 80) l.scrollTop = l.scrollHeight;
@@ -1536,7 +1577,7 @@ async function pollChat() {
     if (first) { renderChat(); scrollChat(true); return; }
     if (added || j.deleted.length || !chatLast) {
       renderChat(); scrollChat(false);
-      if (added && chatLoaded && !chatVisible()) { chatUnread += added; $("chatDot").hidden = false; }
+      if (added && chatLoaded && !chatVisible()) { chatUnread += added; }
     } else $("chatList").querySelectorAll("time[data-ts]").forEach((t) => (t.textContent = ago(+t.dataset.ts)));
   } catch {} finally { chatBusy = false; }
 }
@@ -1594,7 +1635,7 @@ const FAQ = [
   ["How do I connect my wallet?", "Open your profile and tap Connect. You sign a free message to prove the wallet is yours, nothing is sent and no funds move. It is optional, and only your Ticket count is ever public, never your wallet address."],
   ["How do referrals work?", "Share your link from your profile. Anyone who joins with your code gets +10k bonus credits on top of their 10k. Each friend who plays at least 5 rounds with a real X account adds +5,000 to your cycle profit, up to 20 friends."],
   ["Why do I need to connect my X account?", "That is how your progress is tracked. You can login on desktop and mobile and play 24/7."],
-  ["What does the leaderboard track?", "Profit (PnL) in the current cycle, plus referral points. Free claims do not count. If you are in the red you can reset your PNL to 0 once every 24 hours by completing the latest task."],
+  ["What does the leaderboard track?", "Profit (PnL) in the current cycle, plus referral points. Free claims do not count. If you are in the red you can reset your PNL to 0 once every 24 hours by clearing the latest bounty."],
   ["Do I need to bet real money?", "No, the game uses credits. Just sign in with X."],
   ["How much can I play?", "As much as your credits allow. Run out and your next free claim is never more than 24 hours away."],
 ];
@@ -1690,8 +1731,8 @@ function fillPnl() {
   const hrs = s.hours || 24;
   if (s.cooldown) { const h = Math.max(1, Math.ceil((s.nextAt - Date.now()) / 3600_000)); $("pnlMsg").textContent = `You already reset your PNL. You can reset again in about ${h}h.`; return; }
   if (!(s.net < 0)) { $("pnlMsg").textContent = "Your PNL isn't negative right now, so there's nothing to reset. Resets are for when you're in the red."; return; }
-  if (!t) { $("pnlMsg").textContent = "There's no task up right now. Check back soon."; return; }
-  $("pnlMsg").textContent = `Your cycle PNL is ${sgn(s.net)}. To reset it to 0, complete today's latest task on the Tasks page, then come back and reset. You can do this once every ${hrs} hours.`;
+  if (!t) { $("pnlMsg").textContent = "There's no bounty up right now. Check back soon."; return; }
+  $("pnlMsg").textContent = `Your cycle PNL is ${sgn(s.net)}. To reset it to 0, clear today's latest bounty on the Bounties page, then come back and reset. You can do this once every ${hrs} hours.`;
   $("pnlTaskTitle").textContent = t.title;
   $("pnlTaskDesc").textContent = t.desc || "";
   $("pnlTaskGo").href = "tasks";
@@ -1701,14 +1742,14 @@ function fillPnl() {
   btn.onclick = async () => {
     btn.disabled = true;
     try {
-      if (!s.taskDone) { pnlSt = await api("pnl/state"); fillPnl(); if (!pnlSt.taskDone) $("pnlErr").textContent = "That task isn't completed yet."; return; }
+      if (!s.taskDone) { pnlSt = await api("pnl/state"); fillPnl(); if (!pnlSt.taskDone) $("pnlErr").textContent = "That bounty isn't cleared yet."; return; }
       pnlSt = await api("pnl/reset", {}); sessionPnl = 0; setPnl(); refreshMe(); closeOnb(); toast(IMG.me, "PNL reset to <b>0</b>. Fresh start.");
     } catch (e) { $("pnlErr").textContent = e.message; btn.disabled = false; }
   };
   $("pnlTask").hidden = false;
 }
 async function syncTasksCount() {
-  try { const j = await api("tasks"), n = j.tasks.filter((t) => t.state === "todo" || t.state === "rejected").length; $("tasksCount").textContent = n ? `${n} open` : j.tasks.length ? "all done" : ""; } catch { $("tasksCount").textContent = ""; }
+  const c = $("tasksCount"); try { const j = await api("tasks"), n = j.tasks.filter((t) => t.state === "todo" || t.state === "rejected").length; c.textContent = n; c.hidden = !n; } catch { c.hidden = true; }
 }
 $("pnlReset").onclick = async () => {
   try { pnlSt = await api("pnl/state"); sessionPnl = pnlSt.net; setPnl(); } catch (e) { toast(IMG.me, esc(e.message)); return; }
@@ -1814,7 +1855,7 @@ $("claimGo").onclick = async () => {
     sfx.big(); toast(IMG.me, `<b>+${fmt(j.amount)}</b> free credits. Go get rekt.`);
   } catch (err) { refreshMe(); $("claimErr").textContent = err.message; }
 };
-async function refreshMe() { try { const j = await api("me"); onb = j.onb || null; nft = j.nft || null; ref = j.ref || null; pnlSt = j.pnl || null; setBalance(j.balances[coin] ?? 0); syncClaim(); } catch {} }
+async function refreshMe() { try { const j = await api("me"); onb = j.onb || null; nft = j.nft || null; ref = j.ref || null; pnlSt = j.pnl || null; showStreak(j.streak); loginToast(j.streak); setBalance(j.balances[coin] ?? 0); syncClaim(); } catch {} }
 
 // ---------------- intro song on page open ----------------
 let introDone = false;
@@ -1855,14 +1896,13 @@ async function boot() {
     coin = Object.keys(cfg.coins)[0];
     lim = cfg.coins[coin];
     $("testBar").hidden = !cfg.test;
-    $("balCur").textContent = coin;
     document.querySelectorAll(".amt-coin").forEach((e) => (e.textContent = coin));
     chipsUI();
     $("amtIn").value = fmt(lim.min); markChip();
     const me = await api("me");
     user = me.user || null;
     onb = me.onb || null; nft = me.nft || null; ref = me.ref || null; pnlSt = me.pnl || null;
-    syncUser(); syncMute(); syncClaim();
+    syncUser(); syncMute(); syncClaim(); showStreak(me.streak); loginToast(me.streak);
     if (user && ref && ref.canApply && savedRef() && !(cfg && cfg.seasonOver)) useRef(savedRef(), true);
     setBalance(me.balances[coin] ?? 0);
     sessionPnl = pnlSt ? pnlSt.net : 0; // the same cycle PnL the leaderboard uses (settled rounds since the cycle start or your last reset)
@@ -1877,7 +1917,7 @@ async function boot() {
     // direct links: #stats / #chat open that panel, #leaderboard goes to its page
     if (location.hash === "#leaderboard") location.href = "leaderboard";
     else if (location.hash === "#stats") openSheet("stats");
-    else if (location.hash === "#chat") $("chatBtn").click();
+    else if (location.hash === "#chat") openChat();
   } catch (e) {
     resetChart();
     toast(IMG.cousin, e.message || "Could not load. Refresh the page.", 6000);
@@ -1890,7 +1930,6 @@ async function boot() {
   else if (nextOnbStep()) setTimeout(() => showOnb(), bootSeen ? 200 : Math.max(300, 2100 - performance.now()));
 }
 $("refillBtn").onclick = async () => { try { const j = await api("refill", {}); setBalance(j.balance); toast(IMG.me, "Test balance refilled."); } catch (e) { toast(IMG.cousin, e.message); } };
-$("balPill").onclick = () => (user ? $("amtIn").focus() : openSignIn());
 boot();
 // Test hook (headless checks only).
 if (new URLSearchParams(location.search).get("test") === "1") window.__ptsd = { makeCard, titleFor, popup, IMG };

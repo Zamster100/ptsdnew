@@ -3,30 +3,43 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Daily Tasks · PTSD Crash</title>
+<title>Bounties · PTSD Crash</title>
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="#0e0f11">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Rubik+Glitch&display=swap" rel="stylesheet">
 <link rel="icon" href="img/ptsd-logo.webp">
-<link rel="stylesheet" href="style.css?v=58">
+<link rel="stylesheet" href="style.css?v=64">
 <style>
   body { min-height: 100svh; }
-  .tp { width: min(760px, 100%); margin: 0 auto; padding: 18px 16px 40px; }
-  .tp-head { display: flex; align-items: flex-end; gap: 14px; margin-bottom: 14px; }
-  .tp-head h1 { margin: 0; font: 400 34px/1 "Rubik Glitch", Manrope, sans-serif; color: #F05150; }
-  .tp-head p { margin: 4px 0 0; color: var(--mut); font-size: 13px; }
-  .tp-play { margin-left: auto; text-decoration: none; background: var(--up); color: #fff; font-weight: 800; border-radius: 999px; padding: 10px 18px; box-shadow: 0 3px 0 var(--up-d); white-space: nowrap; }
-  .tp-card { background: var(--panel); border: 1px solid var(--bd); border-radius: 18px; overflow: hidden; }
-  .tp-prog { padding: 16px 18px 18px; text-align: center; background: #000; border-bottom: 1px solid var(--bd); }
+  #fx { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+  .dbar { position: relative; z-index: 5; }
+  .tp { position: relative; z-index: 1; width: min(760px, 100%); margin: 0 auto; padding: 18px 16px 40px; }
+  .tp-card { --c1: #F05150; --c2: #8c1d1d; position: relative; border-radius: 24px; overflow: hidden; background: linear-gradient(170deg, #17191e, #0a0b0d); box-shadow: 0 0 0 2px var(--c1), 0 0 38px rgba(240,81,80,.28), 0 14px 44px rgba(0,0,0,.5); animation: tp-in .45s ease both; }
+  @keyframes tp-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  .tp-ban { position: relative; padding: 22px 20px 20px; background: radial-gradient(120% 160% at 10% 0%, rgba(240,81,80,.85), transparent 60%), radial-gradient(90% 140% at 100% 100%, rgba(232,163,23,.55), transparent 65%), #0c0d10; border-bottom: 1px solid rgba(240,81,80,.4); display: flex; align-items: center; gap: 14px; }
+  .tp-ban::after { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(135deg, rgba(255,255,255,.05) 0 2px, transparent 2px 14px); pointer-events: none; }
+  .tp-ban > * { position: relative; z-index: 1; }
+  .tp-ban h1 { margin: 0; font: 400 38px/1 "Rubik Glitch", Manrope, sans-serif; color: #fff; text-shadow: 0 3px 16px rgba(0,0,0,.55); }
+  .tp-ban p { margin: 6px 0 0; color: rgba(255,255,255,.82); font-size: 13px; font-weight: 600; }
+  .tp-play { margin-left: auto; text-decoration: none; background: rgba(0,0,0,.45); border: 1px solid rgba(255,255,255,.25); color: #fff; font-weight: 800; border-radius: 999px; padding: 10px 18px; white-space: nowrap; backdrop-filter: blur(4px); }
+  .tp-play:hover { background: rgba(0,0,0,.65); }
+  .tp-prog { padding: 18px 18px 20px; text-align: center; background: #000; border-bottom: 1px solid var(--bd); }
   .tp-prog b { font-size: 16px; font-weight: 800; }
   .tp-prog b span { color: #ffc400; }
-  .tp-bar { height: 14px; border: 1px solid #8a6a14; border-radius: 999px; margin: 10px auto 0; max-width: 520px; overflow: hidden; }
-  .tp-bar i { display: block; height: 100%; width: 0; background: #ffc400; border-radius: 999px; transition: width .4s; }
-  .tk { display: grid; grid-template-columns: 38px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 14px 16px; border-bottom: 1px solid #1f2023; }
+  .tp-bar { height: 16px; border: 1px solid #8a6a14; border-radius: 999px; margin: 12px auto 0; max-width: 520px; overflow: hidden; background: #0d0b04; }
+  .tp-bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #F05150, #ffc400); border-radius: 999px; transition: width .5s; box-shadow: 0 0 14px rgba(255,196,0,.6); }
+  .tp-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 14px auto 0; max-width: 520px; }
+  .tp-stat { background: #121316; border: 1px solid var(--bd); border-radius: 14px; padding: 10px 6px; }
+  .tp-stat b { display: block; font: 800 20px/1.1 Manrope, sans-serif; font-variant-numeric: tabular-nums; color: #ffd54a; }
+  .tp-stat span { display: block; margin-top: 4px; font-size: 10px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--mut); }
+  .tk { display: grid; grid-template-columns: 42px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 14px 16px; border-bottom: 1px solid #1f2023; transition: background .15s; }
+  .tk:hover { background: rgba(240,81,80,.06); }
+  .tk.done { opacity: .65; }
   .tk:last-child { border-bottom: 0; }
-  .tk-ic { width: 38px; height: 38px; border-radius: 12px; background: #1b1c1f; display: grid; place-items: center; font-size: 18px; }
+  .tk-ic { width: 42px; height: 42px; border-radius: 14px; background: linear-gradient(145deg, #2a1416, #1b1c1f); border: 1px solid #5a2a2b; box-shadow: 0 0 14px rgba(240,81,80,.25); display: grid; place-items: center; font-size: 19px; }
+  .tk.done .tk-ic { background: linear-gradient(145deg, #123a2a, #1b1c1f); border-color: #1d6b49; box-shadow: 0 0 14px rgba(59,227,138,.25); }
   .tk h3 { margin: 0; font-size: 15px; font-weight: 800; }
   .tk p { margin: 2px 0 0; font-size: 13px; color: var(--mut); overflow-wrap: anywhere; }
   .tk .tag { display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 999px; background: #2a1416; border: 1px solid #5a2a2b; color: #F05150; font-size: 11px; font-weight: 800; vertical-align: middle; }
@@ -41,28 +54,37 @@
   .tk-proof input { flex: 1 1 220px; min-width: 0; background: #121214; color: var(--txt); border: 1px solid var(--bd); border-radius: 10px; padding: 9px 12px; font: 600 13px Manrope, sans-serif; }
   .tk-err { grid-column: 2 / -1; color: #F05150; font-size: 12px; font-weight: 700; min-height: 0; }
   .tp-foot { text-align: center; padding: 12px; font-size: 12px; color: #cfd4dc; background: #000; border-top: 1px solid var(--bd); }
+  @media (prefers-reduced-motion: reduce) { .tp-card { animation: none; } }
   .tp-foot b { color: #ffc400; }
   .tp-msg { padding: 28px 18px; text-align: center; color: var(--mut); font-size: 14px; line-height: 1.5; }
   .tp-msg a { color: var(--up); font-weight: 800; }
   .tp-note { margin: 12px 4px 0; color: #5d636d; font-size: 12px; text-align: center; }
   @media (max-width: 560px) {
-    .tk { grid-template-columns: 38px minmax(0, 1fr); }
+    .tk { grid-template-columns: 42px minmax(0, 1fr); }
+    .tp-ban h1 { font-size: 28px; } .tp-ban { padding: 18px 14px; flex-wrap: wrap; }
     .tk-act { grid-column: 1 / -1; justify-content: space-between; }
   }
 </style>
 </head>
 <body>
+<canvas id="fx" aria-hidden="true"></canvas>
+<header class="dbar">
+  <a class="dbar-title" href="./" style="text-decoration:none"><img src="img/ptsd-logo.webp" alt="PTSD"><span>Crash</span></a>
+  <div class="dbar-right"><nav class="nv-wrap"><a class="nv" href="./">🎮<span> Play</span></a><a class="nv on" href="tasks">🎯<span> Bounties</span></a><a class="nv" href="leaderboard">🏆<span> Leaderboard</span></a></nav></div>
+</header>
 <main class="tp">
-  <div class="tp-head">
-    <div><h1>Daily Tasks</h1><p id="sub">Do the tasks, earn free credits. Credits never count toward your PNL.</p></div>
-    <a class="tp-play" href="./">Back to game</a>
-  </div>
   <div class="tp-card">
-    <div class="tp-prog"><b>Your Progress: <span id="pct">0%</span></b><div class="tp-bar"><i id="bar"></i></div></div>
+    <div class="tp-ban">
+      <div><h1>Bounties</h1><p id="sub">Hunt the bounties, bag the loot. Bounty credits never touch your PNL.</p></div>
+      <a class="tp-play" href="./">Back to game</a>
+    </div>
+    <div class="tp-prog"><b>Bounties Cleared: <span id="pct">0%</span></b><div class="tp-bar"><i id="bar"></i></div>
+      <div class="tp-stats"><div class="tp-stat"><b id="stDone">0/0</b><span>Cleared</span></div><div class="tp-stat"><b id="stEarn">0</b><span>Looted today</span></div><div class="tp-stat"><b id="stLeft">0</b><span>Up for grabs</span></div></div>
+    </div>
     <div id="list"><div class="tp-msg">Loading…</div></div>
     <div class="tp-foot" id="foot"></div>
   </div>
-  <p class="tp-note">Tasks marked "under review" are paid once the PTSD team checks your post.</p>
+  <p class="tp-note">Bounties marked "under review" pay out once the PTSD team checks your post.</p>
 </main>
 <script>
 const $ = (id) => document.getElementById(id);
@@ -81,24 +103,26 @@ function foot() {
   clearInterval(footTimer);
   if (!data) return;
   const when = (h) => `${h % 12 || 12}:00 ${h < 12 ? "AM" : "PM"} ET`;
-  const tick = () => { const ms = Math.max(0, data.resetsAt - Date.now()), h = Math.floor(ms / 3600000), m = Math.floor(ms / 60000) % 60; $("foot").innerHTML = `A new set of daily tasks every day at <b>${when(data.dayHour)}</b> · next set in ${h}h ${m}m`; };
+  const tick = () => { const ms = Math.max(0, data.resetsAt - Date.now()), h = Math.floor(ms / 3600000), m = Math.floor(ms / 60000) % 60; $("foot").innerHTML = `Fresh bounties drop every day at <b>${when(data.dayHour)}</b> · next drop in ${h}h ${m}m`; };
   tick(); footTimer = setInterval(tick, 30000);
 }
 function render() {
   $("pct").textContent = data.progress.pct + "%";
   $("bar").style.width = data.progress.pct + "%";
+  const earned = data.tasks.filter((t) => t.state === "done").reduce((a, t) => a + t.reward, 0), left = data.tasks.filter((t) => t.state !== "done").reduce((a, t) => a + t.reward, 0);
+  $("stDone").textContent = `${data.progress.done}/${data.progress.total}`; $("stEarn").textContent = "+" + fmt(earned); $("stLeft").textContent = "+" + fmt(left);
   const list = $("list");
-  if (!data.tasks.length) { list.innerHTML = '<div class="tp-msg">No tasks yet today. Check back soon.</div>'; foot(); return; }
+  if (!data.tasks.length) { list.innerHTML = '<div class="tp-msg">No bounties posted yet. The hunt opens soon, check back.</div>'; foot(); return; }
   list.innerHTML = data.tasks.map((t) => {
     const proof = t.verify !== "timer";
     let act;
-    if (t.state === "done") act = '<span class="tk-btn ok">✓ Done</span>';
-    else if (t.state === "pending") act = '<button class="tk-btn ghost" disabled>Under review</button>';
-    else act = `${t.url ? `<a class="tk-btn ghost" data-visit target="_blank" rel="noopener noreferrer" href="${esc(t.url)}">Visit</a>` : ""}<button class="tk-btn" data-go disabled>${proof ? "Submit" : "Confirm"}</button>`;
-    return `<div class="tk" data-id="${t.id}">
+    if (t.state === "done") act = '<span class="tk-btn ok">✓ Claimed</span>';
+    else if (t.state === "pending") act = '<button class="tk-btn ghost" disabled>Being checked</button>';
+    else act = `${t.url ? `<a class="tk-btn ghost" data-visit target="_blank" rel="noopener noreferrer" href="${esc(t.url)}">Go</a>` : ""}<button class="tk-btn" data-go disabled>${proof ? "Submit proof" : "Claim"}</button>`;
+    return `<div class="tk${t.state === "done" ? " done" : ""}" data-id="${t.id}">
       <div class="tk-ic">${ICON[t.type] || "⭐"}</div>
-      <div><h3>${esc(t.title)}${t.latest ? '<span class="tag">NEW</span>' : ""}</h3>${t.desc ? `<p>${esc(t.desc)}</p>` : ""}${t.state === "rejected" ? "<p>Your last submission was rejected. You can try again.</p>" : ""}</div>
-      <div class="tk-act"><span class="rw">Reward: <b>+${fmt(t.reward)}</b></span>${act}</div>
+      <div><h3>${esc(t.title)}${t.latest ? '<span class="tag">HOT</span>' : ""}</h3>${t.desc ? `<p>${esc(t.desc)}</p>` : ""}${t.state === "rejected" ? "<p>Not quite. Your last proof was rejected, give it another shot.</p>" : ""}</div>
+      <div class="tk-act"><span class="rw">Bounty: <b>+${fmt(t.reward)}</b> · <b>+${fmt(t.points)} XP</b></span>${act}</div>
       ${t.state === "todo" || t.state === "rejected" ? `${proof ? `<div class="tk-proof"><input data-proof inputmode="url" placeholder="Paste the link to your post on X" autocomplete="off"></div>` : ""}<div class="tk-err" data-err></div>` : ""}
     </div>`;
   }).join("");
@@ -109,7 +133,7 @@ function wire(el) {
   const id = Number(el.dataset.id), t = data.tasks.find((x) => x.id === id);
   const go = el.querySelector("[data-go]"), visit = el.querySelector("[data-visit]"), inp = el.querySelector("[data-proof]"), err = el.querySelector("[data-err]");
   if (!go) return;
-  const label = t.verify !== "timer" ? "Submit" : "Confirm";
+  const label = t.verify !== "timer" ? "Submit proof" : "Claim";
   const arm = (sec) => {
     clearTimeout(timers.get(id)); let left = sec;
     const tick = () => { if (left > 0) { go.textContent = `${label} in ${left}s`; go.disabled = true; left--; timers.set(id, setTimeout(tick, 1000)); } else { go.textContent = label; go.dataset.armed = "1"; go.disabled = false; } };
@@ -127,11 +151,46 @@ function wire(el) {
 async function load() {
   try { data = await api("tasks"); render(); }
   catch (e) {
-    if (e.status === 401) $("list").innerHTML = '<div class="tp-msg">Sign in with X on the <a href="./">game page</a> to see and complete your daily tasks.</div>';
+    if (e.status === 401) $("list").innerHTML = '<div class="tp-msg">Sign in with X on the <a href="./">game page</a> to see and claim today&#39;s bounties.</div>';
     else $("list").innerHTML = `<div class="tp-msg">${esc(e.message)}</div>`;
   }
 }
 load();
 </script>
+<script>
+// Floating particles behind the profile: soft glowing dots drifting upward in the PTSD colors.
+(() => {
+  const cv = document.getElementById("fx"), cx = cv.getContext("2d");
+  if (!cx || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const COLORS = ["240,81,80", "232,163,23", "0,216,198", "168,85,247"];
+  let w = 0, h = 0, dots = [], raf = 0;
+  const make = (anywhere) => ({ x: Math.random() * w, y: anywhere ? Math.random() * h : h + 10, r: 1 + Math.random() * 2.6, vy: 0.15 + Math.random() * 0.45, ph: Math.random() * 6.28, sw: 0.2 + Math.random() * 0.5, c: COLORS[(Math.random() * COLORS.length) | 0], a: 0.25 + Math.random() * 0.5 });
+  function size() {
+    const d = Math.min(devicePixelRatio || 1, 2);
+    w = innerWidth; h = innerHeight; cv.width = w * d; cv.height = h * d; cx.setTransform(d, 0, 0, d, 0, 0);
+    const n = Math.round(Math.min(70, Math.max(24, (w * h) / 22000)));
+    while (dots.length < n) dots.push(make(true));
+    dots.length = n;
+  }
+  function frame(t) {
+    cx.clearRect(0, 0, w, h);
+    for (const p of dots) {
+      p.y -= p.vy; p.x += Math.sin(t / 1800 + p.ph) * p.sw;
+      if (p.y < -10) Object.assign(p, make(false));
+      const tw = 0.6 + 0.4 * Math.sin(t / 700 + p.ph);
+      const g = cx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r * 4);
+      g.addColorStop(0, `rgba(${p.c},${p.a * tw})`); g.addColorStop(1, `rgba(${p.c},0)`);
+      cx.fillStyle = g; cx.beginPath(); cx.arc(p.x, p.y, p.r * 4, 0, 6.2832); cx.fill();
+    }
+    raf = requestAnimationFrame(frame);
+  }
+  addEventListener("resize", size);
+  document.addEventListener("visibilitychange", () => { cancelAnimationFrame(raf); if (!document.hidden) raf = requestAnimationFrame(frame); });
+  size(); raf = requestAnimationFrame(frame);
+})();
+</script>
+<script src="doublexp.js?v=1"></script>
+<script src="sentiment.js?v=1"></script>
+<script type="module" src="usermenu.js"></script>
 </body>
 </html>

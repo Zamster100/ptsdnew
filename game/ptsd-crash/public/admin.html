@@ -51,8 +51,8 @@
 <body>
 <main class="ad">
   <div class="ad-head">
-    <div><h1>Team Admin</h1><p>Set the daily tasks, review proofs, and see who did what.</p></div>
-    <div class="sp" id="who" hidden><span id="whoName"></span><a class="btn gh sm" href="tasks" target="_blank">View tasks page</a><button class="btn gh sm" id="out" type="button">Log out</button></div>
+    <div><h1>Team Admin</h1><p>Post the daily bounties, review proofs, and see who claimed what.</p></div>
+    <div class="sp" id="who" hidden><span id="whoName"></span><a class="btn gh sm" href="tasks" target="_blank">View bounties page</a><button class="btn gh sm" id="out" type="button">Log out</button></div>
   </div>
 
   <section class="box login" id="login" hidden>
@@ -65,18 +65,19 @@
 
   <div id="app" hidden>
     <div class="tabs" id="tabs">
-      <button data-t="tasks" class="on">Tasks</button>
+      <button data-t="tasks" class="on">Bounties</button>
       <button data-t="review">Review<span class="n" id="rn" hidden>0</span></button>
       <button data-t="log">Activity</button>
     </div>
 
     <section id="t-tasks">
       <div class="box">
-        <h2 id="formTitle">New task</h2>
+        <h2 id="formTitle">New bounty</h2>
         <div class="grid">
           <div><label for="fTitle">Title</label><input type="text" id="fTitle" maxlength="120" placeholder="Retweet our pinned post"></div>
           <div><label for="fType">Type</label><select id="fType"></select></div>
           <div><label for="fReward">Reward (credits)</label><input type="number" id="fReward" min="0" step="100" value="2500"></div>
+          <div><label for="fPoints">XP points (blank = same as reward)</label><input type="number" id="fPoints" min="0" step="100" placeholder="same as reward"></div>
           <div><label for="fVerify">How we check it</label><select id="fVerify"></select></div>
           <div><label for="fDay">Day (empty = every day)</label><input type="date" id="fDay"></div>
           <div><label for="fUrl">Link players visit</label><input type="url" id="fUrl" placeholder="https://x.com/ptsdshow/status/…"></div>
@@ -84,10 +85,10 @@
         <label for="fDesc">Short description</label><textarea id="fDesc" maxlength="400" placeholder="What the player should do"></textarea>
         <p class="help"><b>Timer</b>: the player opens the link, waits a few seconds and confirms (use for likes, follows, reposts, which can't be checked). <b>Proof</b>: they paste the link to their own reply or quote post; we check it's from their X handle, a real post link, not the original post, and not reused; paid at once and you can revoke later. <b>Review</b>: same proof, but paid only after you approve it.</p>
         <label><input type="checkbox" id="fActive" checked style="width:auto;margin-right:6px"> Active (visible to players)</label>
-        <div class="row"><button class="btn" id="fSave" type="button">Save task</button><button class="btn gh" id="fReset" type="button">Clear</button></div>
+        <div class="row"><button class="btn" id="fSave" type="button">Save bounty</button><button class="btn gh" id="fReset" type="button">Clear</button></div>
         <div class="err" id="ferr"></div>
       </div>
-      <div class="box"><h2>All tasks <span class="help" id="dayNote"></span></h2><div class="scroll"><table><thead><tr><th>Task</th><th>Type</th><th>Reward</th><th>Check</th><th>Day</th><th>Done today</th><th>Total</th><th></th></tr></thead><tbody id="tbody"></tbody></table></div></div>
+      <div class="box"><h2>All bounties <span class="help" id="dayNote"></span></h2><div class="scroll"><table><thead><tr><th>Bounty</th><th>Type</th><th>Reward</th><th>Check</th><th>Day</th><th>Done today</th><th>Total</th><th></th></tr></thead><tbody id="tbody"></tbody></table></div></div>
     </section>
 
     <section id="t-review" hidden>
@@ -141,8 +142,8 @@ document.querySelectorAll("#tabs button").forEach((b) => (b.onclick = () => {
 
 function fill(t) {
   editing = t ? t.id : null;
-  $("formTitle").textContent = t ? `Edit task #${t.id}` : "New task";
-  $("fTitle").value = t ? t.title : ""; $("fType").value = t ? t.type : "visit"; $("fReward").value = t ? t.reward : 2500;
+  $("formTitle").textContent = t ? `Edit bounty #${t.id}` : "New bounty";
+  $("fTitle").value = t ? t.title : ""; $("fType").value = t ? t.type : "visit"; $("fReward").value = t ? t.reward : 2500; $("fPoints").value = t && t.points != null ? t.points : "";
   $("fVerify").value = t ? t.verify : "timer"; $("fDay").value = t && t.day ? t.day : ""; $("fUrl").value = t ? t.url : "";
   $("fDesc").value = t ? t.desc : ""; $("fActive").checked = t ? t.active : true; $("ferr").textContent = "";
   scrollTo({ top: 0, behavior: "smooth" });
@@ -151,13 +152,13 @@ $("fReset").onclick = () => fill(null);
 $("fSave").onclick = async () => {
   $("ferr").className = "err";
   try {
-    await api("task", { id: editing, title: $("fTitle").value, type: $("fType").value, reward: $("fReward").value, verify: $("fVerify").value, day: $("fDay").value, url: $("fUrl").value, desc: $("fDesc").value, active: $("fActive").checked });
+    await api("task", { id: editing, title: $("fTitle").value, type: $("fType").value, reward: $("fReward").value, points: $("fPoints").value, verify: $("fVerify").value, day: $("fDay").value, url: $("fUrl").value, desc: $("fDesc").value, active: $("fActive").checked });
     fill(null); $("ferr").textContent = "Saved."; $("ferr").className = "err ok"; loadTasks();
   } catch (e) { $("ferr").textContent = e.message; }
 };
 async function loadTasks() {
   const j = await api("tasks"); tasks = j.tasks; $("dayNote").textContent = `· today is ${j.day}`;
-  $("tbody").innerHTML = tasks.length ? tasks.map((t) => `<tr class="${t.active ? "" : "off"}"><td><b>${esc(t.title)}</b>${t.desc ? `<div class="help">${esc(t.desc)}</div>` : ""}${safeUrl(t.url) ? `<div class="help"><a class="lnk" target="_blank" rel="noopener noreferrer" href="${safeUrl(t.url)}">${safeUrl(t.url)}</a></div>` : ""}</td><td>${esc(t.type)}</td><td>${fmt(t.reward)}</td><td>${esc(t.verify)}</td><td>${t.day ? esc(t.day) : "every day"}${t.active ? "" : ' <span class="pill bad">hidden</span>'}</td><td>${t.doneToday}${t.pendingToday ? ` <span class="pill warn">${t.pendingToday} pending</span>` : ""}</td><td>${t.doneTotal}</td><td style="white-space:nowrap"><button class="btn gh sm" data-edit="${t.id}">Edit</button> <button class="btn gh sm" data-tog="${t.id}">${t.active ? "Hide" : "Show"}</button> <button class="btn bad sm" data-del="${t.id}">Delete</button></td></tr>`).join("") : '<tr><td colspan="8" class="help">No tasks yet. Add the first one above.</td></tr>';
+  $("tbody").innerHTML = tasks.length ? tasks.map((t) => `<tr class="${t.active ? "" : "off"}"><td><b>${esc(t.title)}</b>${t.desc ? `<div class="help">${esc(t.desc)}</div>` : ""}${safeUrl(t.url) ? `<div class="help"><a class="lnk" target="_blank" rel="noopener noreferrer" href="${safeUrl(t.url)}">${safeUrl(t.url)}</a></div>` : ""}</td><td>${esc(t.type)}</td><td>${fmt(t.reward)}<div class="help">${fmt(t.points ?? t.reward)} XP</div></td><td>${esc(t.verify)}</td><td>${t.day ? esc(t.day) : "every day"}${t.active ? "" : ' <span class="pill bad">hidden</span>'}</td><td>${t.doneToday}${t.pendingToday ? ` <span class="pill warn">${t.pendingToday} pending</span>` : ""}</td><td>${t.doneTotal}</td><td style="white-space:nowrap"><button class="btn gh sm" data-edit="${t.id}">Edit</button> <button class="btn gh sm" data-tog="${t.id}">${t.active ? "Hide" : "Show"}</button> <button class="btn bad sm" data-del="${t.id}">Delete</button></td></tr>`).join("") : '<tr><td colspan="8" class="help">No tasks yet. Add the first one above.</td></tr>';
   $("tbody").querySelectorAll("[data-edit]").forEach((b) => (b.onclick = () => fill(tasks.find((t) => t.id === Number(b.dataset.edit)))));
   $("tbody").querySelectorAll("[data-tog]").forEach((b) => (b.onclick = async () => { const t = tasks.find((x) => x.id === Number(b.dataset.tog)); await api("task", { id: t.id, active: !t.active }); loadTasks(); }));
   $("tbody").querySelectorAll("[data-del]").forEach((b) => (b.onclick = async () => { const t = tasks.find((x) => x.id === Number(b.dataset.del)); if (!confirm(`Delete "${t.title}"? If players already did it, it is hidden instead so the history stays.`)) return; const j2 = await api("task/delete", { id: t.id }); if (j2.hidden) alert("It has history, so it was hidden instead of deleted."); loadTasks(); }));

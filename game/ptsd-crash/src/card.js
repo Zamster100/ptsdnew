@@ -139,7 +139,7 @@ export async function renderProfileCard(root, p) {
   <text x="${372 + 20}" y="298" font-family="${font}" font-weight="800" font-size="28" fill="#fff">${esc(p.nft.badge.name.toUpperCase())}</text>
   <text x="372" y="362" font-family="${font}" font-weight="800" font-size="26" fill="${lv.txt}">${p.nft.count ? `${p.nft.count} Ticket${p.nft.count > 1 ? "s" : ""} held` : "No Tickets yet"}</text>
   ${stat(70, "RANK", rank, "#fff")}
-  ${stat(420, "CYCLE PROFIT", fmt(p.score), p.score > 0 ? "#12b886" : "#fff")}
+  ${stat(420, "XP", fmt(p.xp), p.xp > 0 ? "#12b886" : "#fff")}
   ${stat(850, "ROUNDS", fmt(p.rounds), "#fff")}
   <text x="${W - 52}" y="${H - 38}" text-anchor="end" font-family="${font}" font-weight="800" font-size="22" fill="#6a727d">PTSD Crash</text>
 </svg>`;

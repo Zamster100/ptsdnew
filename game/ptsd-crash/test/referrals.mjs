@@ -19,6 +19,7 @@ function startServer(port, extra) {
     DB_PATH: path.join(dir, "t.db"), LOG_DIR: path.join(dir, "logs"), MIN_BET: "100", MAX_BET: "2500", START_CREDITS: "0", DAILY_CREDITS: "10000",
     NFT_CONTRACT: "", NFT_RPC_URL: "",
     CYCLES: JSON.stringify([{ id: 1, name: "Cycle 1", start: new Date(now - 1000).toISOString(), end: new Date(now + 900_000).toISOString() }]),
+    LOGIN_STEP: "0", // the daily login bonus would add Activity points to the exact XP checked here
     ...extra,
   } });
   return { proc, dir, B: `http://127.0.0.1:${port}/api/` };
@@ -72,7 +73,7 @@ try {
   for (let i = 0; i < 4; i++) await round(A);
   await sleep(11_000);
   const early = await boardRow(R, "refr");
-  check(!early || early.bonus === 0, "4 rounds: the referral does not count yet", early && { bonus: early.bonus });
+  check(!early || early.refs === 0, "4 rounds: the referral does not count yet", early && { refs: early.refs });
   const st = (await R.get("me")).ref;
   check(st.pending === 3 && st.counted === 0, "owner sees 3 pending, 0 counted", st);
 
@@ -80,13 +81,13 @@ try {
   await Promise.all([ (async () => { for (let i = 0; i < 5; i++) await round(Bb); })(), (async () => { for (let i = 0; i < 5; i++) await round(C); })() ]);
   await sleep(11_000);
   let row = null;
-  for (let i = 0; i < 30; i++) { row = await boardRow(R, "refr"); if (row && row.bonus === 10000) break; await sleep(1000); }
-  check(row && row.bonus === 10000, "3 qualified referrals but the cap is 2: the referrer gets 2 x 5000", row && { bonus: row.bonus });
-  check(row && row.score === Math.max(0, row.net + row.bonus) && row.rounds === 0 && row.score === 10000, "bonus is added to the profit (a referrer with no rounds still ranks)", row && { score: row.score, net: row.net });
+  for (let i = 0; i < 30; i++) { row = await boardRow(R, "refr"); if (row && row.refs === 10000) break; await sleep(1000); }
+  check(row && row.refs === 10000, "3 qualified referrals but the cap is 2: the referrer gets 2 x 5000", row && { refs: row.refs });
+  check(row && row.xp === row.net + row.refs && row.rounds === 0 && row.xp === 10000, "referral points count in XP (a referrer with no rounds still ranks)", row && { xp: row.xp, net: row.net });
   const st2 = (await R.get("me")).ref;
   check(st2.counted === 2 && st2.pending === 0 && st2.refs.some((x) => x.status === "over the cap"), "owner sees 2 counted and one over the cap", st2);
   const prof = await fetch(B + "profile/refr").then((r) => r.json());
-  check(prof.referrals === 2 && prof.bonus === 10000, "profile shows 2 referrals and the bonus", { r: prof.referrals, b: prof.bonus });
+  check(prof.referrals === 2 && prof.refs === 10000 && prof.xp === 10000, "profile shows 2 referrals, their points and the XP", { r: prof.referrals, refs: prof.refs, xp: prof.xp });
 
   // real X required: demo accounts never qualify on the default server
   const B2 = s2.B;

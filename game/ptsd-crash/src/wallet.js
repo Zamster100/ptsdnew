@@ -20,13 +20,15 @@ const EVM = /^0x[0-9a-fA-F]{40}$/;
 // capped at 3 boosts: 1 Ticket = one extra claim a day, 2 = two, 3+ = three (so 20k / 30k / 40k credits a day in total).
 // Badges level up at 1, 2, 3, 5 and 10 Tickets.
 export const bonusHours = (n) => (n >= 3 ? 8 : n === 2 ? 12 : n === 1 ? 24 : null);
+// mult = the XP multiplier that tier gives (see xp.js), capped at 1.5x.
 export const TIERS = [
-  { min: 10, level: 5, name: "Gen Wealth" },
-  { min: 5, level: 4, name: "High Roller" },
-  { min: 3, level: 3, name: "Triple Ticket" },
-  { min: 2, level: 2, name: "Double Ticket" },
-  { min: 1, level: 1, name: "Ticket Holder" },
+  { min: 10, level: 5, name: "Gen Wealth", mult: 1.5 },
+  { min: 5, level: 4, name: "High Roller", mult: 1.4 },
+  { min: 3, level: 3, name: "Triple Ticket", mult: 1.3 },
+  { min: 2, level: 2, name: "Double Ticket", mult: 1.2 },
+  { min: 1, level: 1, name: "Ticket Holder", mult: 1.1 },
 ];
+export const multOf = (n) => (TIERS.find((t) => n >= t.min) || { mult: 1 }).mult;
 export const badgeOf = (n) => TIERS.find((t) => n >= t.min) || { min: 0, level: 0, name: "No Tickets" };
 
 export function initWallet({ db }) {
@@ -53,6 +55,13 @@ export function initWallet({ db }) {
   function countOf(player) {
     const u = q.user.get(player), n = q.nft.get(player);
     return u && u.vwallet && n && n.wallet === u.vwallet ? n.count : 0;
+  }
+  // Everyone's current Ticket count in one query (for building a whole board; countOf is one player at a time).
+  const allCounts = db.prepare("SELECT n.player, n.count FROM crash_nft n JOIN crash_users u ON u.id=n.player AND u.vwallet=n.wallet WHERE n.count>0");
+  function countsMap() {
+    const m = new Map();
+    for (const r of allCounts.all()) m.set(r.player, r.count);
+    return m;
   }
   async function balanceOf(address) {
     const data = "0x70a08231" + address.slice(2).toLowerCase().padStart(64, "0");
@@ -126,5 +135,5 @@ export function initWallet({ db }) {
     return null;
   }
 
-  return { enabled, contract, countOf, refresh, stateOf, api, bonusHoursOf: (id) => bonusHours(countOf(id)) };
+  return { enabled, contract, countOf, countsMap, refresh, stateOf, api, bonusHoursOf: (id) => bonusHours(countOf(id)) };
 }
