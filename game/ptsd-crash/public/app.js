@@ -832,6 +832,8 @@ function milestoneToast(m) {
   try { if (sessionStorage.getItem("ms-toast")) return; sessionStorage.setItem("ms-toast", "1"); } catch {}
   setTimeout(() => toast(IMG.max, `🏁 <b>Community milestone reached!</b> <a href="rewards" style="color:#ffd54a">Claim your reward</a>`, 8000), 2500);
 }
+// Instant rugs hand out raffle tickets: say so in the rekt popup instead of just rubbing it in.
+const raffleLine = (n) => (n > 0 ? `Even when you lose, you win. You won ${n} raffle ticket${n === 1 ? "" : "s"} for the jackpot.` : "");
 function badBeatToasts(list) { for (const b of list || []) toast(IMG.rekt2, `🍀 <b>Bad beat refund</b>: ${b.rugs} rugs in a row. <b>+${fmt(b.amount)}</b> back in your balance.`, 6000); }
 function loginToast(st) { if (st && st.loginAward) toast(IMG.me, `📅 <b>Day ${st.login} login streak</b> +${fmt(st.loginAward)} XP${st.boost > 1 ? `<br>⚡ <b>${st.boost}× Double XP hour</b>` : ""}`, 4200); }
 function showLevel(lv) {
@@ -1026,7 +1028,7 @@ async function doSellHalf() {
       if (j.halfMult >= 1) sfx.win();
       toast(IMG.me, `Sold half at <b>${j.halfMult.toFixed(2)}x</b>, <b>${fmt(j.halfPayout)} ${round.coin}</b> locked in. The rest is riding.`);
     } else if (j.state !== "open") {
-      toast(IMG.rekt, j.lateMs != null ? `Too late. It crashed <b>${(j.lateMs / 1000).toFixed(2)}s</b> before your tap got there.` : "Too late. It already crashed.");
+      toast(IMG.rekt, (j.lateMs != null ? `Too late. It crashed <b>${(j.lateMs / 1000).toFixed(2)}s</b> before your tap got there.` : "Too late. It already crashed.") + (j.raffle > 0 ? ` ${raffleLine(j.raffle)}` : ""));
     }
   } catch (e) { toast(IMG.cousin, e.message); }
   finally { busy = false; setButtons(); }
@@ -1060,7 +1062,7 @@ async function doSell() {
     } else if (j.state === "max") {
       round.end = round.end || { t: (j.soldAt - round.startAt) / 1000, state: "max", payout: j.payout, pnl: j.pnl, shown: MAXM };
     } else {
-      toast(IMG.rekt, j.lateMs != null ? `Too late. It crashed <b>${(j.lateMs / 1000).toFixed(2)}s</b> before your tap got there.` : "Too late. It already crashed.");
+      toast(IMG.rekt, (j.lateMs != null ? `Too late. It crashed <b>${(j.lateMs / 1000).toFixed(2)}s</b> before your tap got there.` : "Too late. It already crashed.") + (j.raffle > 0 ? ` ${raffleLine(j.raffle)}` : ""));
     }
   } catch (e) { toast(IMG.cousin, e.message); }
   finally { busy = false; setButtons(); }
@@ -1306,6 +1308,7 @@ function finish(r) {
     sfx.loss();
     if (window.__jackpotRefresh) setTimeout(window.__jackpotRefresh, 800); // the loss just earned tickets
     achToasts(e.achievements);
+    const withRaffle = (line) => (e.raffle > 0 ? `${raffleLine(e.raffle)} ${line}` : line);
     const lost = lockedOf(r) - r.bet;
     $("multPnl").textContent = `${sgn(lost)} ${r.coin}`;
     sessionPnl += lost; setPnl();
@@ -1315,7 +1318,7 @@ function finish(r) {
       sfx.win(); refreshBalance();
       setTimeout(() => popup({
         kind: "big", img: IMG.rekt2, title: "BAD BEAT", badge: "Bad Beat Refund",
-        line: `${e.badBeat.rugs} rugs in a row. Your last bet is back in your balance.`,
+        line: withRaffle(`${e.badBeat.rugs} rugs in a row. Your last bet is back in your balance.`),
         num: `+${fmt(e.badBeat.amount)} ${r.coin}`, btn: "Run it back",
       }), 1000);
       setButtons();
@@ -1330,7 +1333,7 @@ function finish(r) {
       setTimeout(() => sayVoice(v, true), 1000);
       setTimeout(() => popup({
         kind: "rekt tilt", img: IMG.cousinBody, title: "YOU GOT REKT", badge: "Exit Liquidity",
-        line: tilt, num: `${sgn(lost)} ${r.coin}`,
+        line: withRaffle(tilt), num: `${sgn(lost)} ${r.coin}`,
       }), 1000);
       setButtons();
       return;
@@ -1339,9 +1342,9 @@ function finish(r) {
     if (bothV) setTimeout(() => sayVoice(bothV, true), 1000);
     setTimeout(() => popup({
       kind: "rekt", img: Math.random() < 0.5 ? IMG.rekt : IMG.rekt2, title: "YOU GOT REKT", badge: titleFor({ state: "rekt", crash: e.shown, halfMult: r.half ? r.half.mult : null }),
-      line: r.half
+      line: withRaffle(r.half
         ? `It crashed at ${e.shown.toFixed(2)}x. You saved half at ${r.half.mult.toFixed(2)}x, the other half got rekt.`
-        : e.shown >= MAXM - 0.5 ? `It went to ${e.shown.toFixed(2)}x and you didn't sell. That one's going to hurt for a while.` : cousinRekt ? `It crashed at ${e.shown.toFixed(2)}x and Cousin Dick got rekt with you. "${bothV ? bothV.text : pick(BOTH_REKT)}"` : `It crashed at ${e.shown.toFixed(2)}x and you were still holding.`,
+        : e.shown >= MAXM - 0.5 ? `It went to ${e.shown.toFixed(2)}x and you didn't sell. That one's going to hurt for a while.` : cousinRekt ? `It crashed at ${e.shown.toFixed(2)}x and Cousin Dick got rekt with you. "${bothV ? bothV.text : pick(BOTH_REKT)}"` : `It crashed at ${e.shown.toFixed(2)}x and you were still holding.`),
       num: `${sgn(lost)} ${r.coin}`,
     }), 1000);
   }

@@ -68,8 +68,8 @@ Rules for every item
 
 ### 6. Community jackpot  (BUILT, defaults below are tunable)
 - 5% of every loss feeds a pot (players are never charged extra). The pot never drops below a floor of 100,000 (what it restarts at after a win).
-- Lottery tickets: only instant rugs (crash under 1.1x, JACKPOT_INSTA_UNDER) earn tickets (1 per 1,000 lost on that round, at least 1, max 500 per player per day). Counter in the top bar of every page, links to the Jackpot page. (Called "lottery tickets" because "Tickets" is already the NFT.)
-- Daily draw at 9 AM Eastern (the tasks reset): one ticket drawn from the day's entries, the owner wins 50% of the pot. Missed days (downtime) are caught up. The winner is told on their next visit.
+- Raffle tickets: only instant rugs (crash under 1.1x, JACKPOT_INSTA_UNDER) earn them (1 per 1,000 lost on that round, at least 1). They go into a balance that carries over (max 2,000, JACKPOT_HOLD_MAX). Counter in the top bar of every page, links to the Jackpot page.
+- Pledging: entries are open all day (9 AM to 9 AM Eastern, any timezone). Players pledge tickets from their balance on the Jackpot page; a pledge can be topped up but not withdrawn, and pledged tickets are spent win or lose. Auto-pledge (default ON) enters whatever is left when entries close. Daily draw at 9 AM Eastern: one pledged ticket drawn, the owner wins 50% of the pot. Missed days (downtime) are caught up. The winner is told on their next visit. The rekt popup after an instant rug says how many raffle tickets were won.
 - Pot Breaker: the first sell at 50x or higher takes the whole pot (popup, credited at once).
 - Jackpot page (`/jackpot`): pot counter, countdown to the draw, your tickets / all tickets, how it works, winners list.
 - Credits only, paid to the balance: never profit, so no leaderboard or XP effect.

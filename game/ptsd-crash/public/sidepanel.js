@@ -111,7 +111,10 @@
       set("spSent", "Sentiment", k === "fear" ? "Fear · be greedy" : k === "greed" ? "Greed · be fearful" : `${st.label} · ${Math.round(st.index)}`);
     }
     const jp = window.__jackpot;
-    if (jp) $("spJpS").textContent = `${fmt(jp.pot)} · ${clock(jp.nextDrawAt - Date.now() - (jp.skewMs || 0))}`;
+    if (jp) {
+      const left = jp.nextDrawAt - Date.now() - (jp.skewMs || 0), last = left > 0 && left < 3600_000 && jp.balance > 0 && !jp.auto;
+      $("spJpS").textContent = last ? `LAST CALL · ${clock(left)}` : `${fmt(jp.pot)} · ${clock(left)}`;
+    }
     const dx = window.__dxp, b = $("spDx");
     if (dx && (dx.active || dx.next)) {
       const now = Date.now() + (dx.skew || 0);

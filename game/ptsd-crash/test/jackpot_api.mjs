@@ -36,7 +36,18 @@ try {
   let b = await post("buy", { coin: "CREDITS", amount: 2000, clientSeed: "l1" });
   let e = await get("wait?id=" + b.round.id); while (e.pending) e = await get("wait?id=" + b.round.id);
   j = await get("jackpot");
-  check(e.state === "rekt" && j.pot === 100_100 && j.tickets === 2 && j.totalTickets === 2, "a 2,000 loss adds 5% (100) to the pot and earns 2 tickets", { state: e.state, pot: j.pot, tickets: j.tickets });
+  check(e.state === "rekt" && j.pot === 100_100 && j.tickets === 2 && j.totalEntering === 2, "a 2,000 loss adds 5% (100) to the pot and earns 2 tickets", { state: e.state, pot: j.pot, tickets: j.tickets, raffle: e.raffle });
+
+  // the round's popup knows how many raffle tickets the instant rug won; the balance is pledgeable
+  check(e.raffle === 2 && j.balance === 2 && j.pledged === 0 && j.auto === true && j.entering === 2, "the rekt reveal says how many raffle tickets were won (2); auto-pledge is on", { raffle: e.raffle, j });
+  check((await fetch(B + "jackpot/pledge", { method: "POST", headers: { "content-type": "application/json" }, body: "{}" }).then((r) => r.status)) === 401, "pledging needs a sign-in");
+  check((await post("jackpot/pledge", { n: 5 })).code === 400 && (await post("jackpot/pledge", { n: 0 })).code === 400, "you can't pledge more than you hold, or nothing");
+  let pl = await post("jackpot/pledge", { n: 1 });
+  check(pl.code === 200 && pl.pledged === 1 && pl.balance === 1 && pl.entering === 2 && pl.tickets === 2, "pledging 1 moves it from the balance into tonight's draw", pl);
+  const off = await post("jackpot/auto", { on: false });
+  check(off.auto === false && off.entering === 1 && off.totalEntering === 1, "turning auto-pledge off leaves only the pledged ticket entered", off);
+  const on = await post("jackpot/auto", { on: true });
+  check(on.auto === true && on.entering === 2, "...and on again enters the rest");
 
   // the daily draw (the team can run today's draw now): the only ticket holder wins half the pot
   const adm = await fetch(B + "admin/login", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ user: "boss", password: "pw123" }) });

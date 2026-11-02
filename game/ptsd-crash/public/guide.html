@@ -166,11 +166,14 @@ function build(g) {
     ${j ? `<h3>Community jackpot</h3>
     <ul>
       <li><b>${pct(j.share)}</b> of every loss goes into the pot. Nobody pays extra. The pot never drops below <b>${fmt(j.seed)}</b>.</li>
-      <li><b>Instant rugs</b> (the crash comes under <b>${j.instaUnder}x</b>) earn lottery tickets: <b>1 per ${fmt(j.perTicket)} lost</b> on that round (at least 1), up to ${fmt(j.maxTickets)} a day. Other losses feed the pot but earn no tickets. These are not the same as PTSD Ticket NFTs.</li>
-      <li>Every day at <b>9 AM Eastern</b> one lottery ticket is drawn. Its owner wins <b>${pct(j.dailyShare)}</b> of the pot.</li>
+      <li><b>Instant rugs</b> (the crash comes under <b>${j.instaUnder}x</b>) earn <b>raffle tickets</b>: <b>1 per ${fmt(j.perTicket)} lost</b> on that round (at least 1). Other losses feed the pot but earn no tickets. Raffle tickets are not the same as PTSD Ticket NFTs.</li>
+      <li>Raffle tickets go into your balance and carry over from day to day. You can hold up to <b>${fmt(j.holdMax)}</b>.</li>
+      <li><b>Pledge</b> any number of them to the daily draw on the Jackpot page. Entries are open all day, so it doesn't matter which timezone you're in: you can pledge any time before the draw. You can add more but not take any back, and pledged tickets are spent whether they win or not. Unpledged tickets carry over.</li>
+      <li><b>Auto-pledge</b> (on by default) pledges whatever you still hold when entries close, so you never miss a draw. Turn it off to choose for yourself.</li>
+      <li>Every day at <b>9 AM Eastern</b> one pledged ticket is drawn. Its owner wins <b>${pct(j.dailyShare)}</b> of the pot.</li>
       <li><b>Pot Breaker:</b> sell at <b>${j.breakerX}x or higher</b> and you take the <b>whole pot</b>.</li>
     </ul>
-    ${f("Your chance in the daily draw = your tickets / all tickets today")}
+    ${f("Your chance in the daily draw = your pledged tickets / all pledged tickets")}
     <p>Jackpot credits go straight to your balance. They never count as profit, so they don't change your XP.</p>` : ""}
     <h3>Community milestones</h3>
     <p>Goals everyone plays toward. When one is reached, every player who has played a round can claim its reward once.</p>
@@ -218,9 +221,9 @@ function build(g) {
 fetch("api/guide").then((r) => r.json()).then(build).catch(() => { $("body").innerHTML = '<div class="sec">Couldn\'t load the guide. Try again.</div>'; });
 </script>
 <script src="doublexp.js?v=3"></script>
-<script src="jackpot.js?v=1"></script>
+<script src="jackpot.js?v=2"></script>
 <script src="sentiment.js?v=1"></script>
-<script src="sidepanel.js?v=5"></script>
+<script src="sidepanel.js?v=6"></script>
 <script src="bigwins.js?v=1"></script>
 <script type="module" src="usermenu.js"></script>
 </body>

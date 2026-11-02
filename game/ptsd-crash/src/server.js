@@ -213,7 +213,7 @@ function reveal(row) {
   const badBeat = badbeat.forRound(row.id);
   if (badBeat) badbeat.markSeen(row.id);
   return {
-    id: row.id, state: row.state, badBeat, achievements: achievements.forRound(row.id), crash: row.crash, crashShown: crashShown(row), endAt: row.end_ms,
+    id: row.id, state: row.state, badBeat, achievements: achievements.forRound(row.id), raffle: jackpot.forRound(row.id), crash: row.crash, crashShown: crashShown(row), endAt: row.end_ms,
     soldMult: row.sold_mult, halfMult: row.half_mult, halfPayout: row.half_payout, payout: row.payout, pnl: row.pnl,
     serverSeed: row.server_seed, clientSeed: row.client_seed, nonce: row.nonce, commit: row.commit_hash,
   };
@@ -380,7 +380,7 @@ function guideOf() {
     levels, stages: STAGES, tiers: [...TIERS].reverse(), perks: PERKS,
     streaks: streaks.cfg, doubleXp: { hour: dxp.cfg.hour, minutes: dxp.cfg.minutes, mult: dxp.cfg.mult, tasks: dxp.cfg.tasks },
     badBeat: badbeat.cfg.on ? { count: badbeat.cfg.count, under: badbeat.cfg.under, cooldownMin: Math.round(badbeat.cfg.cooldownMs / 60000) } : null,
-    jackpot: jackpot.cfg.on ? { share: jackpot.cfg.share, seed: jackpot.cfg.seed, dailyShare: jackpot.cfg.dailyShare, breakerX: jackpot.cfg.breakerX, perTicket: jackpot.cfg.perTicket, maxTickets: jackpot.cfg.maxTickets, instaUnder: jackpot.cfg.instaUnder } : null,
+    jackpot: jackpot.cfg.on ? { share: jackpot.cfg.share, seed: jackpot.cfg.seed, dailyShare: jackpot.cfg.dailyShare, breakerX: jackpot.cfg.breakerX, perTicket: jackpot.cfg.perTicket, holdMax: jackpot.cfg.holdMax, instaUnder: jackpot.cfg.instaUnder } : null,
     referrals: { points: referrals.cfg.points, max: referrals.cfg.max, minRounds: referrals.cfg.minRounds, bonus: referrals.cfg.bonus },
     achievements: achievements.catalog.map((a) => ({ group: a.group, icon: a.icon, name: a.name, desc: a.desc, xp: a.xp })),
     milestones: milestones.goals.map((g) => ({ track: g.track, goal: g.goal, reward: g.reward })),
@@ -717,6 +717,17 @@ const server = http.createServer(async (req, res) => {
         achievements: achievements.view(player), milestones: milestones.view(player), serverNow: Date.now(),
       });
     }
+    if (p === "/api/jackpot/pledge" && req.method === "POST") {
+      if (!player) return send(res, 401, { error: "Sign in first." });
+      const out = jackpot.pledge(player, body?.n);
+      if (out.error) return send(res, 400, out);
+      return send(res, 200, { ...out, ...jackpot.view(player), serverNow: Date.now() });
+    }
+    if (p === "/api/jackpot/auto" && req.method === "POST") {
+      if (!player) return send(res, 401, { error: "Sign in first." });
+      jackpot.setAuto(player, !!body?.on);
+      return send(res, 200, { ...jackpot.view(player), serverNow: Date.now() });
+    }
     if (p === "/api/milestones/claim" && req.method === "POST") {
       if (!player) return send(res, 401, { error: "Sign in first." });
       const out = milestones.claim(player, String(body?.key || ""));
@@ -801,7 +812,7 @@ const server = http.createServer(async (req, res) => {
       if (out.error) return send(res, 400, { error: out.error });
       const r = out.done;
       logSell(player, r, body, out);
-      return send(res, 200, { state: r.state, half: !!out.half, lateMs: out.late ?? null, halfMult: r.half_mult, halfPayout: r.half_payout, halfAt: r.half_ms, soldMult: r.sold_mult, payout: r.payout, pnl: r.pnl, soldAt: r.sold_ms, award: out.award || null, jackpot: out.jackpot || null, achievements: achievements.forRound(r.id), streak: streaks.stateOf(player), balance: balanceOf(player, r.coin), serverNow: Date.now() });
+      return send(res, 200, { state: r.state, half: !!out.half, lateMs: out.late ?? null, halfMult: r.half_mult, halfPayout: r.half_payout, halfAt: r.half_ms, soldMult: r.sold_mult, payout: r.payout, pnl: r.pnl, soldAt: r.sold_ms, award: out.award || null, jackpot: out.jackpot || null, raffle: jackpot.forRound(r.id), achievements: achievements.forRound(r.id), streak: streaks.stateOf(player), balance: balanceOf(player, r.coin), serverNow: Date.now() });
     }
     if (p === "/api/wait") {
       const row = q.round.get(String(u.searchParams.get("id") || ""));

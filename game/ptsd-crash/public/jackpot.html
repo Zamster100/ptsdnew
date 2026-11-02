@@ -31,6 +31,21 @@
   .jp-stat { background: #121316; border: 1px solid var(--bd); border-radius: 14px; padding: 12px 6px; text-align: center; }
   .jp-stat b { display: block; font: 800 20px/1.1 Manrope, sans-serif; font-variant-numeric: tabular-nums; color: #fff; }
   .jp-stat span { display: block; margin-top: 4px; font-size: 10px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--mut); }
+  .jp-pl { padding: 16px 20px; border-bottom: 1px solid var(--bd); background: linear-gradient(180deg, #14110a, #0c0b09); }
+  .jp-pl h2 { margin: 0 0 8px; font: 800 12px Manrope, sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--mut); }
+  .jp-pl .hold { font-size: 14px; color: #cfd4dc; font-weight: 600; } .jp-pl .hold b { color: #ffd54a; font-size: 18px; }
+  .jp-pl .row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; align-items: center; }
+  .jp-pl input[type=number] { width: 110px; background: #0d0f12; border: 1px solid var(--bd); color: #fff; border-radius: 10px; padding: 9px 10px; font: 700 15px Manrope, sans-serif; }
+  .jp-pl .q { appearance: none; border: 1px solid var(--bd); background: var(--panel2); color: var(--txt); font: 800 12px Manrope, sans-serif; border-radius: 999px; padding: 7px 12px; cursor: pointer; }
+  .jp-pl .q:hover { border-color: #e8a317; }
+  .jp-pl .go { appearance: none; border: 0; cursor: pointer; background: #e8a317; color: #1a1200; font: 900 14px Manrope, sans-serif; border-radius: 999px; padding: 9px 20px; box-shadow: 0 3px 0 #9a6a0a; }
+  .jp-pl .go[disabled] { opacity: .5; cursor: default; box-shadow: none; }
+  .jp-pl .auto { display: flex; gap: 8px; align-items: flex-start; margin-top: 12px; font-size: 13px; color: #cfd4dc; font-weight: 600; cursor: pointer; }
+  .jp-pl .auto input { margin-top: 3px; }
+  .jp-pl .msg { min-height: 18px; margin-top: 8px; font-size: 13px; font-weight: 700; color: #7ee7b3; } .jp-pl .msg.bad { color: #ff8b8b; }
+  .jp-last { display: none; margin: 0 0 10px; padding: 8px 12px; border-radius: 10px; background: #3a1315; border: 1px solid #ff4d4d; color: #fff; font-weight: 800; font-size: 13px; animation: jpLast 1.4s ease-in-out infinite; }
+  .jp-last.on { display: block; }
+  @keyframes jpLast { 50% { background: #5a1a1d; } }
   .jp-how { padding: 16px 20px; border-bottom: 1px solid var(--bd); font-size: 13px; color: #cfd4dc; line-height: 1.55; }
   .jp-how h2, .jp-win h2 { margin: 0 0 8px; font: 800 12px Manrope, sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--mut); }
   .jp-how li { margin: 3px 0; } .jp-how ul { margin: 0; padding-left: 18px; } .jp-how b { color: #ffd54a; }
@@ -56,12 +71,20 @@
 </header>
 <main class="jp-wrap">
   <div class="jp-card">
-    <div class="jp-ban"><div><h1>Jackpot</h1><p>Every loss feeds the pot. Instant rugs earn tickets. One winner a day.</p></div><a class="jp-play" href="./">Back to game</a></div>
+    <div class="jp-ban"><div><h1>Jackpot</h1><p>Every loss feeds the pot. Instant rugs earn raffle tickets. Pledge them for the daily draw.</p></div><a class="jp-play" href="./">Back to game</a></div>
     <div class="jp-pot" id="pot"><small>Community pot</small><span class="n" id="potN">0</span><div class="u" id="potU">credits</div></div>
     <div class="jp-stats">
       <div class="jp-stat"><b id="next">--:--:--</b><span>Next draw</span></div>
-      <div class="jp-stat"><b id="mine">0</b><span>Your lottery tickets</span></div>
-      <div class="jp-stat"><b id="all">0</b><span>All lottery tickets</span></div>
+      <div class="jp-stat"><b id="mine">0</b><span>You hold</span></div>
+      <div class="jp-stat"><b id="all">0</b><span>In tonight's draw</span></div>
+    </div>
+    <div class="jp-pl" id="pl">
+      <div class="jp-last" id="last"></div>
+      <h2>Your raffle tickets</h2>
+      <div class="hold" id="hold"></div>
+      <div class="row"><input id="amt" type="number" min="1" step="1" placeholder="How many?"><button class="q" data-q="10">10</button><button class="q" data-q="100">100</button><button class="q" data-q="half">Half</button><button class="q" data-q="all">All</button><button class="go" id="goPledge" type="button">Pledge</button></div>
+      <div class="msg" id="plMsg"></div>
+      <label class="auto"><input type="checkbox" id="autoOn"><span><b>Auto-pledge</b> whatever I still hold when entries close, so I never miss a draw. Turn it off to choose for yourself and keep the rest for later.</span></label>
     </div>
     <div class="jp-how"><h2>How it works</h2><ul id="how"></ul></div>
     <div class="jp-win"><h2>Winners</h2><div id="winners"><div class="jp-empty">Loading…</div></div></div>
@@ -93,11 +116,18 @@ function clock() {
 }
 const when = (ts) => new Date(ts).toLocaleDateString([], { month: "short", day: "numeric" });
 function draw() {
-  $("mine").textContent = fmt(st.tickets); $("all").textContent = fmt(st.totalTickets);
+  $("mine").textContent = fmt(st.balance); $("all").textContent = fmt(st.totalEntering);
+  const share = st.entering > 0 && st.totalEntering > 0 ? Math.round((st.entering / st.totalEntering) * 1000) / 10 : 0;
+  $("hold").innerHTML = `You hold <b>${fmt(st.balance)}</b> ticket${st.balance === 1 ? "" : "s"} (max ${fmt(st.holdMax)}). Pledged for tonight's draw: <b>${fmt(st.pledged)}</b>${st.auto && st.balance ? ` · auto-pledge will add ${fmt(st.balance)}` : ""}.${st.entering ? ` Your share of the draw: <b>${share}%</b>.` : ""}`;
+  if (document.activeElement !== $("autoOn")) $("autoOn").checked = st.auto;
+  $("amt").max = st.balance;
   $("potU").textContent = `${fmt(Math.floor(st.pot * st.dailyShare))} goes to the next daily winner`;
   $("how").innerHTML = [
     `<b>${Math.round(st.share * 100)}%</b> of every loss goes into the pot. Nobody pays extra.`,
-    `<b>Instant rugs</b> (a crash under ${st.instaUnder}x) earn lottery tickets: <b>1 per ${fmt(st.perTicket)}</b> lost on that round, at least 1. Other losses feed the pot but earn no tickets. You can hold up to ${fmt(st.maxTickets)} a day.`,
+    `<b>Instant rugs</b> (a crash under ${st.instaUnder}x) earn raffle tickets: <b>1 per ${fmt(st.perTicket)}</b> lost on that round, at least 1. Other losses feed the pot but earn no tickets.`,
+    `Tickets are yours to keep. You can hold up to <b>${fmt(st.holdMax)}</b>, and they carry over from day to day.`,
+    `Entries are open <b>all day</b>, whatever your timezone: pledge any number of tickets before the draw. You can add more but not take any back, and pledged tickets are spent whether they win or not.`,
+    `Prefer not to think about it? Leave <b>auto-pledge</b> on and everything you hold goes in when entries close.`,
     `Every day at <b>9 AM Eastern</b> one ticket is drawn. Its owner wins <b>${Math.round(st.dailyShare * 100)}%</b> of the pot.`,
     `<b>Pot Breaker:</b> sell at <b>${st.breakerX}x or higher</b> and you take the whole pot.`,
   ].map((x) => `<li>${x}</li>`).join("");
@@ -113,12 +143,42 @@ function draw() {
 async function load() {
   try { const j = await (await fetch("api/jackpot", { cache: "no-store" })).json(); skew = (j.serverNow || Date.now()) - Date.now(); st = j; draw(); } catch {}
 }
-load(); setInterval(load, 8000); setInterval(clock, 1000);
+function lastCall() {
+  if (!st) return;
+  const ms = st.nextDrawAt - (Date.now() + skew), el = $("last");
+  if (ms > 0 && ms < 3600_000 && st.balance > 0 && !st.auto) { el.classList.add("on"); el.textContent = `Last call! Entries close in ${Math.floor(ms / 60000)}:${two(Math.floor((ms % 60000) / 1000))}. You hold ${fmt(st.balance)} unpledged ticket${st.balance === 1 ? "" : "s"}.`; }
+  else el.classList.remove("on");
+}
+const say = (t, bad) => { $("plMsg").textContent = t; $("plMsg").className = "msg" + (bad ? " bad" : ""); };
+async function post(path, body) {
+  const r = await fetch(path, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+  return { ok: r.ok, j: await r.json().catch(() => ({})) };
+}
+async function doPledge(n) {
+  $("goPledge").disabled = true;
+  try {
+    const { ok, j } = await post("api/jackpot/pledge", { n });
+    if (!ok) { say(j.error || "Couldn't pledge.", true); return; }
+    skew = (j.serverNow || Date.now()) - Date.now(); st = j; $("amt").value = ""; draw();
+    say(`Pledged ${fmt(j.pledged)} ticket${j.pledged === 1 ? "" : "s"}. Good luck!`);
+  } catch { say("Couldn't pledge, try again.", true); } finally { $("goPledge").disabled = false; }
+}
+$("goPledge").addEventListener("click", () => doPledge(Number($("amt").value)));
+$("amt").addEventListener("keydown", (e) => { if (e.key === "Enter") doPledge(Number($("amt").value)); });
+$("pl").addEventListener("click", (e) => {
+  const b = e.target.closest(".q"); if (!b || !st) return;
+  const v = b.dataset.q; $("amt").value = v === "all" ? st.balance : v === "half" ? Math.max(1, Math.floor(st.balance / 2)) : Math.min(Number(v), st.balance);
+});
+$("autoOn").addEventListener("change", async () => {
+  const { ok, j } = await post("api/jackpot/auto", { on: $("autoOn").checked });
+  if (ok) { st = j; draw(); say($("autoOn").checked ? "Auto-pledge is on." : "Auto-pledge is off. Pledge before the draw, or your tickets carry over."); } else { say(j.error || "Sign in first.", true); $("autoOn").checked = !$("autoOn").checked; }
+});
+load(); setInterval(load, 8000); setInterval(clock, 1000); setInterval(lastCall, 1000);
 </script>
 <script src="doublexp.js?v=3"></script>
-<script src="jackpot.js?v=1"></script>
+<script src="jackpot.js?v=2"></script>
 <script src="sentiment.js?v=1"></script>
-<script src="sidepanel.js?v=5"></script>
+<script src="sidepanel.js?v=6"></script>
 <script src="bigwins.js?v=1"></script>
 <script type="module" src="usermenu.js"></script>
 </body>
