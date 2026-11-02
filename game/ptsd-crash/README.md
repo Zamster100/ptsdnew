@@ -29,14 +29,14 @@ Needs Node 20+. Everything is served by one small Node server (no build step): t
 | `DB_PATH` | `data/crash.db` | SQLite database file. |
 | `LOG_DIR` | `data/logs` | Sell log + browser error log. |
 | `CURRENCY` | `CREDITS` | Name of the currency shown everywhere. |
-| `MIN_BET` / `MAX_BET` | `1000` / `10000` | Bet limits. |
+| `MIN_BET` / `MAX_BET` | `100` / `1000` | Bet limits. |
 | `CRASH_TEST` | off | `1` = play-money mode: new players start with `TEST_START`, a Refill button shows. |
 | `TEST_START` | `1000000` | Starting balance in test mode. |
 | `X_CLIENT_ID` / `X_CLIENT_SECRET` | none | Turns on real "Sign in with X" (see below). |
 | `DEMO_LOGIN` | on | Without X keys, players sign in by typing a username. Set `0` to turn off. |
 | `ADMIN_X_USERNAMES` | none | Comma list of X usernames that can delete any chat message. |
 | `CLAIMS` | off | `1` = WL campaign credits: players get `START_CREDITS` after onboarding, then `DAILY_CREDITS` every `CLAIM_HOURS`. |
-| `START_CREDITS` / `DAILY_CREDITS` / `CLAIM_HOURS` | `100000` / `100000` / `24` | Credit amounts and claim interval. |
+| `START_CREDITS` / `DAILY_CREDITS` / `CLAIM_HOURS` | `0` / `10000` / `24` | Credit amounts and claim interval. |
 | `CAMPAIGN_START` / `CAMPAIGN_END` | none | ISO times. Only rounds inside count on the Campaign leaderboard; the snapshot is `CAMPAIGN_END`. |
 | `WL_MAX` / `WL_PER` | `500` / `10` | WL spots = min(WL_MAX, players / WL_PER). |
 | `MINT_MAX` / `MINT_PER` | `25` / `200` | Free mints = min(MINT_MAX, players / MINT_PER). |

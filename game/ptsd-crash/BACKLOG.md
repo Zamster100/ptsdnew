@@ -10,7 +10,7 @@ Rules for every item
 
 ## Up next
 
-### 1. Scoring: one XP counter  (NEXT)
+### 1. Scoring: one XP counter  (BUILT)
 - One number per player per cycle: **XP**, shown on the leaderboard and profile.
 - `XP = (PNL + Referral points + Task points + Activity points) x NFT multiplier`
 - PNL can go negative. A PNL reset zeroes the PNL part only. Referral, Task and Activity points are separate tracked counters and are never cleared by a reset.
@@ -86,8 +86,11 @@ Rules for every item
 - Fairness: the entry price must use the undipped trend (not the dipped price), otherwise players can buy the bottom of a dip.
 - Touches sell/settle, history, stats, the verify screen, and new columns on `crash_rounds`. Biggest change, built last.
 
-### Stats page: PNL chart (added 2026-11-01)
+### Stats page: PNL chart  (BUILT)
 - A chart of the player's PNL over time (cumulative, per round and per day) on the Stats page, under the stat tiles. Data already exists in the rounds table.
+
+### Guide page  (BUILT)
+- /guide: rules, XP formula and calculator, levels, perks, bonus XP, jackpot, FAQ. Numbers are read live from the game settings.
 
 ## Parked (ideas to come back to)
 - Missions: daily, weekly, rerolls, campaign-wide community goals (needs specifics).
@@ -113,12 +116,12 @@ Rating: value / complexity are Low, Med or High. "Legal" = needs the pre-launch 
 | G | Buy & Burn (buy credits, proceeds to prize pool + NFT buybacks) | Med (money) | High | Yes, big | Needs legal answer first |
 | H | Marketplace (sell leaderboard positions for ETH/SOL) | Low | High | Yes, big | Recommend not building |
 
-### A. Big-win popups
+### A. Big-win popups  (BUILT)
 - Bottom-right popup with the player's name every time someone sells at 5x or more ("@name sold at 7.4x"). Social proof and FOMO.
 - Needs: a small public feed of recent big sells (name, multiplier, no bet size), polled or pushed to every open page. Cheap to build.
 - Open: show bet size or profit? Opt out for players who don't want to be shown? Cap popups per minute so a busy hour doesn't spam the screen.
 
-### B. Layout restructure + side panel
+### B. Layout restructure + menu rail  (BUILT)
 - The top bar now carries Play, Bounties, Leaderboard, Jackpot, Sentiment, the user chip, sound and Cousin Dick, plus the Double XP banner. It's getting full, especially on phones.
 - Idea: a side panel (menu/dashboard) that holds navigation, level, streak, tickets, sentiment and jackpot, and frees the top bar. Front-end work only, but it touches every page, so do it in one pass and check mobile.
 - Recommend doing this before adding more top-bar items.
@@ -165,3 +168,5 @@ Rating: value / complexity are Low, Med or High. "Legal" = needs the pre-launch 
 
 ## Before launch
 - Check the legal side: free play with cash prizes, and an NFT that gives a score edge, may count as consideration in some places.
+- Economy (done Nov 2026): bets 100 to 1,000, start 0, daily claim 10,000, bonus XP from streaks and perfect sells capped at 1,500 a day, Ticket multipliers 1.25 to 2.5, referrals 7,500 (first 5) / 3,750 with a 40,000 cap per cycle. Make sure the VPS .env sets these explicitly (see .env.example).
+- Task XP budget: pick values in /admin so total task XP per player stays near 8,000 to 12,000 a cycle.

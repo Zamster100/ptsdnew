@@ -225,7 +225,7 @@ function cycleClock() {
   $("cycClock").innerHTML = `${d}d ${String(h).padStart(2, "0")}h ${String(m).padStart(2, "0")}m ${String(s).padStart(2, "0")}s<small>${cyc.live ? "until the cycle ends" : "until the cycle starts"}</small>`;
 }
 setInterval(cycleClock, 1000);
-const xpTip = (r) => esc(`Profit ${fmt(r.net)} + Referrals ${fmt(r.refs)} + Tasks ${fmt(r.tasks)}` + (r.activity ? ` + Bonus ${fmt(r.activity)}` : "") + (r.mult > 1 ? ` x ${r.mult} Tickets` : ""));
+const xpTip = (r) => { const parts = `Referrals ${fmt(r.refs)} + Tasks ${fmt(r.tasks)}` + (r.activity ? ` + Bonus ${fmt(r.activity)}` : ""); return esc(r.mult > 1 && r.net <= 0 ? `Profit ${fmt(r.net)} + (${parts}) x ${r.mult} Tickets` : r.mult > 1 ? `(Profit ${fmt(r.net)} + ${parts}) x ${r.mult} Tickets` : `Profit ${fmt(r.net)} + ${parts}`); };
 async function renderCycle(j) {
   cyc = j.cycle;
   cardRows.clear(); for (const r of [...j.top, ...(j.mine ? [j.mine] : [])]) cardRows.set(String(r.username).toLowerCase(), r);

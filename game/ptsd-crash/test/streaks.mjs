@@ -11,6 +11,7 @@ db.exec("CREATE TABLE crash_rounds (id TEXT PRIMARY KEY, player TEXT, state TEXT
 let live = true; // is a cycle running?
 const xp = initXp({ db, cycles: { current: () => (live ? { id: 1 } : null) } });
 let day = "2026-11-02";
+process.env.ROUND_BONUS_DAILY_CAP = "0"; // the daily limit has its own checks at the bottom
 const streaks = initStreaks({ db, xp, dayKey: () => day });
 const points = (p) => xp.activityMap(1).get(p) || 0;
 
@@ -49,6 +50,19 @@ live = false;
 r = settle("d"); r = settle("d");
 check(r.streak === 2 && r.streakXp === 0 && xp.activityMap(1).get("d") === undefined, "outside a cycle: streak counts, nothing is paid", r);
 live = true;
+
+// ---- daily limit on win-streak + perfect-sell XP ----
+delete process.env.ROUND_BONUS_DAILY_CAP;
+const capped = initStreaks({ db, xp, dayKey: () => day });
+check(capped.cfg.dailyCap === 1500, "the daily limit defaults to 1,500");
+const csettle = (player, o = {}) => capped.onSettled({ id: "c" + ++n, player, state: o.win === false ? "rekt" : "sold", pnl: o.win === false ? -1000 : 1000, sold_mult: o.win === false ? null : (o.mult || 2), crash: o.crash || 5 });
+day = "2026-12-01"; const f0 = points("f");
+for (let i = 0; i < 4; i++) r = csettle("f", { mult: 10, crash: 10.4 }); // streak pays 0+100+150+200, perfect 4 x 500
+check(points("f") - f0 === 1500 && r.capped, "win-streak + perfect-sell XP stops at 1,500 a day", points("f") - f0);
+r = csettle("f", { mult: 10, crash: 10.4 }); check(r.streakXp === 0 && r.perfectXp === 0 && points("f") - f0 === 1500, "...and pays nothing more that day", r);
+r = csettle("g"); r = csettle("g"); check(points("g") === 100, "the limit is per player");
+day = "2026-12-02"; r = csettle("f", { mult: 10, crash: 10.4 }); check(r.perfectXp === 500 && r.streakXp > 0, "a new task day starts a fresh allowance", r);
+day = "2026-11-02";
 
 // ---- login streak ----
 let ci = streaks.checkIn("e"); check(ci.isNew && ci.streak === 1 && ci.xp === 100, "first visit: day 1 pays 100", ci);

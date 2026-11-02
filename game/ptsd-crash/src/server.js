@@ -51,7 +51,7 @@ const GRACE_MS = 200; // was 500: long enough that the chart kept pumping ~0.6s 
 
 // One currency, set by CURRENCY / MIN_BET / MAX_BET.
 const CURRENCY = String(process.env.CURRENCY || "CREDITS").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 12) || "CREDITS";
-export const COINS = { [CURRENCY]: { min: Number(process.env.MIN_BET || 1000), max: Number(process.env.MAX_BET || 10000) } };
+export const COINS = { [CURRENCY]: { min: Number(process.env.MIN_BET || 100), max: Number(process.env.MAX_BET || 1000) } };
 
 const db = new Database(DB_PATH);
 db.pragma("journal_mode = WAL");
@@ -381,7 +381,7 @@ function guideOf() {
     streaks: streaks.cfg, doubleXp: { hour: dxp.cfg.hour, minutes: dxp.cfg.minutes, mult: dxp.cfg.mult, tasks: dxp.cfg.tasks },
     badBeat: badbeat.cfg.on ? { count: badbeat.cfg.count, under: badbeat.cfg.under, cooldownMin: Math.round(badbeat.cfg.cooldownMs / 60000) } : null,
     jackpot: jackpot.cfg.on ? { share: jackpot.cfg.share, seed: jackpot.cfg.seed, dailyShare: jackpot.cfg.dailyShare, breakerX: jackpot.cfg.breakerX, perTicket: jackpot.cfg.perTicket, holdMax: jackpot.cfg.holdMax, instaUnder: jackpot.cfg.instaUnder } : null,
-    referrals: { points: referrals.cfg.points, max: referrals.cfg.max, minRounds: referrals.cfg.minRounds, bonus: referrals.cfg.bonus },
+    referrals: { points: referrals.cfg.points, pointsAfter: referrals.cfg.pointsAfter, fullCount: referrals.cfg.fullCount, cycleCap: referrals.cfg.cycleCap, max: referrals.cfg.max, minRounds: referrals.cfg.minRounds, minDays: referrals.cfg.minDays, bonus: referrals.cfg.bonus },
     achievements: achievements.catalog.map((a) => ({ group: a.group, icon: a.icon, name: a.name, desc: a.desc, xp: a.xp })),
     milestones: milestones.goals.map((g) => ({ track: g.track, goal: g.goal, reward: g.reward })),
   };

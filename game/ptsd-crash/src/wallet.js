@@ -20,13 +20,13 @@ const EVM = /^0x[0-9a-fA-F]{40}$/;
 // capped at 3 boosts: 1 Ticket = one extra claim a day, 2 = two, 3+ = three (so 20k / 30k / 40k credits a day in total).
 // Badges level up at 1, 2, 3, 5 and 10 Tickets.
 export const bonusHours = (n) => (n >= 3 ? 8 : n === 2 ? 12 : n === 1 ? 24 : null);
-// mult = the XP multiplier that tier gives (see xp.js), capped at 1.5x.
+// mult = the XP multiplier that tier gives (see xp.js), from 1.25x to 2.5x.
 export const TIERS = [
-  { min: 10, level: 5, name: "Gen Wealth", mult: 1.5 },
-  { min: 5, level: 4, name: "High Roller", mult: 1.4 },
-  { min: 3, level: 3, name: "Triple Ticket", mult: 1.3 },
-  { min: 2, level: 2, name: "Double Ticket", mult: 1.2 },
-  { min: 1, level: 1, name: "Ticket Holder", mult: 1.1 },
+  { min: 10, level: 5, name: "Gen Wealth", mult: 2.5 },
+  { min: 5, level: 4, name: "High Roller", mult: 2 },
+  { min: 3, level: 3, name: "Triple Ticket", mult: 1.75 },
+  { min: 2, level: 2, name: "Double Ticket", mult: 1.5 },
+  { min: 1, level: 1, name: "Ticket Holder", mult: 1.25 },
 ];
 export const multOf = (n) => (TIERS.find((t) => n >= t.min) || { mult: 1 }).mult;
 export const badgeOf = (n) => TIERS.find((t) => n >= t.min) || { min: 0, level: 0, name: "No Tickets" };

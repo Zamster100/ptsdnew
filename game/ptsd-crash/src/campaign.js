@@ -4,8 +4,8 @@
 //
 // Settings (env):
 //   CLAIMS=1             credits come from claims (no free test balance)
-//   START_CREDITS        first pack, after the social step   (default 100000)
-//   DAILY_CREDITS        each later claim                    (default 100000)
+//   START_CREDITS        first pack, after the social step   (default 0 / 10000)
+//   DAILY_CREDITS        each later claim                    (default 10000)
 //   CLAIM_HOURS          hours between claims                (default 24)
 //   CAMPAIGN_START/END   ISO times; only rounds inside count for the campaign board
 //   WL_MAX, WL_PER       WL spots = min(WL_MAX, players / WL_PER)      (500, 10)
@@ -20,8 +20,8 @@ const time = (v) => { const t = v ? Date.parse(v) : NaN; return Number.isFinite(
 export function initCampaign({ db, currency, addCredits, bonusOf, perk = () => 1 }) {
   const cfg = {
     claims: process.env.CLAIMS === "1",
-    start: num(process.env.START_CREDITS, 100000),
-    daily: num(process.env.DAILY_CREDITS, 100000),
+    start: num(process.env.START_CREDITS, 0),
+    daily: num(process.env.DAILY_CREDITS, 10000),
     hours: num(process.env.CLAIM_HOURS, 24),
     campStart: time(process.env.CAMPAIGN_START),
     campEnd: time(process.env.CAMPAIGN_END),

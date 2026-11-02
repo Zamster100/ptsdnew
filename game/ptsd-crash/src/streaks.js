@@ -11,6 +11,7 @@
 //
 // Settings (env, all optional):
 //   STREAK_WIN_STEP 50   STREAK_WIN_CAP 10   PERFECT_PCT 5   PERFECT_XP 500   PERFECT_MIN_X 1.5   LOGIN_STEP 100   LOGIN_CAP 7
+//   ROUND_BONUS_DAILY_CAP 1500   most win-streak + perfect-sell XP one player can earn per task day (0 = no limit)
 const num = (v, d) => (v != null && v !== "" && Number.isFinite(Number(v)) ? Number(v) : d);
 
 export function initStreaks({ db, xp, dayKey }) {
@@ -18,7 +19,9 @@ export function initStreaks({ db, xp, dayKey }) {
     winStep: num(process.env.STREAK_WIN_STEP, 50), winCap: num(process.env.STREAK_WIN_CAP, 10),
     perfectPct: num(process.env.PERFECT_PCT, 5), perfectXp: num(process.env.PERFECT_XP, 500), perfectMinX: num(process.env.PERFECT_MIN_X, 1.5),
     loginStep: num(process.env.LOGIN_STEP, 100), loginCap: num(process.env.LOGIN_CAP, 7),
+    dailyCap: num(process.env.ROUND_BONUS_DAILY_CAP, 1500),
   };
+  db.exec("CREATE TABLE IF NOT EXISTS crash_bonus_day (player TEXT NOT NULL, day TEXT NOT NULL, n INTEGER NOT NULL, PRIMARY KEY (player, day))");
   db.exec(`CREATE TABLE IF NOT EXISTS crash_streaks (player TEXT PRIMARY KEY, win_streak INTEGER NOT NULL DEFAULT 0, best_win INTEGER NOT NULL DEFAULT 0,
     login_day TEXT, login_streak INTEGER NOT NULL DEFAULT 0, best_login INTEGER NOT NULL DEFAULT 0)`);
   const q = {
@@ -26,6 +29,8 @@ export function initStreaks({ db, xp, dayKey }) {
     insert: db.prepare("INSERT OR IGNORE INTO crash_streaks(player, win_streak, best_win) VALUES(?,?,?)"),
     setWin: db.prepare("UPDATE crash_streaks SET win_streak=?, best_win=? WHERE player=?"),
     setLogin: db.prepare("UPDATE crash_streaks SET login_day=?, login_streak=?, best_login=? WHERE player=?"),
+    usedGet: db.prepare("SELECT n FROM crash_bonus_day WHERE player=? AND day=?"),
+    usedAdd: db.prepare("INSERT INTO crash_bonus_day(player,day,n) VALUES(?,?,?) ON CONFLICT(player,day) DO UPDATE SET n=n+excluded.n"),
     history: db.prepare("SELECT pnl FROM crash_rounds WHERE player=? AND state!='open' AND id!=? ORDER BY ts"),
   };
 
@@ -44,10 +49,14 @@ export function initStreaks({ db, xp, dayKey }) {
     const s = ensure(round.player, round.id);
     const win = round.pnl > 0, streak = win ? s.win_streak + 1 : 0;
     q.setWin.run(streak, Math.max(s.best_win, streak), round.player);
-    const streakXp = win && streak >= 2 ? xp.addActivity(round.player, "win-streak", cfg.winStep * Math.min(streak, cfg.winCap), now) : 0;
+    // win-streak + perfect-sell share one daily limit (counted before any Double XP boost)
+    const day = dayKey(now);
+    let room = cfg.dailyCap > 0 ? Math.max(0, cfg.dailyCap - ((q.usedGet.get(round.player, day) || {}).n || 0)) : Infinity;
+    const pay = (kind, base) => { const b = Math.min(base, room); if (b <= 0) return 0; room -= b; if (cfg.dailyCap > 0) q.usedAdd.run(round.player, day, b); return xp.addActivity(round.player, kind, b, now); };
+    const streakXp = win && streak >= 2 ? pay("win-streak", cfg.winStep * Math.min(streak, cfg.winCap)) : 0;
     const perfect = round.state === "sold" && round.sold_mult >= cfg.perfectMinX && round.sold_mult >= round.crash * (1 - cfg.perfectPct / 100);
-    const perfectXp = perfect ? xp.addActivity(round.player, "perfect-sell", cfg.perfectXp, now) : 0;
-    return { streak, streakXp, perfectXp, perfect, boost: xp.boostAt(now) };
+    const perfectXp = perfect ? pay("perfect-sell", cfg.perfectXp) : 0;
+    return { streak, streakXp, perfectXp, perfect, boost: xp.boostAt(now), capped: room <= 0 && cfg.dailyCap > 0 };
   }
 
   const prevDay = (day) => { const d = new Date(day + "T00:00:00Z"); d.setUTCDate(d.getUTCDate() - 1); return d.toISOString().slice(0, 10); };

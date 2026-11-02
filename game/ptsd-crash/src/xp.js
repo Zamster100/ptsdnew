@@ -3,15 +3,15 @@
 //   XP = (PNL + Referral points + Task points + Activity points) x NFT multiplier
 //
 // PNL can be negative. Referral, Task and Activity points are their own counters, never cleared by a PNL reset.
-// The multiplier (from the Tickets held, see wallet.js) only applies while the total is above zero, so holding
-// Tickets can never make a negative score worse.
+// The multiplier (from the Tickets held, see wallet.js) never makes a loss bigger: while PNL is in the red it multiplies
+// only the points earned (referrals, tasks, activity) and the loss is subtracted at face value.
 //
 // Activity points are the catch-all for the small bonuses (streaks, perfect sells, double XP hour, underdog boost...).
 // Features call addActivity(); nothing else in here needs to change when a new one is added.
 export function xpOf({ pnl = 0, refs = 0, tasks = 0, activity = 0 }, mult = 1) {
-  const total = pnl + refs + tasks + activity;
-  const m = total > 0 && mult > 1 ? mult : 1;
-  return { total, mult: m, xp: Math.round(total * m) };
+  const total = pnl + refs + tasks + activity, earned = refs + tasks + activity;
+  const m = mult > 1 && (pnl > 0 ? total > 0 : earned > 0) ? mult : 1;
+  return { total, mult: m, xp: Math.round(pnl > 0 ? total * m : pnl + earned * m) };
 }
 
 // ---- levels ----

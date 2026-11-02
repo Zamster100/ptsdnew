@@ -12,7 +12,7 @@ const PORT = 3599, B = `http://127.0.0.1:${PORT}/api/`;
 const now = Date.now(), C1_END = now + 40_000;
 const env = {
   ...process.env, PORT: String(PORT), HOST: "127.0.0.1", CRASH_BASE: "", CRASH_TEST: "1", CLAIMS: "1", DEMO_LOGIN: "1",
-  DB_PATH: path.join(dir, "t.db"), LOG_DIR: path.join(dir, "logs"), MIN_BET: "100", MAX_BET: "2500",
+  DB_PATH: path.join(dir, "t.db"), LOG_DIR: path.join(dir, "logs"), MIN_BET: "100", MAX_BET: "1000",
   START_CREDITS: "0", DAILY_CREDITS: "10000", CLAIM_HOURS: "24", X_CLIENT_ID: "", LOGIN_STEP: "0", ACHIEVEMENTS: "0",
   CYCLES: JSON.stringify([
     { id: 1, name: "Cycle 1", start: new Date(now - 1000).toISOString(), end: new Date(C1_END).toISOString() },
@@ -40,7 +40,7 @@ try {
   check((await post("claim", { kind: "daily" })).code === 400, "no second claim inside 24h");
 
   // one round: balance change must equal the round's pnl
-  const b = await post("buy", { coin: "CREDITS", amount: 2500, clientSeed: "t" });
+  const b = await post("buy", { coin: "CREDITS", amount: 1000, clientSeed: "t" });
   check(b.code === 200, "bet inside the limits works", b);
   await sleep(1500);
   await post("sell", { id: b.round.id });

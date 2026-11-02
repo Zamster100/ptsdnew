@@ -1,4 +1,4 @@
-// Referral check: code use + bonus, qualifying (5 rounds), +5000 profit for the referrer, the per-referrer cap,
+// Referral check: code use + bonus, qualifying (5 rounds here; 50 rounds on 3 days by default), +7,500 for the referrer, the per-referrer cap,
 // and "real X only".   node test/referrals.mjs   (takes about a minute: it plays real rounds)
 import { spawn } from "node:child_process";
 import fs from "node:fs";
@@ -16,7 +16,7 @@ function startServer(port, extra) {
   const now = Date.now();
   const proc = spawn(process.execPath, [path.join(ROOT, "src/server.js")], { cwd: ROOT, stdio: "ignore", env: {
     ...process.env, PORT: String(port), HOST: "127.0.0.1", CRASH_BASE: "", CRASH_TEST: "1", CLAIMS: "1", DEMO_LOGIN: "1", X_CLIENT_ID: "",
-    DB_PATH: path.join(dir, "t.db"), LOG_DIR: path.join(dir, "logs"), MIN_BET: "100", MAX_BET: "2500", START_CREDITS: "0", DAILY_CREDITS: "10000",
+    DB_PATH: path.join(dir, "t.db"), LOG_DIR: path.join(dir, "logs"), MIN_BET: "100", MAX_BET: "1000", START_CREDITS: "0", DAILY_CREDITS: "10000",
     NFT_CONTRACT: "", NFT_RPC_URL: "",
     CYCLES: JSON.stringify([{ id: 1, name: "Cycle 1", start: new Date(now - 1000).toISOString(), end: new Date(now + 900_000).toISOString() }]),
     LOGIN_STEP: "0", ACHIEVEMENTS: "0", // the daily login bonus would add Activity points to the exact XP checked here
@@ -48,13 +48,14 @@ async function boardRow(pl, handle) {
 }
 async function ready(B) { for (let i = 0; i < 50; i++) { try { await fetch(B + "config"); return; } catch { await sleep(200); } } }
 
-const s1 = startServer(3595, { REF_REQUIRE_X: "0", REF_MAX: "2" });
-const s2 = startServer(3594, {}); // real X required (default): demo logins must not qualify
+const s1 = startServer(3595, { REF_REQUIRE_X: "0", REF_MAX: "2", REF_MIN_ROUNDS: "5", REF_MIN_DAYS: "1" });
+const s2 = startServer(3594, { REF_MIN_ROUNDS: "5", REF_MIN_DAYS: "1" }); // real X required (default): demo logins must not qualify
 try {
   await ready(s1.B); await ready(s2.B);
   const B = s1.B;
   const R = await player(B, "refr"); await onboard(R);
   check((await R.get("me")).ref.code === "refr" && (await R.get("me")).ref.max === 2, "owner sees their code and the cap");
+  { const rf = (await R.get("me")).ref; check(rf.points === 7500 && rf.pointsAfter === 3750 && rf.fullCount === 5 && rf.cycleCap === 40000, "default payout: 7,500 for the first 5 friends, 3,750 after, 40,000 a cycle at most", rf); }
 
   const A = await player(B, "refa"), Bb = await player(B, "refb"), C = await player(B, "refc"), D = await player(B, "refd");
   check((await A.post("referral/apply", { code: "nobody_here" })).code === 404, "unknown code is refused");
@@ -81,13 +82,13 @@ try {
   await Promise.all([ (async () => { for (let i = 0; i < 5; i++) await round(Bb); })(), (async () => { for (let i = 0; i < 5; i++) await round(C); })() ]);
   await sleep(11_000);
   let row = null;
-  for (let i = 0; i < 30; i++) { row = await boardRow(R, "refr"); if (row && row.refs === 10000) break; await sleep(1000); }
-  check(row && row.refs === 10000, "3 qualified referrals but the cap is 2: the referrer gets 2 x 5000", row && { refs: row.refs });
-  check(row && row.xp === row.net + row.refs && row.rounds === 0 && row.xp === 10000, "referral points count in XP (a referrer with no rounds still ranks)", row && { xp: row.xp, net: row.net });
+  for (let i = 0; i < 30; i++) { row = await boardRow(R, "refr"); if (row && row.refs === 15000) break; await sleep(1000); }
+  check(row && row.refs === 15000, "3 qualified referrals but the cap is 2: the referrer gets 2 x 7500", row && { refs: row.refs });
+  check(row && row.xp === row.net + row.refs && row.rounds === 0 && row.xp === 15000, "referral points count in XP (a referrer with no rounds still ranks)", row && { xp: row.xp, net: row.net });
   const st2 = (await R.get("me")).ref;
   check(st2.counted === 2 && st2.pending === 0 && st2.refs.some((x) => x.status === "over the cap"), "owner sees 2 counted and one over the cap", st2);
   const prof = await fetch(B + "profile/refr").then((r) => r.json());
-  check(prof.referrals === 2 && prof.refs === 10000 && prof.xp === 10000, "profile shows 2 referrals, their points and the XP", { r: prof.referrals, refs: prof.refs, xp: prof.xp });
+  check(prof.referrals === 2 && prof.refs === 15000 && prof.xp === 15000, "profile shows 2 referrals, their points and the XP", { r: prof.referrals, refs: prof.refs, xp: prof.xp });
 
   // real X required: demo accounts never qualify on the default server
   const B2 = s2.B;

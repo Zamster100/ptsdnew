@@ -11,7 +11,7 @@ const PORT = 3589, B = `http://127.0.0.1:${PORT}/api/`;
 const now = Date.now(), C1_END = now + 45_000;
 const srv = spawn(process.execPath, [path.join(ROOT, "src/server.js")], { cwd: ROOT, stdio: "ignore", env: {
   ...process.env, PORT: String(PORT), HOST: "127.0.0.1", CRASH_BASE: "", CRASH_TEST: "1", CLAIMS: "1", DEMO_LOGIN: "1", X_CLIENT_ID: "",
-  DB_PATH: path.join(dir, "t.db"), LOG_DIR: path.join(dir, "logs"), MIN_BET: "100", MAX_BET: "2500", START_CREDITS: "0", DAILY_CREDITS: "10000",
+  DB_PATH: path.join(dir, "t.db"), LOG_DIR: path.join(dir, "logs"), MIN_BET: "100", MAX_BET: "1000", START_CREDITS: "0", DAILY_CREDITS: "10000",
   NFT_CONTRACT: "", NFT_RPC_URL: "", LOGIN_STEP: "0", ACHIEVEMENTS: "0", TASK_MIN_SECONDS: "1", TASKS_REQUIRE_X: "0", ADMIN_USERS: "boss:pw-123",
   CYCLES: JSON.stringify([
     { id: 1, name: "Cycle 1", start: new Date(now - 1000).toISOString(), end: new Date(C1_END).toISOString() },

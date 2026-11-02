@@ -70,6 +70,7 @@ const f = (html, note) => `<div class="formula">${html}${note ? `<small>${note}<
 function build(g) {
   const S = [];
   const add = (id, title, html) => S.push({ id, title, html });
+const refRule = `${fmt(g.referrals.points)} XP for each of your first ${g.referrals.fullCount} friends and ${fmt(g.referrals.pointsAfter)} for each one after that (up to ${g.referrals.max} friends, and at most ${fmt(g.referrals.cycleCap)} referral XP per cycle). A friend counts once they have played ${g.referrals.minRounds}+ rounds on ${g.referrals.minDays}+ different days with a real X account.`;
   const tiersRows = g.tiers.map((t) => `<tr><td>${esc(t.name)}</td><td>${t.min}+ Ticket${t.min > 1 ? "s" : ""}</td><td>x${t.mult}</td></tr>`).join("");
 
   add("start", "Quick start", `
@@ -106,17 +107,17 @@ function build(g) {
     ${f("XP = (PNL + Referral points + Task points + Activity points) x Ticket multiplier")}
     <table class="tb"><tr><th>Part</th><th>Where it comes from</th></tr>
       <tr><td><b>PNL</b></td><td>Profit and loss from your rounds this cycle. It can be negative. Free claims never count.</td></tr>
-      <tr><td><b>Referral points</b></td><td>+${fmt(g.referrals.points)} for each friend who plays ${g.referrals.minRounds}+ rounds with a real X account, up to ${g.referrals.max} friends.</td></tr>
+      <tr><td><b>Referral points</b></td><td>${refRule}</td></tr>
       <tr><td><b>Task points</b></td><td>The XP value of each bounty you clear.</td></tr>
-      <tr><td><b>Activity points</b></td><td>Bonuses: win streaks, perfect sells, login streaks, achievements. Doubled during Double XP hour.</td></tr></table>
+      <tr><td><b>Activity points</b></td><td>Bonuses: win streaks, perfect sells (together capped at ${fmt(g.streaks.dailyCap)} XP a day), login streaks, achievements. Doubled during Double XP hour.</td></tr></table>
     <h3>Ticket multiplier</h3>
     <p>Holding PTSD Ticket NFTs multiplies your total:</p>
     <div class="scroll"><table class="tb"><tr><th>Badge</th><th>Tickets held</th><th>Multiplier</th></tr>${tiersRows}</table></div>
-    <div class="note">The multiplier only applies while your total is <b>above zero</b>. It never makes a negative score worse.</div>
+    <div class="note">The multiplier boosts everything you <b>earn</b> (referral, task and bonus points) and your profit when you are up. If your PNL is in the red the loss counts at face value, it is never made bigger.</div>
     <h3>Try it</h3>
     <div class="calc">
       <div><label>PNL</label><input id="cPnl" type="number" value="12000"></div>
-      <div><label>Referral points</label><input id="cRef" type="number" value="5000"></div>
+      <div><label>Referral points</label><input id="cRef" type="number" value="7500"></div>
       <div><label>Task points</label><input id="cTask" type="number" value="2000"></div>
       <div><label>Activity points</label><input id="cAct" type="number" value="1500"></div>
       <div><label>Tickets held</label><input id="cTix" type="number" min="0" value="2"></div>
@@ -182,7 +183,7 @@ function build(g) {
 
   add("friends", "Referrals & bounties", `
     <h3>Referrals</h3>
-    <p>Share your link from your profile. Anyone who joins with your code gets <b>+${fmt(g.referrals.bonus)} bonus credits</b> on top of their starting credits. Each friend who plays at least ${g.referrals.minRounds} rounds with a real X account adds <b>+${fmt(g.referrals.points)}</b> referral points to your XP, up to ${g.referrals.max} friends.</p>
+    <p>Share your link from your profile. Anyone who joins with your code gets <b>+${fmt(g.referrals.bonus)} bonus credits</b> on top of their starting credits. You earn ${refRule} Your Ticket multiplier applies to referral XP too.</p>
     <h3>Bounties</h3>
     <p>Bounties are tasks posted by the team. Clear one to earn credits and task points. They reset every day at 9 AM Eastern. Clearing the latest bounty also lets you reset your PNL to 0 (once every 24 hours).</p>
     <h3>Connecting a wallet</h3>
@@ -195,7 +196,7 @@ function build(g) {
     ["How do I get credits?", `You start every cycle with ${fmt(g.cycles.bankroll)} credits. You can also claim ${fmt(g.credits.daily)} free credits every ${g.credits.hours} hours. Claimed credits never count as profit.`],
     ["What do PTSD Ticket NFTs do?", "Holding Tickets multiplies your XP (up to x1.5) and unlocks NFT bonus claims: an extra free claim once a day with 1 Ticket, twice a day with 2, three times a day with 3 or more. You also get Ticket Holder badges that level up with how many you hold, shown on your profile."],
     ["How do I connect my wallet?", "Open your profile and tap Connect. You sign a free message to prove the wallet is yours, nothing is sent and no funds move. It is optional, and only your Ticket count is ever public, never your wallet address."],
-    ["How do referrals work?", `Share your link from your profile. Anyone who joins with your code gets +${fmt(g.referrals.bonus)} bonus credits. Each friend who plays at least ${g.referrals.minRounds} rounds with a real X account adds +${fmt(g.referrals.points)} to your XP, up to ${g.referrals.max} friends.`],
+    ["How do referrals work?", `Share your link from your profile. Anyone who joins with your code gets +${fmt(g.referrals.bonus)} bonus credits. You earn ${refRule}`],
     ["Why do I need to connect my X account?", "That is how your progress is tracked. You can log in on desktop and mobile and play 24/7."],
     ["What does the leaderboard track?", "XP in the current cycle: profit (PNL) + referral points + task points + bonus points, times your Ticket multiplier. Free claims do not count. If you are in the red you can reset your PNL to 0 once every 24 hours by clearing the latest bounty."],
     ["Can my level go down?", "Never. Levels are built from the best XP you reached in each cycle, so bad runs and resets can't take them away."],
@@ -211,9 +212,10 @@ function build(g) {
 
   const best = (n) => g.tiers.find((t) => n >= t.min);
   const calc = () => {
-    const v = (id) => Number($(id).value) || 0, total = v("cPnl") + v("cRef") + v("cTask") + v("cAct"), tier = best(v("cTix"));
-    const m = total > 0 && tier ? tier.mult : 1;
-    $("cOut").innerHTML = `${fmt(total)} x ${m} = <span>${fmt(total * m)} XP</span>${tier ? ` <small style="color:var(--mut);font-weight:600">(${esc(tier.name)})</small>` : ""}${total <= 0 ? ` <small style="color:var(--mut);font-weight:600">(no multiplier while the total is zero or below)</small>` : ""}`;
+    const v = (id) => Number($(id).value) || 0, pnl = v("cPnl"), earned = v("cRef") + v("cTask") + v("cAct"), tier = best(v("cTix"));
+    const m = tier ? tier.mult : 1, xp = pnl > 0 ? (pnl + earned) * m : pnl + earned * m;
+    $("cOut").innerHTML = pnl > 0 ? `(${fmt(pnl)} + ${fmt(earned)}) x ${m} = <span>${fmt(xp)} XP</span>` : `${fmt(pnl)} + ${fmt(earned)} x ${m} = <span>${fmt(xp)} XP</span>`;
+    if (tier) $("cOut").innerHTML += ` <small style="color:var(--mut);font-weight:600">(${esc(tier.name)})</small>`;
   };
   document.querySelectorAll(".calc input").forEach((i) => i.addEventListener("input", calc)); calc();
   if (location.hash) { const t = document.querySelector(location.hash); if (t) t.scrollIntoView(); }

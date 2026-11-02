@@ -141,7 +141,7 @@ async function load() {
         <div class="pf-stat"><i>🤝</i><b>${fmt(p.refs)}</b><span>Referrals${p.referrals ? " (" + fmt(p.referrals) + ")" : ""}</span></div>
         <div class="pf-stat"><i>⚡</i><b>${fmt(p.activity)}</b><span>Bonus</span></div>
       </div>
-      <div class="pf-sub" style="margin-top:12px">XP = (profit + tasks + referrals + bonus) × Ticket multiplier${p.ticketMult > 1 ? ` · <b>×${p.ticketMult}</b> with your Tickets${p.mult > 1 ? "" : " (applies once your total is above 0)"}` : ""}.</div>
+      <div class="pf-sub" style="margin-top:12px">XP = (profit + tasks + referrals + bonus) × Ticket multiplier${p.ticketMult > 1 ? ` · <b>×${p.ticketMult}</b> with your Tickets${p.mult > 1 ? "" : " (applies once you have earned points or profit)"}` : ""}.</div>
       <div class="pf-share"><a href="${share}" target="_blank" rel="noopener noreferrer">Share on X</a><button class="alt" id="copyBtn" type="button">Copy link</button></div>
     </div></div>
     <div class="pf-sec"><h2>Level ${p.level.n}</h2><p class="mut">Your level comes from the most XP you reach in each cycle, added up. It only goes up: a bad run, a PNL reset or a revoked task can't take it away.</p>
@@ -151,7 +151,7 @@ async function load() {
     ${p.streak ? `<div class="pf-sec"><h2>Streaks</h2><div class="achs"><span class="ach on">🔥 Win streak <b>${fmt(p.streak.win)}</b> · best ${fmt(p.streak.bestWin)}</span><span class="ach on">📅 Login streak <b>${fmt(p.streak.login)}</b> · best ${fmt(p.streak.bestLogin)}</span></div></div>` : ""}
     ${p.achievements ? `<div class="pf-sec"><h2>Achievements · ${p.achievements.unlocked}/${p.achievements.total}</h2>${p.achievements.recent.length ? `<div class="achs">${p.achievements.recent.map((a) => `<span class="ach" title="${esc(a.name)}: ${esc(a.desc)}">${a.icon} ${esc(a.name)}</span>`).join("")}</div>` : `<p class="mut">None yet.</p>`}<p class="mut" style="margin-top:8px"><a href="rewards" style="color:var(--up);font-weight:800">See every achievement</a></p></div>` : ""}
     ${mine ? `<div class="pf-sec nft-sec" id="own"></div>` : ""}
-    <div class="pf-sec"><h2>Ticket levels</h2><p class="mut">Hold PTSD Ticket NFTs to level up. Tickets boost your XP while it is above zero, and also unlock the NFT bonus: an extra 10k free credits claim, once a day with 1 Ticket, twice with 2, three times with 3 or more.</p><div class="ladder">${rungs}</div><div class="tbar"><i style="width:${pct}%"></i></div><p class="mut" style="margin-top:8px">${next}</p></div>
+    <div class="pf-sec"><h2>Ticket levels</h2><p class="mut">Hold PTSD Ticket NFTs to level up. Tickets multiply the points you earn (and your profit while you are up), and also unlock the NFT bonus: an extra 10k free credits claim, once a day with 1 Ticket, twice with 2, three times with 3 or more.</p><div class="ladder">${rungs}</div><div class="tbar"><i style="width:${pct}%"></i></div><p class="mut" style="margin-top:8px">${next}</p></div>
     ${mine ? `<div class="pf-sec" id="refs"></div>` : ""}
     ${hist}`;
   $("copyBtn").onclick = async () => { try { await navigator.clipboard.writeText(url); $("copyBtn").textContent = "Copied!"; setTimeout(() => ($("copyBtn").textContent = "Copy link"), 1500); } catch { prompt("Copy this link", url); } };

@@ -16,9 +16,13 @@ const num = (v, d) => (v != null && v !== "" && Number.isFinite(Number(v)) ? Num
 
 export function initReferrals({ db, cycles, addCredits }) {
   const cfg = {
-    points: num(process.env.REF_POINTS, 5000),
+    points: num(process.env.REF_POINTS, 7500),            // per friend, for the first fullCount friends in a cycle
+    pointsAfter: num(process.env.REF_POINTS_AFTER, 3750), // per friend after that
+    fullCount: num(process.env.REF_FULL_COUNT, 5),
+    cycleCap: num(process.env.REF_CYCLE_CAP, 40000),      // most referral points one player can earn in a cycle (0 = no limit)
     max: num(process.env.REF_MAX, 20),
-    minRounds: num(process.env.REF_MIN_ROUNDS, 5),
+    minRounds: num(process.env.REF_MIN_ROUNDS, 50),       // a friend counts after this many rounds...
+    minDays: num(process.env.REF_MIN_DAYS, 3),            // ...played on at least this many different task days
     bonus: num(process.env.REF_BONUS_CREDITS, 10000),
     requireX: process.env.REF_REQUIRE_X !== "0",
   };
@@ -33,8 +37,10 @@ export function initReferrals({ db, cycles, addCredits }) {
     played: db.prepare("SELECT 1 FROM crash_rounds WHERE player=? LIMIT 1"),
     add: db.prepare("INSERT INTO crash_referrals(referee, referrer, applied_at) VALUES(?,?,?)"),
     logClaim: db.prepare("INSERT INTO crash_claims(player,kind,amount,ts) VALUES(?,?,?,?)"),
+    // a task day runs 9 AM to 9 AM Eastern (about UTC-5, so subtract 14 hours to get the day)
     pending: db.prepare(`SELECT r.referee, r.referrer, u.provider, u.status FROM crash_referrals r JOIN crash_users u ON u.id=r.referee
-      WHERE r.qualified_at IS NULL AND (SELECT COUNT(*) FROM crash_rounds WHERE player=r.referee AND state!='open') >= ?`),
+      WHERE r.qualified_at IS NULL AND (SELECT COUNT(*) FROM crash_rounds WHERE player=r.referee AND state!='open') >= ?
+      AND (SELECT COUNT(DISTINCT strftime('%Y-%m-%d', (ts - 50400000) / 1000, 'unixepoch')) FROM crash_rounds WHERE player=r.referee AND state!='open') >= ?`),
     countedFor: db.prepare("SELECT COUNT(*) n FROM crash_referrals WHERE referrer=? AND counted=1"),
     mark: db.prepare("UPDATE crash_referrals SET qualified_at=?, cycle_id=?, counted=?, reason=? WHERE referee=? AND qualified_at IS NULL"),
     // counted referrals of each referrer in one cycle, minus accounts flagged as bots
@@ -66,7 +72,7 @@ export function initReferrals({ db, cycles, addCredits }) {
   // Referred players who now qualify: real X account, not flagged, enough rounds, and the referrer still under the cap.
   function sweep() {
     let changed = false;
-    for (const p of q.pending.all(cfg.minRounds)) {
+    for (const p of q.pending.all(cfg.minRounds, cfg.minDays)) {
       if (p.status === "blocked") continue; // stays pending; counts if the flag is lifted
       const now = Date.now(), cyc = cycles.shown();
       if (cfg.requireX && p.provider !== "x") { q.mark.run(now, cyc ? cyc.id : null, 0, "no-x", p.referee); changed = true; continue; }
@@ -79,10 +85,15 @@ export function initReferrals({ db, cycles, addCredits }) {
   try { sweep(); } catch (e) { console.error("[referrals] sweep failed", e.message); }
   setInterval(() => { try { sweep(); } catch (e) { console.error("[referrals] sweep failed", e.message); } }, 10_000).unref();
 
-  // referrer -> profit added in this cycle
+  // Points for n counted friends in one cycle: full rate for the first few, half after, and a ceiling per cycle.
+  function pointsFor(n) {
+    const raw = Math.min(n, cfg.fullCount) * cfg.points + Math.max(0, n - cfg.fullCount) * cfg.pointsAfter;
+    return cfg.cycleCap > 0 ? Math.min(raw, cfg.cycleCap) : raw;
+  }
+  // referrer -> referral points in this cycle
   function bonusMap(cycleId) {
     const m = new Map();
-    for (const r of q.inCycle.all(cycleId)) m.set(r.referrer, r.n * cfg.points);
+    for (const r of q.inCycle.all(cycleId)) m.set(r.referrer, pointsFor(r.n));
     return m;
   }
 
@@ -96,7 +107,7 @@ export function initReferrals({ db, cycles, addCredits }) {
       code: u ? u.username : null,
       usedCode: !!by, canApply: !by && !q.played.get(userId),
       refs: list.map((r) => ({ username: r.username, status: r.qualified_at ? (r.counted ? "counted" : r.reason === "cap" ? "over the cap" : "not eligible") : "playing" })),
-      counted, pending: list.filter((r) => !r.qualified_at).length, max: cfg.max, points: cfg.points, minRounds: cfg.minRounds, bonus: cfg.bonus,
+      counted, pending: list.filter((r) => !r.qualified_at).length, max: cfg.max, points: cfg.points, pointsAfter: cfg.pointsAfter, fullCount: cfg.fullCount, cycleCap: cfg.cycleCap, minRounds: cfg.minRounds, minDays: cfg.minDays, bonus: cfg.bonus,
     };
   }
   const countOf = (userId) => q.countedLive.get(userId).n;

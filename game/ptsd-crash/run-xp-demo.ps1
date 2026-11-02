@@ -16,6 +16,10 @@ $env:CRASH_TEST  = "1"
 $env:CLAIMS      = "1"
 $env:ADMIN_USERS = "demo:demo123"
 $env:TASKS_REQUIRE_X = "0"
+$env:START_CREDITS = "0"
+$env:DAILY_CREDITS = "10000"
+$env:MIN_BET = "100"
+$env:MAX_BET = "1000"
 if (-not (Test-Path node_modules)) { npm ci }
 node scripts/seed-xp-demo.mjs
 if ($LASTEXITCODE -ne 0) { exit 1 }
