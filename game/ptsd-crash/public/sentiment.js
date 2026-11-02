@@ -35,6 +35,7 @@
   btn.type = "button"; btn.className = "nv sent"; btn.id = "sentBtn"; btn.setAttribute("aria-haspopup", "dialog");
   btn.innerHTML = `📊<span> Sentiment</span>`;
   nav.appendChild(btn);
+  btn.style.display = "none"; // the menu rail has the Sentiment entry; this button stays only as the thing it clicks to open the panel
 
   const pop = document.createElement("div");
   pop.id = "sentPop"; pop.setAttribute("role", "dialog"); pop.setAttribute("aria-label", "Fear and Greed");
@@ -80,7 +81,7 @@
     btn.classList.toggle("fear", live === "fear");
     btn.classList.toggle("greed", live === "greed");
     btn.title = live === "fear" ? "Fear is live" : live === "greed" ? "Greed is live" : "Fear & Greed sentiment";
-    btn.style.display = st.on ? "" : "none";
+    btn.style.display = "none"; // never shown in the top bar: the menu rail opens the panel
     if (!pop.classList.contains("open")) return;
     $("sentNeedle").style.transform = `rotate(${(st.index - 50) * 1.8}deg)`;
     const s = $("sentState");

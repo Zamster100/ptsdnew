@@ -77,9 +77,7 @@
     </section>
 
     <aside class="side">
-      <div class="side-h">Your stats</div>
-      <div class="side-stats" id="sideStats"></div>
-      <div class="side-tabs" id="sideTabs"><button data-side="chat" class="on" type="button">💬 Chat</button><button data-side="rounds" type="button">Your rounds</button><button data-side="how" type="button">How it works</button></div>
+      <div class="side-tabs" id="sideTabs"><button data-side="chat" class="on" type="button">💬 Chat</button><button data-side="rounds" type="button">Your rounds</button></div>
       <div class="side-pane" id="paneChat">
         <div class="chat" id="chat">
           <div class="chat-list" id="chatList"><div class="side-empty">Loading chat…</div></div>
@@ -92,12 +90,6 @@
       <div class="side-pane" id="paneRounds" hidden>
         <div class="side-note">Tap a round to check it.</div>
         <div class="side-list" id="hist"><div class="side-empty">No rounds yet.</div></div>
-      </div>
-      <div class="side-pane" id="paneHow" hidden>
-        <ul class="side-rules" id="rules"></ul>
-        <button class="side-more" id="howMore" type="button">How to play</button>
-        <button class="side-more" id="faqMore" type="button">FAQ</button>
-        <a class="side-more" href="guide" style="display:block;text-align:center;text-decoration:none">Full guide: XP, levels, rules</a>
       </div>
     </aside>
   </div>
@@ -285,14 +277,13 @@
   </div>
 </div>
 
-<nav class="foot"><button id="statsBtn" type="button">Stats</button><button id="howBtn" type="button">How to play</button><button id="faqBtn" type="button">FAQ</button></nav>
 
-<script src="doublexp.js?v=3"></script>
+<script src="doublexp.js?v=4"></script>
 <script src="jackpot.js?v=2"></script>
-<script src="sentiment.js?v=1"></script>
+<script src="sentiment.js?v=3"></script>
 <script src="sidepanel.js?v=6"></script>
 <script src="bigwins.js?v=1"></script>
 <script src="vendor/lwc.js"></script>
-<script type="module" src="app.js?v=103"></script>
+<script type="module" src="app.js?v=104"></script>
 </body>
 </html>

@@ -1430,7 +1430,7 @@ function statTiles(s) {
 }
 function renderSideStats() {
   if (!myStats) return;
-  $("sideStats").innerHTML = statTiles(myStats);
+  const el = $("sideStats"); if (el) el.innerHTML = statTiles(myStats);
 }
 
 async function sha256Hex(text) {
@@ -1503,7 +1503,6 @@ function openSheet(tab, id) {
   if (tab === "stats") loadStats();
   if (tab === "check") renderCheck(id);
 }
-$("statsBtn").onclick = () => { location.href = "stats"; };
 const openChat = () => { if (isPhone()) openSheet("chat"); else { sideTab("chat"); $("chatIn").focus(); } };
 $("sheetX").onclick = closeSheet;
 $("sheet").addEventListener("click", (e) => {
@@ -1522,7 +1521,7 @@ for (const el of [$("hist"), $("pills")]) el.addEventListener("click", (e) => {
 // Left column on desktop: Chat / Your rounds / How it works.
 function sideTab(name) {
   document.querySelectorAll("#sideTabs [data-side]").forEach((b) => b.classList.toggle("on", b.dataset.side === name));
-  $("paneChat").hidden = name !== "chat"; $("paneRounds").hidden = name !== "rounds"; $("paneHow").hidden = name !== "how";
+  $("paneChat").hidden = name !== "chat"; $("paneRounds").hidden = name !== "rounds";
   if (name === "chat") { dockChat(); chatSeen(); scrollChat(true); }
 }
 $("sideTabs").addEventListener("click", (e) => { const b = e.target.closest("[data-side]"); if (b) sideTab(b.dataset.side); });
@@ -1675,7 +1674,6 @@ const FAQ = [
   ["Do I need to bet real money?", "No, the game uses credits. Just sign in with X."],
   ["How much can I play?", "As much as your credits allow. Run out and your next free claim is never more than 24 hours away."],
 ];
-$("rules").innerHTML = HOW.map((t) => `<li>${esc(t)}</li>`).join("");
 $("howList").innerHTML = HOW.map((t) => `<li>${esc(t)}</li>`).join("");
 $("faq").innerHTML = FAQ.map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${esc(a).replace(/\n/g, "<br>")}</p></details>`).join("");
 
@@ -1793,10 +1791,6 @@ $("pnlReset").onclick = async () => {
 };
 function closeOnb() { if (blockedInfo || (cfg && cfg.seasonOver)) return; $("onb").hidden = true; }
 $("onbX").onclick = closeOnb;
-$("howBtn").onclick = () => showOnb("how", "info");
-$("howMore").onclick = () => showOnb("how", "info");
-$("faqBtn").onclick = () => showOnb("faq", "info");
-$("faqMore").onclick = () => showOnb("faq", "info");
 $("faqClose").onclick = closeOnb;
 $("onbDemo").addEventListener("submit", async (e) => {
   e.preventDefault();

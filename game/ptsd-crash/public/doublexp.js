@@ -4,7 +4,7 @@
   const css = document.createElement("style");
   css.textContent = `
   #dxp{display:none;flex:none;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;padding:6px 12px;font:600 12px/1.3 inherit;font-family:inherit;text-align:center;letter-spacing:.02em;border-bottom:1px solid rgba(255,255,255,.08);color:#9aa4b2;background:rgba(255,255,255,.03)}
-  #dxp.on,#dxp.off{display:flex}
+  /* the top banner is retired: the menu rail shows the XP hour (the data below still drives it) */
   #dxp b{font-weight:800}
   #dxp .t{font-variant-numeric:tabular-nums}
   #dxp.live{color:#1a1200;background:linear-gradient(90deg,#ffb800,#ffe066,#ffb800);background-size:200% 100%;animation:dxpSlide 3s linear infinite;border-bottom-color:#ffb800;font-size:14px;padding:9px 12px;letter-spacing:.04em}

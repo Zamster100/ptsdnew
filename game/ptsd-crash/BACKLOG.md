@@ -92,6 +92,38 @@ Rules for every item
 ### Guide page  (BUILT)
 - /guide: rules, XP formula and calculator, levels, perks, bonus XP, jackpot, FAQ. Numbers are read live from the game settings.
 
+### 9. Paid bet unlocks and late-cycle rebuys  (SPEC, BENCHED: automatic payments to be designed first)
+Goal: test whether people pay, using the top of the board. Bet sizes stay 100 to 1,000 for everyone else. Nothing here changes the crash odds. Payments start manual (see Payments).
+
+**9a. Bigger bets for leaders (unlock 5k, later 10k)**
+- 5k bets: offered from day 4 of a cycle to players in the top 100 by XP who also hold at least 25,000 credits (5x the bet). Price $10.
+- 10k bets: offered from day 7 to players in the top 20 by XP who also hold at least 100,000 credits (10x the bet). Price $25.
+- One unlock lasts for the cycle it was bought in. The unlock is by player, not by balance, and stays after they drop out of the top 100 (so the button doesn't flicker), but the balance rule still applies at bet time (bet at most the balance).
+- Message on the offer: "You're ahead. Keep your lead with bigger bets." It shows their rank, XP, and the 5k or 10k button.
+- Why these gates: simulation shows only about 3% of players ever reach 25k PNL, so a PNL gate is too rare and too lucky. A rank gate adapts to real numbers. A 5k bet roughly triples a rank-30 player's chance at the top 3 with 3 days left (14% against 5%). 10k is no better than 5k for most players, so it is a small, status-led tier.
+- Cohort size per 2,000 players: about 100 for 5k, about 20 for 10k. Expect $100 to $300 per cycle from a 20% buy rate, so treat it as a demand test.
+- Settings (env, all tunable live after day 2): BIGBET_5K_DAY, BIGBET_5K_RANK, BIGBET_5K_MIN_BAL, BIGBET_5K_PRICE, and the same four for 10k.
+- Needs: `crash_unlocks(player, cycle_id, tier, ts, tx)` table (additive), max-bet check in the buy path reads the unlock, an offer card on the game page and the Stats page, Guide section.
+
+**9b. Rebuys (late-cycle credit stacks)**
+- Opens for the last 2 days of a cycle, for any player. A stack is 10,000 credits for $5. Limit 6 stacks per player per cycle.
+- Credits are added to the balance like a claim: they never count as PNL or XP, so the only gain is more rounds.
+- Message: "Out of time? Buy credits and climb before the cycle ends."
+- Why the window: simulation shows a rebuy adds under 5 points of chance with 3 days left (the free 10k a day already funds you) but 6 to 18 points with 1 day left (1 stack: 7.6% to 13.4% to reach the top-100 XP).
+- Caveat: only the top 3 gets a prize, so a late rebuyer is buying rank. Smaller rewards for top 10 or top 100 (for example an NFT raffle) would give them something to buy for. Decide before launch.
+- Settings: REBUY_LAST_DAYS (2), REBUY_STACK (10000), REBUY_PRICE (5), REBUY_MAX (6).
+- Needs: `crash_purchases(id, player, cycle_id, kind, credits, price, chain, tx, ts)` table, an `addCredits` call on confirmation, and a Guide section.
+
+**Payments (start manual)**
+- Phase 1: the buy button shows a SOL/ETH address and a memo or exact amount, the team confirms in /admin and clicks Grant. No on-chain code. Enough to learn if anyone pays.
+- Phase 2, only if people pay: automatic verification (read the transaction by signature or hash, match amount and memo, grant once, refuse reuse of a tx).
+- Count the clicks on every buy button from day 1 (offered, clicked, paid), so the demand test has numbers.
+
+**Open questions**
+- Does the paid PNL count for the prize? In this spec, yes. It is effectively an entry fee for a better lottery ticket (legal check deferred as decided).
+- Per cycle or per campaign, and refunds if a cycle is cancelled.
+- Prices are guesses. A top-3 finish is worth a few hundred dollars, so $10 for a 5k button is cheap and could go higher near the end.
+
 ## Parked (ideas to come back to)
 - Missions: daily, weekly, rerolls, campaign-wide community goals (needs specifics).
 - Socials and competition: crews, head-to-head challenges, referral tiers.
@@ -161,12 +193,47 @@ Rating: value / complexity are Low, Med or High. "Legal" = needs the pre-launch 
 - Recommend not building. If the goal is trading and speculation, a tradeable NFT or badge would be safer than selling a rank.
 
 ### Dependencies and order (suggested)
+0. Item 9 (paid unlocks and rebuys) is the Buy & Burn test (G) in a cheaper form: sell unlocks and rebuys to the top of the board instead of credit packs.
 1. B (layout) and A (big-win popups): small, safe, visible.
 2. C simple communities.
 3. Multi-ticker core, then D cheap version, then F.
 4. E, G and H wait: G for the legal answer, E for value, H probably never.
 
+## Task limits (reward guardrails for /admin)
+Why: task points count in XP and are multiplied by Tickets (up to x2.5), and credits feed betting. Median XP per cycle is about 6.5k and the top 100 starts at about 35k, so tasks must stay a side dish. Set the XP on every task by hand: a blank XP field copies the credit reward.
+
+**Budget per player per cycle (10 days, before the Ticket multiplier)**
+- Task XP: aim for about 9,000, never more than 12,000 (hard ceiling 15,000). A 10-Ticket holder gets x2.5, so 12,000 becomes 30,000.
+- Task credits: no more than 10,000 a day in total (one daily claim). Credits only buy rounds and max bet is 1,000, so large credit rewards do nothing for the score, but they still dilute the "credits are limited" idea.
+- A single task is worth at most 1,000 XP (about 3% of the top-100 line) and 2,000 credits.
+- Tasks without a day repeat every day and pay every day: count them x10 per cycle. A task that is worth 300 XP and repeats is 3,000 XP, not 300. Give one-off tasks a specific day.
+- Tasks do not double in Double XP hour (DOUBLE_XP_TASKS stays 0).
+
+**Limits by task type** (the weakest check gets the lowest pay, because it is the easiest to farm with bots)
+| Type | How it is checked | Credits (max) | XP (max) | Repeat |
+|---|---|---|---|---|
+| visit (open a link) | timer only | 100 | 50 | daily is fine |
+| like | timer only | 100 | 50 | daily is fine |
+| retweet | timer only | 200 | 100 | daily is fine |
+| follow | timer only | 500 | 300 | one-time |
+| comment | proof link on their own X handle | 300 | 200 | daily is fine, one-time up to 400 XP |
+| quote | proof link, pays at once | 1,000 | 600 | one-time or a few times a cycle |
+| custom or review | a person approves it in /admin | 2,000 | 1,000 | one-time |
+
+**Example set that fits the budget (about 9,100 XP)**
+- 10 one-time tasks: 4 easy (follow, join) x 300, 4 medium (quote, connect wallet) x 600, 2 hard (review) x 1,000 = 5,600 XP.
+- 10 daily tasks over 10 days: 1 simple x 100 XP a day (1,000), plus a bigger "latest" task at 250 XP a day (2,500) = 3,500 XP.
+- Credits for that set: about 6,000 a day at most, under the 10,000 limit.
+
+**Rules of thumb when adding a task**
+- First add up what a player can earn from all active tasks in a cycle. Stay under the 12,000 ceiling.
+- If it is not checked (timer), cap it at 100 XP unless it is one-time.
+- If it needs a human to approve, it can be worth more, but there should be few of them.
+- Referrals (up to 40,000 a cycle) and achievements (27,100 total) are already large, so do not use tasks to make up the difference.
+
+**Not built yet (nice to have):** a warning in /admin that totals the XP and credits of all active tasks per cycle and turns red above the budget, and a hard cap setting (TASK_XP_CYCLE_CAP) that stops paying task XP past a ceiling.
+
 ## Before launch
 - Check the legal side: free play with cash prizes, and an NFT that gives a score edge, may count as consideration in some places.
 - Economy (done Nov 2026): bets 100 to 1,000, start 0, daily claim 10,000, bonus XP from streaks and perfect sells capped at 1,500 a day, Ticket multipliers 1.25 to 2.5, referrals 7,500 (first 5) / 3,750 with a 40,000 cap per cycle. Make sure the VPS .env sets these explicitly (see .env.example).
-- Task XP budget: pick values in /admin so total task XP per player stays near 8,000 to 12,000 a cycle.
+- Task XP budget: see "Task limits" above. Keep each cycle's task XP under 12,000 per player.
