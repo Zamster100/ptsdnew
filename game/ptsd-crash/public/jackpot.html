@@ -52,11 +52,11 @@
 <body>
 <header class="dbar">
   <a class="dbar-title" href="./" style="text-decoration:none"><img src="img/ptsd-logo.webp" alt="PTSD"><span>Crash</span></a>
-  <div class="dbar-right"><nav class="nv-wrap"><a class="nv" href="./">🎮<span> Play</span></a><a class="nv" href="tasks">🎯<span> Bounties</span></a><a class="nv" href="leaderboard">🏆<span> Leaderboard</span></a><a class="nv" href="rewards">🏅<span> Rewards</span></a></nav></div>
+  <div class="dbar-right"><nav class="nv-wrap"><a class="nv" href="./">🎮<span> Play</span></a><a class="nv" href="tasks">🎯<span> Bounties</span></a><a class="nv" href="leaderboard">🏆<span> Leaderboard</span></a><a class="nv" href="rewards">🏅<span> Rewards</span></a><a class="nv" href="guide">📖<span> Guide</span></a></nav></div>
 </header>
 <main class="jp-wrap">
   <div class="jp-card">
-    <div class="jp-ban"><div><h1>Jackpot</h1><p>Every loss feeds the pot. Every loss is a ticket. One winner a day.</p></div><a class="jp-play" href="./">Back to game</a></div>
+    <div class="jp-ban"><div><h1>Jackpot</h1><p>Every loss feeds the pot. Instant rugs earn tickets. One winner a day.</p></div><a class="jp-play" href="./">Back to game</a></div>
     <div class="jp-pot" id="pot"><small>Community pot</small><span class="n" id="potN">0</span><div class="u" id="potU">credits</div></div>
     <div class="jp-stats">
       <div class="jp-stat"><b id="next">--:--:--</b><span>Next draw</span></div>
@@ -97,7 +97,7 @@ function draw() {
   $("potU").textContent = `${fmt(Math.floor(st.pot * st.dailyShare))} goes to the next daily winner`;
   $("how").innerHTML = [
     `<b>${Math.round(st.share * 100)}%</b> of every loss goes into the pot. Nobody pays extra.`,
-    `Every loss earns lottery tickets: <b>1 per ${fmt(st.perTicket)}</b> lost, at least 1. You can hold up to ${fmt(st.maxTickets)} a day.`,
+    `<b>Instant rugs</b> (a crash under ${st.instaUnder}x) earn lottery tickets: <b>1 per ${fmt(st.perTicket)}</b> lost on that round, at least 1. Other losses feed the pot but earn no tickets. You can hold up to ${fmt(st.maxTickets)} a day.`,
     `Every day at <b>9 AM Eastern</b> one ticket is drawn. Its owner wins <b>${Math.round(st.dailyShare * 100)}%</b> of the pot.`,
     `<b>Pot Breaker:</b> sell at <b>${st.breakerX}x or higher</b> and you take the whole pot.`,
   ].map((x) => `<li>${x}</li>`).join("");
@@ -118,7 +118,8 @@ load(); setInterval(load, 8000); setInterval(clock, 1000);
 <script src="doublexp.js?v=3"></script>
 <script src="jackpot.js?v=1"></script>
 <script src="sentiment.js?v=1"></script>
-<script src="sidepanel.js?v=3"></script>
+<script src="sidepanel.js?v=5"></script>
+<script src="bigwins.js?v=1"></script>
 <script type="module" src="usermenu.js"></script>
 </body>
 </html>

@@ -21,7 +21,7 @@
 <header class="dbar">
   <div class="dbar-title"><img src="img/ptsd-logo.webp" alt="PTSD"><span>Crash</span></div>
   <div class="dbar-right">
-    <nav class="nv-wrap"><a class="nv on" href="./">🎮<span> Play</span></a><a class="nv" href="tasks" id="tasksBtn">🎯<span> Bounties</span><i class="tb-n" id="tasksCount" hidden></i></a><a class="nv" href="leaderboard">🏆<span> Leaderboard</span></a><a class="nv" href="rewards">🏅<span> Rewards</span></a></nav>
+    <nav class="nv-wrap"><a class="nv on" href="./">🎮<span> Play</span></a><a class="nv" href="tasks" id="tasksBtn">🎯<span> Bounties</span><i class="tb-n" id="tasksCount" hidden></i></a><a class="nv" href="leaderboard">🏆<span> Leaderboard</span></a><a class="nv" href="rewards">🏅<span> Rewards</span></a><a class="nv" href="guide">📖<span> Guide</span></a></nav>
     <button class="xbtn" id="signInBtn" type="button" hidden><svg viewBox="0 0 24 24" width="14" height="14"><path d="M17.75 3h3.07l-6.7 7.66L22 21h-6.17l-4.83-6.32L5.47 21H2.4l7.17-8.2L2 3h6.33l4.37 5.77L17.75 3zm-1.08 16.17h1.7L7.4 4.74H5.58l11.09 14.43z" fill="currentColor"/></svg><span>Sign in</span></button>
     <div class="um" id="meMenu" hidden><button class="me-chip" id="meChip" type="button" aria-haspopup="true"><span class="av" id="meAv"></span><b id="meName"></b></button><div class="um-pop"><a id="umProfile" href="#">👤 Profile</a><button type="button" id="umOut">↩ Log out</button></div></div>
     <button class="dbar-icon" id="muteBtn" type="button" aria-label="Sound effects" title="Sound effects">🔊</button>
@@ -97,6 +97,7 @@
         <ul class="side-rules" id="rules"></ul>
         <button class="side-more" id="howMore" type="button">How to play</button>
         <button class="side-more" id="faqMore" type="button">FAQ</button>
+        <a class="side-more" href="guide" style="display:block;text-align:center;text-decoration:none">Full guide: XP, levels, rules</a>
       </div>
     </aside>
   </div>
@@ -289,7 +290,8 @@
 <script src="doublexp.js?v=3"></script>
 <script src="jackpot.js?v=1"></script>
 <script src="sentiment.js?v=1"></script>
-<script src="sidepanel.js?v=3"></script>
+<script src="sidepanel.js?v=5"></script>
+<script src="bigwins.js?v=1"></script>
 <script src="vendor/lwc.js"></script>
 <script type="module" src="app.js?v=102"></script>
 </body>

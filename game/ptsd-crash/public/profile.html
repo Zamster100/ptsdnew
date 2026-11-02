@@ -82,7 +82,7 @@
 <body>
 <header class="dbar">
   <a class="dbar-title" href="./" style="text-decoration:none"><img src="img/ptsd-logo.webp" alt="PTSD"><span>Crash</span></a>
-  <div class="dbar-right"><nav class="nv-wrap"><a class="nv" href="./">🎮<span> Play</span></a><a class="nv" href="tasks">🎯<span> Bounties</span></a><a class="nv" href="leaderboard">🏆<span> Leaderboard</span></a><a class="nv" href="rewards">🏅<span> Rewards</span></a></nav></div>
+  <div class="dbar-right"><nav class="nv-wrap"><a class="nv" href="./">🎮<span> Play</span></a><a class="nv" href="tasks">🎯<span> Bounties</span></a><a class="nv" href="leaderboard">🏆<span> Leaderboard</span></a><a class="nv" href="rewards">🏅<span> Rewards</span></a><a class="nv" href="guide">📖<span> Guide</span></a></nav></div>
 </header>
 <canvas id="fx" aria-hidden="true"></canvas>
 <main class="pf" id="pf"><div class="pf-empty">Loading…</div></main>
@@ -148,6 +148,7 @@ async function load() {
       <div class="tbar"><i style="width:${Math.max(3, p.level.pct)}%"></i></div>
       <p class="mut" style="margin-top:8px">${p.level.next ? `<b>${fmt(p.level.xp)}</b> / ${fmt(p.level.next)} level XP to level ${p.level.n + 1}${p.level.nextStage ? ` · <b>${esc(p.level.nextStage.name)}</b> badge at level ${p.level.nextStage.from}` : ""}` : "Max level reached."}</p>
       <div class="ladder" style="margin-top:10px">${p.level.stages.map((s) => `<div class="rung ${p.level.n >= s.from ? "got" : ""} ${p.level.name === s.name ? "now" : ""}"><i>${s.from}</i>${esc(s.name)}<em>Level ${s.from}+</em></div>`).join("")}</div></div>
+    ${p.streak ? `<div class="pf-sec"><h2>Streaks</h2><div class="achs"><span class="ach on">🔥 Win streak <b>${fmt(p.streak.win)}</b> · best ${fmt(p.streak.bestWin)}</span><span class="ach on">📅 Login streak <b>${fmt(p.streak.login)}</b> · best ${fmt(p.streak.bestLogin)}</span></div></div>` : ""}
     ${p.achievements ? `<div class="pf-sec"><h2>Achievements · ${p.achievements.unlocked}/${p.achievements.total}</h2>${p.achievements.recent.length ? `<div class="achs">${p.achievements.recent.map((a) => `<span class="ach" title="${esc(a.name)}: ${esc(a.desc)}">${a.icon} ${esc(a.name)}</span>`).join("")}</div>` : `<p class="mut">None yet.</p>`}<p class="mut" style="margin-top:8px"><a href="rewards" style="color:var(--up);font-weight:800">See every achievement</a></p></div>` : ""}
     ${mine ? `<div class="pf-sec nft-sec" id="own"></div>` : ""}
     <div class="pf-sec"><h2>Ticket levels</h2><p class="mut">Hold PTSD Ticket NFTs to level up. Tickets boost your XP while it is above zero, and also unlock the NFT bonus: an extra 10k free credits claim, once a day with 1 Ticket, twice with 2, three times with 3 or more.</p><div class="ladder">${rungs}</div><div class="tbar"><i style="width:${pct}%"></i></div><p class="mut" style="margin-top:8px">${next}</p></div>
@@ -240,7 +241,8 @@ load();
 <script src="doublexp.js?v=3"></script>
 <script src="jackpot.js?v=1"></script>
 <script src="sentiment.js?v=1"></script>
-<script src="sidepanel.js?v=3"></script>
+<script src="sidepanel.js?v=5"></script>
+<script src="bigwins.js?v=1"></script>
 <script type="module" src="usermenu.js"></script>
 </body>
 </html>

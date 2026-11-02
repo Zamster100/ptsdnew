@@ -59,6 +59,7 @@
     ${item("rewards", "🏅", "Rewards", here === "rewards", `<i class="sp-dot" id="spDot" hidden></i>`)}
     <div class="sp-sep"></div>
     ${item("stats", "📊", "Stats", here === "stats")}
+    ${item("guide", "📖", "Guide", here === "guide")}
     ${tool("spSent", "🧭", "Sentiment")}
     <a class="sp-it ${here === "jackpot" ? "on" : ""}" id="spJp" href="jackpot"><span class="i">💰</span><span class="t"><span class="sp-l">Jackpot</span><small class="sp-s" id="spJpS"></small></span></a>
     ${tool("spDx", "⚡", "XP hour")}

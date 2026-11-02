@@ -14,7 +14,7 @@
 <style>
   body { min-height: 100svh; }
   .dbar { position: relative; z-index: 5; }
-  .rw-wrap { position: relative; z-index: 1; width: min(860px, 100%); margin: 0 auto; padding: 18px 16px 40px; display: grid; gap: 16px; }
+  .rw-wrap { position: relative; z-index: 1; width: min(860px, 100%); margin: 0 auto; padding: 18px 16px 40px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
   .rw-ban { border-radius: 24px; padding: 22px 20px 18px; display: flex; align-items: center; gap: 14px; background: radial-gradient(120% 160% at 10% 0%, rgba(59,227,138,.55), transparent 60%), radial-gradient(90% 140% at 100% 100%, rgba(232,163,23,.55), transparent 65%), #0c140f; box-shadow: 0 0 0 2px #1d6b49, 0 0 38px rgba(59,227,138,.2); }
   .rw-ban h1 { margin: 0; font: 400 38px/1 "Rubik Glitch", Manrope, sans-serif; color: #fff; text-shadow: 0 3px 16px rgba(0,0,0,.55); }
   .rw-ban p { margin: 6px 0 0; color: rgba(255,255,255,.85); font-size: 13px; font-weight: 600; }
@@ -52,7 +52,7 @@
 <body>
 <header class="dbar">
   <a class="dbar-title" href="./" style="text-decoration:none"><img src="img/ptsd-logo.webp" alt="PTSD"><span>Crash</span></a>
-  <div class="dbar-right"><nav class="nv-wrap"><a class="nv" href="./">🎮<span> Play</span></a><a class="nv" href="tasks">🎯<span> Bounties</span></a><a class="nv" href="leaderboard">🏆<span> Leaderboard</span></a><a class="nv on" href="rewards">🏅<span> Rewards</span></a></nav></div>
+  <div class="dbar-right"><nav class="nv-wrap"><a class="nv" href="./">🎮<span> Play</span></a><a class="nv" href="tasks">🎯<span> Bounties</span></a><a class="nv" href="leaderboard">🏆<span> Leaderboard</span></a><a class="nv on" href="rewards">🏅<span> Rewards</span></a><a class="nv" href="guide">📖<span> Guide</span></a></nav></div>
 </header>
 <main class="rw-wrap">
   <div class="rw-ban"><div><h1>Rewards</h1><p>Perks for your level, achievements to collect, and goals the whole community works on together.</p></div><a class="rw-play" href="./">Back to game</a></div>
@@ -109,7 +109,8 @@ load(); setInterval(load, 30000);
 <script src="doublexp.js?v=3"></script>
 <script src="jackpot.js?v=1"></script>
 <script src="sentiment.js?v=1"></script>
-<script src="sidepanel.js?v=3"></script>
+<script src="sidepanel.js?v=5"></script>
+<script src="bigwins.js?v=1"></script>
 <script type="module" src="usermenu.js"></script>
 </body>
 </html>

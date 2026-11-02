@@ -12,7 +12,7 @@ const now = Date.now();
 const srv = spawn(process.execPath, [path.join(ROOT, "src/server.js")], { cwd: ROOT, stdio: "ignore", env: {
   ...process.env, PORT: String(PORT), HOST: "127.0.0.1", CRASH_BASE: "", CRASH_TEST: "1", CLAIMS: "1", DEMO_LOGIN: "1", X_CLIENT_ID: "", LOGIN_STEP: "0",
   DB_PATH: path.join(dir, "t.db"), LOG_DIR: path.join(dir, "logs"), MIN_BET: "100", MAX_BET: "2500", START_CREDITS: "0", DAILY_CREDITS: "10000",
-  NFT_CONTRACT: "", NFT_RPC_URL: "", ADMIN_USERS: "boss:pw123", BAD_BEAT: "0", JACKPOT_BREAKER_X: "1.01",
+  NFT_CONTRACT: "", NFT_RPC_URL: "", ADMIN_USERS: "boss:pw123", BAD_BEAT: "0", JACKPOT_BREAKER_X: "1.01", JACKPOT_INSTA_UNDER: "1000",
   CYCLES: JSON.stringify([{ id: 1, name: "Cycle 1", start: new Date(now - 1000).toISOString(), end: new Date(now + 900_000).toISOString() }]),
 } });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));

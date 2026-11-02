@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="style.css?v=64">
 <style>
   body { min-height: 100svh; }
-  .rw-wrap { position: relative; z-index: 1; width: min(860px, 100%); margin: 0 auto; padding: 18px 16px 40px; display: grid; gap: 16px; }
+  .rw-wrap { position: relative; z-index: 1; width: min(860px, 100%); margin: 0 auto; padding: 18px 16px 40px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
   .rw-ban { border-radius: 24px; padding: 22px 20px 18px; display: flex; align-items: center; gap: 14px; background: radial-gradient(120% 160% at 10% 0%, rgba(80,140,255,.5), transparent 60%), radial-gradient(90% 140% at 100% 100%, rgba(59,227,138,.4), transparent 65%), #0c1018; box-shadow: 0 0 0 2px #27406e, 0 0 38px rgba(80,140,255,.2); }
   .rw-ban h1 { margin: 0; font: 400 38px/1 "Rubik Glitch", Manrope, sans-serif; color: #fff; text-shadow: 0 3px 16px rgba(0,0,0,.55); }
   .rw-ban p { margin: 6px 0 0; color: rgba(255,255,255,.85); font-size: 13px; font-weight: 600; }
@@ -31,6 +31,11 @@
   .trx b { font-weight: 800; } .trx small { display: block; color: var(--mut); font-size: 12px; font-weight: 600; }
   .trx .amt { font-weight: 900; font-variant-numeric: tabular-nums; white-space: nowrap; }
   .trx a { color: inherit; text-decoration: none; }
+  .pnl-h { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; } .pnl-h h2 { margin: 0; }
+  .seg { margin-left: auto; display: flex; gap: 4px; } .seg button { appearance: none; border: 1px solid var(--bd); background: var(--panel2); color: var(--mut); font: 800 12px Manrope, sans-serif; border-radius: 999px; padding: 5px 12px; cursor: pointer; }
+  .seg button.on { color: #fff; border-color: #F05150; background: #2a1416; }
+  .pnl-box { position: relative; } .pnl-box svg { width: 100%; height: auto; display: block; touch-action: none; }
+  .pnl-tip { position: absolute; top: 6px; left: 50px; pointer-events: none; font: 800 12px Manrope, sans-serif; background: #0e0f11; border: 1px solid var(--bd); border-radius: 8px; padding: 4px 8px; display: none; white-space: nowrap; }
   .msg { color: var(--mut); text-align: center; padding: 20px; }
   @media (max-width: 560px) { .rw-ban h1 { font-size: 28px; } .rw-ban { flex-wrap: wrap; } }
 </style>
@@ -38,12 +43,13 @@
 <body>
 <header class="dbar">
   <a class="dbar-title" href="./" style="text-decoration:none"><img src="img/ptsd-logo.webp" alt="PTSD"><span>Crash</span></a>
-  <div class="dbar-right"><nav class="nv-wrap"><a class="nv" href="./">🎮<span> Play</span></a><a class="nv" href="tasks">🎯<span> Bounties</span></a><a class="nv" href="leaderboard">🏆<span> Leaderboard</span></a><a class="nv on" href="rewards">🏅<span> Rewards</span></a></nav></div>
+  <div class="dbar-right"><nav class="nv-wrap"><a class="nv" href="./">🎮<span> Play</span></a><a class="nv" href="tasks">🎯<span> Bounties</span></a><a class="nv" href="leaderboard">🏆<span> Leaderboard</span></a><a class="nv on" href="rewards">🏅<span> Rewards</span></a><a class="nv" href="guide">📖<span> Guide</span></a></nav></div>
 </header>
 <main class="rw-wrap">
   <div class="rw-ban"><div><h1>Stats</h1><p>Your numbers, your last 10 transactions, and how the whole community is doing.</p></div><a class="rw-play" href="./">Back to game</a></div>
   <section class="rw-sec" id="me"><div class="msg">Loading…</div></section>
   <section class="rw-sec" id="com"></section>
+  <section class="rw-sec" id="pnl"></section>
   <section class="rw-sec" id="tx"></section>
 </main>
 <script>
@@ -78,12 +84,52 @@ async function load() {
     $("com").innerHTML = m && m.on ? "<h2>Community</h2><div class=\"sgrid\">" + tile("Rounds played by everyone", fmt(m.rounds)) + tile("Players joined", fmt(m.players)) + "</div>" : "";
   } catch { $("com").innerHTML = ""; }
 }
-load(); setInterval(load, 20000);
+let pnlMode = "round", pnlData = null;
+function drawPnl() {
+  const box = $("pnl");
+  if (!pnlData || !pnlData.rows.length) { box.innerHTML = "<h2>PNL</h2><div class=\"msg\">Play a round and your PNL line shows up here.</div>"; return; }
+  let pts = []; let run = pnlData.start;
+  if (pnlMode === "round") for (const [ts, p] of pnlData.rows) { run += p; pts.push([ts, run]); }
+  else {
+    const byDay = new Map();
+    for (const [ts, p] of pnlData.rows) { const d = new Date(ts); const k = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime(); byDay.set(k, (byDay.get(k) || 0) + p); }
+    for (const k of [...byDay.keys()].sort((a, b) => a - b)) { run += byDay.get(k); pts.push([k, run]); }
+  }
+  pts.unshift([pts[0][0] - 1, pnlData.start]);
+  const W = 800, H = 240, L = 56, R = 12, T = 12, Bm = 26;
+  const ys = pts.map((p) => p[1]).concat(0), lo = Math.min(...ys), hi = Math.max(...ys), span = hi - lo || 1;
+  const X = (i) => L + (pts.length < 2 ? 0 : (i / (pts.length - 1)) * (W - L - R)), Y = (v) => T + (1 - (v - lo) / span) * (H - T - Bm);
+  const end = pts[pts.length - 1][1], col = end >= 0 ? "#3be38a" : "#F05150";
+  const line = pts.map((p, i) => (i ? "L" : "M") + X(i).toFixed(1) + " " + Y(p[1]).toFixed(1)).join(" ");
+  const area = line + ` L${X(pts.length - 1).toFixed(1)} ${Y(0).toFixed(1)} L${X(0).toFixed(1)} ${Y(0).toFixed(1)} Z`;
+  const dt = (ts) => new Date(ts).toLocaleDateString([], { month: "short", day: "numeric" });
+  box.innerHTML = `<div class="pnl-h"><h2>PNL</h2><div class="seg"><button data-m="round" class="${pnlMode === "round" ? "on" : ""}">Per round</button><button data-m="day" class="${pnlMode === "day" ? "on" : ""}">Per day</button></div></div>
+    <div class="pnl-box"><svg viewBox="0 0 ${W} ${H}" id="pnlSvg" role="img" aria-label="Cumulative PNL">
+      <path d="${area}" fill="${col}" opacity=".12"/><line x1="${L}" x2="${W - R}" y1="${Y(0)}" y2="${Y(0)}" stroke="#5d636d" stroke-dasharray="4 4"/>
+      <path d="${line}" fill="none" stroke="${col}" stroke-width="2.5" stroke-linejoin="round"/>
+      <text x="${L - 6}" y="${Y(hi) + 4}" fill="#9aa4b2" font-size="11" text-anchor="end">${sgn(hi)}</text><text x="${L - 6}" y="${Y(lo) + 4}" fill="#9aa4b2" font-size="11" text-anchor="end">${sgn(lo)}</text>
+      <text x="${L}" y="${H - 6}" fill="#9aa4b2" font-size="11">${dt(pts[1][0])}</text><text x="${W - R}" y="${H - 6}" fill="#9aa4b2" font-size="11" text-anchor="end">${dt(pts[pts.length - 1][0])}</text>
+      <circle id="pnlDot" r="4" fill="${col}" cx="${X(pts.length - 1)}" cy="${Y(end)}"/></svg><div class="pnl-tip" id="pnlTip"></div></div>
+    <div style="color:var(--mut);font-size:12px;font-weight:600;margin-top:6px">Cumulative PNL over your last ${pnlData.rows.length} rounds${pnlData.rows.length >= 400 ? " (older rounds are folded into the starting point)" : ""}. Free claims aren't included.</div>`;
+  const svg = $("pnlSvg"), tip = $("pnlTip");
+  const move = (e) => {
+    const r = svg.getBoundingClientRect(), x = ((e.clientX - r.left) / r.width) * W;
+    const i = Math.max(0, Math.min(pts.length - 1, Math.round(((x - L) / (W - L - R)) * (pts.length - 1))));
+    $("pnlDot").setAttribute("cx", X(i)); $("pnlDot").setAttribute("cy", Y(pts[i][1]));
+    tip.style.display = "block"; tip.style.left = Math.min(r.width - 150, Math.max(0, (X(i) / W) * r.width + 8)) + "px";
+    tip.innerHTML = `<span class="${cls(pts[i][1])}">${sgn(pts[i][1])}</span> · ${new Date(pts[i][0]).toLocaleString([], pnlMode === "day" ? { month: "short", day: "numeric" } : { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}`;
+  };
+  svg.addEventListener("pointermove", move); svg.addEventListener("pointerleave", () => { tip.style.display = "none"; });
+}
+document.addEventListener("click", (e) => { const b = e.target.closest(".seg button"); if (b) { pnlMode = b.dataset.m; drawPnl(); } });
+async function loadPnl() { try { pnlData = await get("api/pnl"); } catch { pnlData = null; } drawPnl(); }
+load(); loadPnl(); setInterval(load, 20000); setInterval(loadPnl, 60000);
 </script>
 <script src="doublexp.js?v=3"></script>
 <script src="jackpot.js?v=1"></script>
 <script src="sentiment.js?v=1"></script>
-<script src="sidepanel.js?v=3"></script>
+<script src="sidepanel.js?v=5"></script>
+<script src="bigwins.js?v=1"></script>
 <script type="module" src="usermenu.js"></script>
 </body>
 </html>

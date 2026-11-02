@@ -1,4 +1,4 @@
-// Jackpot link + lottery ticket counter in the top bar of every page. Your tickets for today's draw (every loss earns some).
+// Jackpot link + lottery ticket counter in the top bar of every page. Your tickets for today's draw (instant rugs earn them).
 (() => {
   const css = document.createElement("style");
   css.textContent = `

@@ -17,7 +17,7 @@ import { initWallet, badgeOf, multOf, TIERS } from "./wallet.js";
 import { initReferrals } from "./referrals.js";
 import { initPnlReset } from "./pnlreset.js";
 import { initTasks } from "./tasks.js";
-import { initXp, xpOf, levelInfo, stageOf, STAGES } from "./xp.js";
+import { initXp, xpOf, levelInfo, stageOf, STAGES, xpForLevel, LEVEL_CAP } from "./xp.js";
 import { initStreaks } from "./streaks.js";
 import { initDoubleXp } from "./doublexp.js";
 import { initSentiment } from "./sentiment.js";
@@ -178,7 +178,7 @@ const finishOverdue = db.transaction((row) => {
     // rugged again and again: the last bet comes back as credits (profit and loss and the round stay as they were)
     const back = badbeat.check(row);
     if (back) q.addBal.run(back, row.player, row.coin);
-    jackpot.onLoss(q.round.get(row.id)); // a slice of the loss feeds the community pot, and earns tickets
+    jackpot.onLoss(q.round.get(row.id)); // a slice of the loss feeds the community pot (instant rugs also earn lottery tickets)
     achievements.evaluate(row.player, row.id); milestones.onSettled();
   }
 });
@@ -360,6 +360,40 @@ function transactionsOf(player, coin, limit = 10) {
   for (const r of txQ.beats.all(player, limit)) rows.push({ ts: r.ts, kind: "refund", label: "Bad beat refund", amount: r.amount });
   return rows.sort((a, b) => b.ts - a.ts).slice(0, limit);
 }
+// Big sells (>= BIGWIN_X, default 5x) in the last day, for the popups: public, names only.
+const BIGWIN_X = Math.max(1.01, Number(process.env.BIGWIN_X) || 5);
+let bigQ = null;
+function bigWins(since, exceptPlayer) {
+  bigQ ||= db.prepare("SELECT id, player, sold_mult, pnl, ts FROM crash_rounds WHERE ts > ? AND state IN ('sold','max') AND sold_mult >= ? AND coin = ? ORDER BY ts DESC LIMIT 15");
+  const floor = Math.max(since || 0, Date.now() - 24 * 3600_000);
+  return bigQ.all(floor, BIGWIN_X, CURRENCY).filter((r) => r.player !== exceptPlayer && !auth.blockedIds().has(r.player))
+    .slice(0, 10).map((r) => ({ id: r.id, name: auth.publicUser(r.player).username, x: r.sold_mult, pnl: r.pnl, ts: r.ts }));
+}
+// Everything the Guide page quotes, read from the live settings so it can never drift from the game.
+function guideOf() {
+  const levels = [];
+  for (let n = 1; n <= LEVEL_CAP; n++) levels.push({ n, xp: xpForLevel(n), stage: stageOf(n).name });
+  return {
+    game: { min: COINS[CURRENCY].min, max: COINS[CURRENCY].max, maxMult: MAX_MULT, currency: CURRENCY, bigWinX: BIGWIN_X },
+    cycles: { bankroll: cycles.publicCfg().cycleBankroll, prize: cycles.publicCfg().cyclePrize },
+    credits: { start: campaign.cfg.start, daily: campaign.cfg.daily, hours: campaign.cfg.hours },
+    levels, stages: STAGES, tiers: [...TIERS].reverse(), perks: PERKS,
+    streaks: streaks.cfg, doubleXp: { hour: dxp.cfg.hour, minutes: dxp.cfg.minutes, mult: dxp.cfg.mult, tasks: dxp.cfg.tasks },
+    badBeat: badbeat.cfg.on ? { count: badbeat.cfg.count, under: badbeat.cfg.under, cooldownMin: Math.round(badbeat.cfg.cooldownMs / 60000) } : null,
+    jackpot: jackpot.cfg.on ? { share: jackpot.cfg.share, seed: jackpot.cfg.seed, dailyShare: jackpot.cfg.dailyShare, breakerX: jackpot.cfg.breakerX, perTicket: jackpot.cfg.perTicket, maxTickets: jackpot.cfg.maxTickets, instaUnder: jackpot.cfg.instaUnder } : null,
+    referrals: { points: referrals.cfg.points, max: referrals.cfg.max, minRounds: referrals.cfg.minRounds, bonus: referrals.cfg.bonus },
+    achievements: achievements.catalog.map((a) => ({ group: a.group, icon: a.icon, name: a.name, desc: a.desc, xp: a.xp })),
+    milestones: milestones.goals.map((g) => ({ track: g.track, goal: g.goal, reward: g.reward })),
+  };
+}
+// The player's PNL history for the Stats chart: their last 400 settled rounds, oldest first, plus where the total stood before them.
+let pnlQ = null;
+function pnlSeries(player, coin) {
+  pnlQ ||= db.prepare("SELECT ts, pnl FROM crash_rounds WHERE player = ? AND coin = ? AND state != 'open' ORDER BY ts DESC LIMIT 400");
+  const rows = pnlQ.all(player, coin).reverse(), net = statsOf(player, coin).net;
+  const shown = rows.reduce((t, r) => t + (r.pnl || 0), 0);
+  return { start: net - shown, rows: rows.map((r) => [r.ts, r.pnl || 0]) };
+}
 function periodStart(period) {
   const d = new Date();
   if (period === "day") return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
@@ -512,7 +546,7 @@ function profileOf(handle) {
     user: auth.publicUser(u.id), joined: u.created,
     cycle: cur && { id: cur.id, name: cur.name, start: cur.start, end: cur.end, live: !!cycles.current(), upcoming: cur.start > Date.now() },
     rank: now.rank, players: now.players,
-    level: { ...xp.levelOf(u.id), stages: STAGES },
+    level: { ...xp.levelOf(u.id), stages: STAGES }, streak: streaks.stateOf(u.id),
     xp: r ? r.xp : 0, mult: r ? r.mult : 1, ticketMult: multOf(count), refs: r ? r.refs : 0, tasks: r ? r.tasks : 0, activity: r ? r.activity : 0, referrals: referrals.countOf(u.id), achievements: achievements.summary(u.id), net: r ? r.net : 0, rounds: r ? r.rounds : 0, wins: r ? r.wins : 0, best: r ? r.best : 0, bestWin: r ? r.bestWin : 0,
     lifetime: { rounds: s.rounds, wins: s.wins, wagered: s.wagered, bestMult: s.bestMult, bestStreak: s.bestStreak },
     nft: { count, badge, next: nextTier && { name: nextTier.name, min: nextTier.min, level: nextTier.level }, tiers: [...TIERS].reverse().map((t) => ({ min: t.min, level: t.level, name: t.name, mult: t.mult })) },
@@ -652,6 +686,7 @@ const server = http.createServer(async (req, res) => {
       if (p === "/jackpot") return serveStatic(res, "jackpot.html");
       if (p === "/rewards") return serveStatic(res, "rewards.html");
       if (p === "/stats") return serveStatic(res, "stats.html");
+      if (p === "/guide") return serveStatic(res, "guide.html");
       if (p === "/tasks") return serveStatic(res, "tasks.html");
       if (p === "/admin") return serveStatic(res, "admin.html");
       return serveStatic(res, p === "/" ? "index.html" : p);
@@ -671,6 +706,8 @@ const server = http.createServer(async (req, res) => {
     }
     if (p.startsWith("/api/auth/")) return await auth.api(req, res, p, body, send);
     // Level perks, achievements and community milestones in one place (the Rewards page).
+    if (p === "/api/guide") { res.setHeader("cache-control", "public, max-age=60"); return send(res, 200, guideOf()); }
+    if (p === "/api/bigwins") return send(res, 200, { x: BIGWIN_X, wins: bigWins(Number(u.searchParams.get("since")) || 0, player), serverNow: Date.now() });
     if (p === "/api/rewards") {
       if (player) achievements.evaluate(player);
       const lv = player ? xp.levelOf(player) : null;
@@ -795,6 +832,11 @@ const server = http.createServer(async (req, res) => {
         shareQ.add.run(id, row.id, sym, color, Date.now());
       }
       return send(res, 200, { url: `${PUBLIC_URL}/win/${id}` });
+    }
+    if (p === "/api/pnl") {
+      const coin = String(u.searchParams.get("coin") || CURRENCY);
+      if (!COINS[coin]) return send(res, 400, { error: "Coin not available." });
+      return send(res, 200, pnlSeries(player, coin));
     }
     if (p === "/api/transactions") {
       const coin = String(u.searchParams.get("coin") || CURRENCY);

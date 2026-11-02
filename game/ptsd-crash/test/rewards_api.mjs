@@ -60,6 +60,16 @@ try {
   t = (await get("transactions")).transactions;
   check(t.some((x) => x.label === "Community milestone" && x.amount === 777), "the milestone claim is in the transactions", t.map((x) => x.label));
 
+  const pn = await get("pnl");
+  check(pn.rows.length === 2 && pn.start + pn.rows.reduce((t, r) => t + r[1], 0) === (await get("stats")).net, "the PNL series ends exactly at the net PNL", pn);
+  check((await fetch(B + "pnl").then((r) => r.status)) === 401, "the PNL series needs a sign-in");
+  const bw = await fetch(B + "bigwins").then(json);
+  check(Array.isArray(bw.wins) && bw.x === 5 && bw.wins.every((w) => w.x >= 5 && typeof w.name === "string" && !("player" in w)), "the big-win feed is public, names only, 5x and up", bw);
+  const gd = await fetch(B + "guide").then(json);
+  check(gd.levels.length === 30 && gd.levels[1].xp === 500 && gd.tiers.length === 5 && gd.perks.length === 6 && gd.achievements.length >= 30 && gd.game.maxMult === 100 && gd.streaks.winStep > 0, "the guide reads live settings: levels, tickets, perks, achievements, streaks", Object.keys(gd));
+  check(JSON.stringify(gd).toLowerCase().includes("whitelist") === false && !("edge" in gd) && gd.jackpot.breakerX >= 1.01, "the guide has no whitelist or edge talk");
+  const pf = await fetch(B + "profile/rw").then(json);
+  check(pf.streak && typeof pf.streak.win === "number" && typeof pf.streak.bestLogin === "number", "the public profile carries streaks", pf.streak);
   const st = await get("stats");
   check(st.rounds === 2, "stats count every round", st.rounds);
 } finally { srv.kill(); await sleep(300); try { fs.rmSync(dir, { recursive: true, force: true }); } catch {} }

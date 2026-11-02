@@ -68,7 +68,7 @@ Rules for every item
 
 ### 6. Community jackpot  (BUILT, defaults below are tunable)
 - 5% of every loss feeds a pot (players are never charged extra). The pot never drops below a floor of 100,000 (what it restarts at after a win).
-- Lottery tickets: every losing round earns tickets (1 per 1,000 lost, at least 1, max 500 per player per day). Counter in the top bar of every page, links to the Jackpot page. (Called "lottery tickets" because "Tickets" is already the NFT.)
+- Lottery tickets: only instant rugs (crash under 1.1x, JACKPOT_INSTA_UNDER) earn tickets (1 per 1,000 lost on that round, at least 1, max 500 per player per day). Counter in the top bar of every page, links to the Jackpot page. (Called "lottery tickets" because "Tickets" is already the NFT.)
 - Daily draw at 9 AM Eastern (the tasks reset): one ticket drawn from the day's entries, the owner wins 50% of the pot. Missed days (downtime) are caught up. The winner is told on their next visit.
 - Pot Breaker: the first sell at 50x or higher takes the whole pot (popup, credited at once).
 - Jackpot page (`/jackpot`): pot counter, countdown to the draw, your tickets / all tickets, how it works, winners list.

@@ -15,13 +15,15 @@ function fresh() {
   const pay = (p, n) => bal.set(p, (bal.get(p) || 0) + n);
   return { db, bal, j: initJackpot({ db, coin: "CREDITS", dayKey, nextReset, nameOf: (p) => "@" + p, pay }) };
 }
-const loss = (player, n, over = {}) => ({ id: "x", player, coin: "CREDITS", pnl: -n, state: "rekt", ...over });
+const loss = (player, n, over = {}) => ({ id: "x", player, coin: "CREDITS", pnl: -n, state: "rekt", crash: 1.0, ...over }); // default: an instant rug
 
 { const { j } = fresh();
   check(j.pot() === 100_000, "the pot starts at its floor (100,000)");
   const r = j.onLoss(loss("a", 2500), T);
   check(r.add === 125 && r.tickets === 2 && j.pot() === 100_125, "a 2,500 loss adds 5% (125) to the pot and earns 2 tickets", r);
   check(j.onLoss(loss("a", 400), T).tickets === 1, "a small loss still earns 1 ticket");
+  { const o = j.onLoss(loss("a", 3000, { crash: 1.1 }), T), p = j.onLoss(loss("a", 3000, { crash: 4.2 }), T);
+    check(o.add === 150 && o.tickets === 0 && p.add === 150 && p.tickets === 0 && j.view("a", T).tickets === 3, "a loss that wasn't an instant rug (1.10x or later) feeds the pot but earns no tickets"); }
   check(j.onLoss({ ...loss("a", 100), pnl: 500 }, T) === null && j.onLoss({ ...loss("a", 100), coin: "X" }, T) === null, "wins and other coins feed nothing");
   check(j.view("a", T).tickets === 3 && j.view("b", T).tickets === 0 && j.view(null, T).tickets === 0, "view shows my tickets for today");
 }

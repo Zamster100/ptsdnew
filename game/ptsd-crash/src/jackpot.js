@@ -1,7 +1,7 @@
 // Community jackpot: a pot that fills from everyone's losses, a daily draw, and the Pot Breaker.
 //
 //   The pot:      a slice (default 5%) of every loss is added to a counter. Players are never charged extra, it is a number.
-//   Tickets:      every losing round earns tickets (1 per 1,000 lost, at least 1). The tickets earned since the last 9 AM
+//   Tickets:      only an instant rug (crash under 1.1x) earns tickets (1 per 1,000 lost, at least 1). The tickets earned since the last 9 AM
 //                 (Eastern, same moment as the daily tasks reset) are that day's entries.
 //   Daily draw:   at 9 AM Eastern one ticket is drawn from yesterday's entries and its owner wins half the pot.
 //   Pot Breaker:  the first player to sell at 50x or higher takes the whole pot.
@@ -31,6 +31,7 @@ export function initJackpot({ db, coin = "CREDITS", dayKey, nextReset, nameOf, p
     breakerX: Math.max(1.01, num(process.env.JACKPOT_BREAKER_X, 50)),
     perTicket: Math.max(1, Math.floor(num(process.env.JACKPOT_TICKET_PER, 1000))),
     maxTickets: Math.max(1, Math.floor(num(process.env.JACKPOT_MAX_TICKETS_DAY, 500))),
+    instaUnder: Math.max(1, num(process.env.JACKPOT_INSTA_UNDER, 1.1)), // a crash under this many x is an "instant rug"
   };
   db.exec(`
     CREATE TABLE IF NOT EXISTS crash_jackpot (id INTEGER PRIMARY KEY CHECK (id = 1), pot INTEGER NOT NULL);
@@ -58,12 +59,14 @@ export function initJackpot({ db, coin = "CREDITS", dayKey, nextReset, nameOf, p
   };
   const potNow = () => q.pot.get().pot;
 
-  // A round just settled as a loss: feed the pot and hand out tickets. Returns { add, tickets } (nothing when it wasn't a loss).
+  // A round just settled as a loss: every loss feeds the pot, but lottery tickets only come from instant rugs (the crash came
+  // before the player could do anything). Returns { add, tickets } (nothing when it wasn't a loss).
   const onLoss = db.transaction((round, now = Date.now()) => {
     if (!cfg.on || !round || round.coin !== coin || !(round.pnl < 0)) return null;
     const loss = -round.pnl;
     const add = Math.floor(loss * cfg.share);
     if (add > 0) q.setPot.run(potNow() + add);
+    if (!(round.crash < cfg.instaUnder)) return { add, tickets: 0 };
     const tickets = Math.max(1, Math.floor(loss / cfg.perTicket));
     q.addTix.run(dayKey(now), round.player, Math.min(tickets, cfg.maxTickets), cfg.maxTickets);
     return { add, tickets };
@@ -123,7 +126,7 @@ export function initJackpot({ db, coin = "CREDITS", dayKey, nextReset, nameOf, p
     return {
       on: cfg.on, pot: potNow(), nextDrawAt: nextReset(now), day,
       tickets: player ? q.mine.get(day, player)?.n || 0 : 0, totalTickets: t.t, players: t.p,
-      share: cfg.share, dailyShare: cfg.dailyShare, breakerX: cfg.breakerX, perTicket: cfg.perTicket, maxTickets: cfg.maxTickets,
+      share: cfg.share, dailyShare: cfg.dailyShare, breakerX: cfg.breakerX, perTicket: cfg.perTicket, maxTickets: cfg.maxTickets, instaUnder: cfg.instaUnder,
       winners: q.winners.all(30),
     };
   }

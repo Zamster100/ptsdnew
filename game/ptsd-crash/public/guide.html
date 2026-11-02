@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Guide · PTSD Crash</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0e0f11">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Rubik+Glitch&display=swap" rel="stylesheet">
+<link rel="icon" href="img/ptsd-logo.webp">
+<link rel="stylesheet" href="style.css?v=64">
+<style>
+  body { min-height: 100svh; }
+  .dbar { position: relative; z-index: 5; }
+  .gd-wrap { position: relative; z-index: 1; width: min(860px, 100%); margin: 0 auto; padding: 18px 16px 50px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .gd-ban { border-radius: 24px; padding: 22px 20px 18px; background: radial-gradient(120% 160% at 10% 0%, rgba(240,81,80,.5), transparent 60%), radial-gradient(90% 140% at 100% 100%, rgba(232,163,23,.45), transparent 65%), #130d0d; box-shadow: 0 0 0 2px #6b2a2b, 0 0 38px rgba(240,81,80,.18); }
+  .gd-ban h1 { margin: 0; font: 400 38px/1 "Rubik Glitch", Manrope, sans-serif; color: #fff; text-shadow: 0 3px 16px rgba(0,0,0,.55); }
+  .gd-ban p { margin: 6px 0 0; color: rgba(255,255,255,.85); font-size: 13px; font-weight: 600; }
+  .toc { position: sticky; top: 0; z-index: 4; display: flex; gap: 6px; overflow-x: auto; padding: 8px 2px; background: linear-gradient(#0e0f11 70%, transparent); scrollbar-width: none; }
+  .toc::-webkit-scrollbar { display: none; }
+  .toc a { flex: none; text-decoration: none; color: var(--txt); font: 800 12px Manrope, sans-serif; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--bd); background: var(--panel2); }
+  .toc a:hover, .toc a.on { border-color: #F05150; background: #2a1416; }
+  .sec { background: linear-gradient(170deg, #17191e, #0a0b0d); border: 1px solid var(--bd); border-radius: 20px; padding: 16px 18px 18px; scroll-margin-top: 58px; }
+  .sec h2 { margin: 0 0 4px; font: 800 15px Manrope, sans-serif; letter-spacing: .06em; text-transform: uppercase; }
+  .sec h3 { margin: 16px 0 6px; font: 800 13px Manrope, sans-serif; color: #ffd54a; }
+  .sec p, .sec li { color: #cfd4dc; font-size: 14px; line-height: 1.6; font-weight: 500; }
+  .sec p { margin: 6px 0; } .sec ul, .sec ol { margin: 6px 0; padding-left: 20px; } .sec li { margin: 3px 0; }
+  .sec b { color: #fff; } .sec code { background: #0d0f12; border: 1px solid var(--bd); border-radius: 6px; padding: 1px 6px; font-size: 13px; color: #ffd54a; }
+  .formula { margin: 10px 0; padding: 12px 14px; border-radius: 12px; background: #0d0f12; border: 1px solid #3a2f12; font: 800 15px/1.5 Manrope, sans-serif; color: #ffd54a; overflow-x: auto; }
+  .formula small { display: block; margin-top: 4px; color: var(--mut); font-size: 12px; font-weight: 600; }
+  table.tb { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 13px; }
+  table.tb th { text-align: left; color: var(--mut); font: 800 11px Manrope, sans-serif; letter-spacing: .06em; text-transform: uppercase; padding: 6px 8px; border-bottom: 1px solid var(--bd); }
+  table.tb td { padding: 7px 8px; border-bottom: 1px solid #1f2023; color: #cfd4dc; font-variant-numeric: tabular-nums; font-weight: 600; }
+  table.tb tr.hl td { color: #fff; background: #1b1608; }
+  .scroll { overflow-x: auto; }
+  .calc { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin: 10px 0; }
+  .calc label { display: block; color: var(--mut); font: 800 11px Manrope, sans-serif; letter-spacing: .05em; text-transform: uppercase; }
+  .calc input, .calc select { width: 100%; margin-top: 4px; box-sizing: border-box; background: #0d0f12; border: 1px solid var(--bd); color: #fff; border-radius: 10px; padding: 9px 10px; font: 700 14px Manrope, sans-serif; }
+  .calc-out { padding: 12px 14px; border-radius: 12px; background: #0f2a1d; border: 1px solid #1d6b49; font: 800 16px/1.5 Manrope, sans-serif; color: #fff; }
+  .calc-out span { color: #3be38a; }
+  details { border: 1px solid var(--bd); border-radius: 12px; background: var(--panel2); margin-top: 6px; }
+  details summary { cursor: pointer; padding: 10px 12px; font-weight: 800; font-size: 14px; }
+  details p, details ul { padding: 0 12px 10px; margin: 0; }
+  .ag { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 6px; padding: 0 10px 10px; }
+  .ag div { display: flex; gap: 8px; align-items: baseline; font-size: 13px; color: #cfd4dc; } .ag em { font-style: normal; } .ag small { color: #ffd54a; font-weight: 800; margin-left: auto; white-space: nowrap; }
+  .note { border-left: 3px solid #e8a317; padding: 4px 12px; margin: 10px 0; color: #cfd4dc; font-size: 13px; background: rgba(232,163,23,.06); border-radius: 0 8px 8px 0; }
+  @media (max-width: 560px) { .gd-ban h1 { font-size: 28px; } .sec { padding: 14px; } }
+</style>
+</head>
+<body>
+<header class="dbar">
+  <a class="dbar-title" href="./" style="text-decoration:none"><img src="img/ptsd-logo.webp" alt="PTSD"><span>Crash</span></a>
+  <div class="dbar-right"><nav class="nv-wrap"><a class="nv" href="./">🎮<span> Play</span></a><a class="nv" href="tasks">🎯<span> Bounties</span></a><a class="nv" href="leaderboard">🏆<span> Leaderboard</span></a><a class="nv" href="rewards">🏅<span> Rewards</span></a><a class="nv on" href="guide">📖<span> Guide</span></a></nav></div>
+</header>
+<main class="gd-wrap">
+  <div class="gd-ban"><h1>Guide</h1><p>How everything works: the rules, the formulas and the numbers behind XP. Every number on this page is read live from the game.</p></div>
+  <nav class="toc" id="toc"></nav>
+  <div id="body"><div class="sec">Loading…</div></div>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+const fmt = (n) => Math.round(n).toLocaleString("en-US");
+const pct = (n) => (Math.round(n * 1000) / 10) + "%";
+const hm = (h) => { const p = h % 12 || 12; return p + ":00 " + (h < 12 ? "AM" : "PM") + " Eastern"; };
+const f = (html, note) => `<div class="formula">${html}${note ? `<small>${note}</small>` : ""}</div>`;
+
+function build(g) {
+  const S = [];
+  const add = (id, title, html) => S.push({ id, title, html });
+  const tiersRows = g.tiers.map((t) => `<tr><td>${esc(t.name)}</td><td>${t.min}+ Ticket${t.min > 1 ? "s" : ""}</td><td>x${t.mult}</td></tr>`).join("");
+
+  add("start", "Quick start", `
+    <ol>
+      <li>Choose your order size (${fmt(g.game.min)} to ${fmt(g.game.max)} credits).</li>
+      <li>Buy opens your position at <b>1.00x</b>.</li>
+      <li>The chart pumps and dumps, and your multiplier moves with it.</li>
+      <li>Sell any time to lock it in. If it crashes first, you get <b>rekt</b> and lose the bet.</li>
+      <li>Max win is <b>${g.game.maxMult}x</b>. If the chart gets there, you better sell at ${g.game.maxMult}x.</li>
+      <li>Cousin Dick trades on the same chart. He doesn't know when it crashes either.</li>
+    </ol>
+    <p>Your sell counts from the moment you tap, so lag doesn't cost you. <b>Sell 50%</b> locks in half your position at the current multiplier and lets the rest ride.</p>
+    ${f("Payout = bet x multiplier at your sell<br>PNL = payout - bet", "Win 2,000 at 3.00x: payout 6,000, PNL +4,000. Get rekt: PNL -2,000.")}
+    <h3>Every result is locked before you bet</h3>
+    <p>The crash point is locked in before your bet and nobody, not even us, can see it until the round ends. Tap any round in "Your rounds" to check it yourself: the game re-computes the crash point from the seeds and shows you the proof.</p>`);
+
+  add("cycles", "Cycles & prizes", `
+    <p>The campaign runs in <b>cycles</b>. Every cycle, everyone starts from the same <b>${fmt(g.cycles.bankroll)} credits</b>, so nobody starts behind. The leaderboard ranks you by <b>XP</b> earned in that cycle only (see below).</p>
+    <p>Finish in the <b>top 3</b> of a cycle to win cash: <b>$${fmt(g.cycles.prize)}</b> for the top 3 of each cycle.</p>
+    <p>A bad run never buries you: if your PNL is in the red you can reset it to 0 once every 24 hours by clearing a bounty. Your referral, task and bonus points stay.</p>`);
+
+  add("credits", "Getting credits", `
+    <ul>
+      <li><b>Starter credits:</b> ${fmt(g.credits.start)} to begin with.</li>
+      <li><b>Free claim:</b> ${fmt(g.credits.daily)} free credits every ${g.credits.hours} hours. Claimed credits never count as profit.</li>
+      <li><b>NFT bonus claims:</b> connect a wallet that holds PTSD Tickets for extra ${fmt(g.credits.daily)} claims: once a day with 1 Ticket, twice a day with 2, three times a day with 3 or more.</li>
+      <li><b>Level perks:</b> your free claims pay up to +30% more as you level up (see Levels &amp; perks).</li>
+      <li><b>Bounties, referrals, milestones, jackpot and bad beat refunds</b> also pay credits (see below).</li>
+    </ul>
+    <p>No real money is ever needed. The game uses credits. Sign in with X to play.</p>`);
+
+  add("xp", "XP: how your score works", `
+    <p><b>XP</b> is the one number the leaderboard ranks you on in a cycle.</p>
+    ${f("XP = (PNL + Referral points + Task points + Activity points) x Ticket multiplier")}
+    <table class="tb"><tr><th>Part</th><th>Where it comes from</th></tr>
+      <tr><td><b>PNL</b></td><td>Profit and loss from your rounds this cycle. It can be negative. Free claims never count.</td></tr>
+      <tr><td><b>Referral points</b></td><td>+${fmt(g.referrals.points)} for each friend who plays ${g.referrals.minRounds}+ rounds with a real X account, up to ${g.referrals.max} friends.</td></tr>
+      <tr><td><b>Task points</b></td><td>The XP value of each bounty you clear.</td></tr>
+      <tr><td><b>Activity points</b></td><td>Bonuses: win streaks, perfect sells, login streaks, achievements. Doubled during Double XP hour.</td></tr></table>
+    <h3>Ticket multiplier</h3>
+    <p>Holding PTSD Ticket NFTs multiplies your total:</p>
+    <div class="scroll"><table class="tb"><tr><th>Badge</th><th>Tickets held</th><th>Multiplier</th></tr>${tiersRows}</table></div>
+    <div class="note">The multiplier only applies while your total is <b>above zero</b>. It never makes a negative score worse.</div>
+    <h3>Try it</h3>
+    <div class="calc">
+      <div><label>PNL</label><input id="cPnl" type="number" value="12000"></div>
+      <div><label>Referral points</label><input id="cRef" type="number" value="5000"></div>
+      <div><label>Task points</label><input id="cTask" type="number" value="2000"></div>
+      <div><label>Activity points</label><input id="cAct" type="number" value="1500"></div>
+      <div><label>Tickets held</label><input id="cTix" type="number" min="0" value="2"></div>
+    </div>
+    <div class="calc-out" id="cOut"></div>
+    <h3>Rules that never change</h3>
+    <ul><li>A PNL reset zeroes only the PNL part. Referral, task and activity points are never cleared.</li>
+      <li>Bonus XP is paid as activity points. It never changes a payout and never counts as PNL.</li>
+      <li>Bonus XP is only paid while a cycle is running.</li></ul>`);
+
+  const rows = g.levels.map((l) => `<tr class="${g.stages.some((s) => s.from === l.n) ? "hl" : ""}"><td>${l.n}</td><td>${fmt(l.xp)}</td><td>${esc(l.stage)}</td></tr>`).join("");
+  const perks = g.perks.map((p) => `<tr><td>${esc(p.name)}</td><td>Level ${p.level}</td><td>+${p.claimPct}% on free claims</td></tr>`).join("");
+  add("levels", "Levels & perks", `
+    <p>Your <b>level</b> never goes down. It is built from <b>level XP</b>: the highest XP you reached in each cycle, added up over the whole campaign. A bad run, a PNL reset or a revoked task can't take a level away, and Cycle 2 starts from the level you earned in Cycle 1.</p>
+    ${f("Level XP needed for level n = 500 x (n - 1)<sup>1.8</sup>, rounded to the nearest 50", "Level 2 = 500, level 10 = " + fmt(g.levels[9].xp) + ", level 20 = " + fmt(g.levels[19].xp) + ", level 30 = " + fmt(g.levels[29].xp) + ".")}
+    <p>Every <b>5th level</b> is a new badge stage (highlighted below), and each stage unlocks a perk.</p>
+    <h3>Perks</h3>
+    <div class="scroll"><table class="tb"><tr><th>Stage</th><th>Unlocks at</th><th>Perk</th></tr>${perks}</table></div>
+    <p>Perks boost your free credit claims (the daily claim and the NFT bonus claims). The starter credits are not boosted. Perks only ever add credits; they never change the game.</p>
+    <details><summary>All 30 levels</summary><div class="scroll"><table class="tb"><tr><th>Level</th><th>Level XP needed</th><th>Stage</th></tr>${rows}</table></div></details>`);
+
+  const st = g.streaks, dx = g.doubleXp;
+  add("bonus", "Bonus XP", `
+    <p>Small XP bonuses for playing well and coming back. All of them are <b>activity points</b>.</p>
+    <h3>Win streak</h3>
+    <p>Every win that extends a streak of 2 or more wins in a row pays:</p>
+    ${f("Bonus = " + st.winStep + " x streak length (streak capped at " + st.winCap + ")", "3rd win in a row = " + fmt(st.winStep * 3) + " XP. At " + st.winCap + "+ wins in a row each win pays " + fmt(st.winStep * st.winCap) + " XP. A loss resets the streak.")}
+    <h3>Perfect sell</h3>
+    <p>Sell everything within <b>${st.perfectPct}%</b> of the crash point (at ${st.perfectMinX}x or more) and you earn <b>${fmt(st.perfectXp)} XP</b>.</p>
+    <h3>Login streak</h3>
+    <p>The first time you open the game each day (the day rolls over at 9 AM Eastern) pays:</p>
+    ${f("Bonus = " + st.loginStep + " x days in a row (capped at " + st.loginCap + ")", "Day 3 = " + fmt(st.loginStep * 3) + " XP. Day " + st.loginCap + "+ = " + fmt(st.loginStep * st.loginCap) + " XP a day. Miss a day and you start again at 1.")}
+    <h3>Achievements</h3>
+    <p>${g.achievements.length} one-time goals, each with a badge and an XP reward paid once. See the full list on the Rewards page.</p>
+    <details><summary>Show all achievements</summary>${[...new Set(g.achievements.map((a) => a.group))].map((grp) => `<h3 style="padding:0 12px">${esc(grp)}</h3><div class="ag">${g.achievements.filter((a) => a.group === grp).map((a) => `<div><em>${a.icon}</em><span><b>${esc(a.name)}</b> · ${esc(a.desc)}</span><small>+${fmt(a.xp)}</small></div>`).join("")}</div>`).join("")}</details>
+    <h3>Double XP hour</h3>
+    <p>Every day at <b>${hm(dx.hour)}</b> (the same moment the daily tasks reset) bonus XP is <b>${dx.mult}x</b> for ${dx.minutes >= 60 && dx.minutes % 60 === 0 ? dx.minutes / 60 + " hour" + (dx.minutes > 60 ? "s" : "") : dx.minutes + " minutes"}. It doubles win-streak bonuses, perfect sells, the daily login bonus and achievement bonuses. ${dx.tasks ? "Task points double too." : "Task points don't double."} Profit and referral points never do. The bonus is locked in when you earn it, so it keeps its doubled value afterwards.</p>`);
+
+  add("sentiment", "Fear & Greed sentiment", `
+    <p>The <b>Sentiment</b> button shows the mood of the room. When the game gets too hot or too cold, a window opens for a random 5 to 15 minutes and the button flashes <b style="color:#ff6b6b">red for Fear</b> or <b style="color:#3be38a">green for Greed</b>. Open it to see the meter and the history of past windows.</p>
+    <div class="note">Be fearful when everyone is greedy, and greedy when everyone is fearful.</div>
+    <p>It's a signal to read however you like. It runs alongside Double XP hour. There is no timer, so you never know how long a window lasts. Two achievements reward playing the mood well.</p>`);
+
+  const j = g.jackpot, bb = g.badBeat;
+  add("safety", "Jackpot, bad beats & milestones", `
+    ${bb ? `<h3>Bad beat refund</h3><p>Get rugged <b>${bb.count} times in a row</b> under <b>${bb.under}x</b> without selling anything, and your last bet is refunded in credits. The refund can happen once every ${bb.cooldownMin} minutes. It's credits only, never profit.</p>` : ""}
+    ${j ? `<h3>Community jackpot</h3>
+    <ul>
+      <li><b>${pct(j.share)}</b> of every loss goes into the pot. Nobody pays extra. The pot never drops below <b>${fmt(j.seed)}</b>.</li>
+      <li><b>Instant rugs</b> (the crash comes under <b>${j.instaUnder}x</b>) earn lottery tickets: <b>1 per ${fmt(j.perTicket)} lost</b> on that round (at least 1), up to ${fmt(j.maxTickets)} a day. Other losses feed the pot but earn no tickets. These are not the same as PTSD Ticket NFTs.</li>
+      <li>Every day at <b>9 AM Eastern</b> one lottery ticket is drawn. Its owner wins <b>${pct(j.dailyShare)}</b> of the pot.</li>
+      <li><b>Pot Breaker:</b> sell at <b>${j.breakerX}x or higher</b> and you take the <b>whole pot</b>.</li>
+    </ul>
+    ${f("Your chance in the daily draw = your tickets / all tickets today")}
+    <p>Jackpot credits go straight to your balance. They never count as profit, so they don't change your XP.</p>` : ""}
+    <h3>Community milestones</h3>
+    <p>Goals everyone plays toward. When one is reached, every player who has played a round can claim its reward once.</p>
+    <div class="scroll"><table class="tb"><tr><th>Goal</th><th>Reward for everyone</th></tr>${g.milestones.map((m) => `<tr><td>${fmt(m.goal)} ${m.track === "rounds" ? "rounds played by everyone" : "players joined"}</td><td>${fmt(m.reward)} credits</td></tr>`).join("")}</table></div>
+    <p>Big sells are celebrated too: whenever someone sells at <b>${g.game.bigWinX}x or more</b>, a popup appears at the bottom right with their name.</p>`);
+
+  add("friends", "Referrals & bounties", `
+    <h3>Referrals</h3>
+    <p>Share your link from your profile. Anyone who joins with your code gets <b>+${fmt(g.referrals.bonus)} bonus credits</b> on top of their starting credits. Each friend who plays at least ${g.referrals.minRounds} rounds with a real X account adds <b>+${fmt(g.referrals.points)}</b> referral points to your XP, up to ${g.referrals.max} friends.</p>
+    <h3>Bounties</h3>
+    <p>Bounties are tasks posted by the team. Clear one to earn credits and task points. They reset every day at 9 AM Eastern. Clearing the latest bounty also lets you reset your PNL to 0 (once every 24 hours).</p>
+    <h3>Connecting a wallet</h3>
+    <p>Open your profile and tap Connect. You sign a free message to prove the wallet is yours. Nothing is sent and no funds move. It's optional, and only your Ticket count is ever public, never your wallet address.</p>`);
+
+  const faq = [
+    ["How do I win?", "Finish in the top 3 of a cycle. The leaderboard ranks everyone by XP: your profit plus referral, task and bonus points, boosted by your Tickets."],
+    ["What are the prizes?", `$${fmt(g.cycles.prize)} in cash for the top 3 of each cycle. There are two cycles, 10 days each.`],
+    ["How do cycles work?", `Every cycle starts everyone from the same ${fmt(g.cycles.bankroll)} credits, so nobody starts behind. Your XP counts for that cycle only, and a bad run can be reset, so you are never buried.`],
+    ["How do I get credits?", `You start every cycle with ${fmt(g.cycles.bankroll)} credits. You can also claim ${fmt(g.credits.daily)} free credits every ${g.credits.hours} hours. Claimed credits never count as profit.`],
+    ["What do PTSD Ticket NFTs do?", "Holding Tickets multiplies your XP (up to x1.5) and unlocks NFT bonus claims: an extra free claim once a day with 1 Ticket, twice a day with 2, three times a day with 3 or more. You also get Ticket Holder badges that level up with how many you hold, shown on your profile."],
+    ["How do I connect my wallet?", "Open your profile and tap Connect. You sign a free message to prove the wallet is yours, nothing is sent and no funds move. It is optional, and only your Ticket count is ever public, never your wallet address."],
+    ["How do referrals work?", `Share your link from your profile. Anyone who joins with your code gets +${fmt(g.referrals.bonus)} bonus credits. Each friend who plays at least ${g.referrals.minRounds} rounds with a real X account adds +${fmt(g.referrals.points)} to your XP, up to ${g.referrals.max} friends.`],
+    ["Why do I need to connect my X account?", "That is how your progress is tracked. You can log in on desktop and mobile and play 24/7."],
+    ["What does the leaderboard track?", "XP in the current cycle: profit (PNL) + referral points + task points + bonus points, times your Ticket multiplier. Free claims do not count. If you are in the red you can reset your PNL to 0 once every 24 hours by clearing the latest bounty."],
+    ["Can my level go down?", "Never. Levels are built from the best XP you reached in each cycle, so bad runs and resets can't take them away."],
+    ["Do I need to bet real money?", "No, the game uses credits. Just sign in with X."],
+    ["How much can I play?", "As much as your credits allow. Run out and your next free claim is never more than 24 hours away."],
+    ["Can the result be rigged?", "Every result is locked in before you bet, and you can check any round yourself from \"Your rounds\"."],
+  ];
+  add("faq", "FAQ", faq.map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join(""));
+
+  const SHORT = { start: "Quick start", cycles: "Cycles", credits: "Credits", xp: "XP", levels: "Levels & perks", bonus: "Bonus XP", sentiment: "Sentiment", safety: "Jackpot & more", friends: "Referrals", faq: "FAQ" };
+  $("toc").innerHTML = S.map((s) => `<a href="#${s.id}">${esc(SHORT[s.id] || s.title)}</a>`).join("");
+  $("body").innerHTML = S.map((s) => `<section class="sec" id="${s.id}"><h2>${s.title}</h2>${s.html}</section>`).join("<div style=\"height:16px\"></div>");
+
+  const best = (n) => g.tiers.find((t) => n >= t.min);
+  const calc = () => {
+    const v = (id) => Number($(id).value) || 0, total = v("cPnl") + v("cRef") + v("cTask") + v("cAct"), tier = best(v("cTix"));
+    const m = total > 0 && tier ? tier.mult : 1;
+    $("cOut").innerHTML = `${fmt(total)} x ${m} = <span>${fmt(total * m)} XP</span>${tier ? ` <small style="color:var(--mut);font-weight:600">(${esc(tier.name)})</small>` : ""}${total <= 0 ? ` <small style="color:var(--mut);font-weight:600">(no multiplier while the total is zero or below)</small>` : ""}`;
+  };
+  document.querySelectorAll(".calc input").forEach((i) => i.addEventListener("input", calc)); calc();
+  if (location.hash) { const t = document.querySelector(location.hash); if (t) t.scrollIntoView(); }
+}
+fetch("api/guide").then((r) => r.json()).then(build).catch(() => { $("body").innerHTML = '<div class="sec">Couldn\'t load the guide. Try again.</div>'; });
+</script>
+<script src="doublexp.js?v=3"></script>
+<script src="jackpot.js?v=1"></script>
+<script src="sentiment.js?v=1"></script>
+<script src="sidepanel.js?v=5"></script>
+<script src="bigwins.js?v=1"></script>
+<script type="module" src="usermenu.js"></script>
+</body>
+</html>
