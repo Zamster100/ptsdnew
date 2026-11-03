@@ -780,7 +780,7 @@ let cfg = null, coin = "CREDITS", lim = { min: 100, max: 2500 }, balance = 0, se
 let round = null;   // the position on screen
 let history = [];
 
-function setBalance(b) { balance = b; $("balBottom").textContent = `${fmt(b)} ${coin}`; if (user) rankSoon(); }
+function setBalance(b) { balance = b; $("balBottom").textContent = fmt(b); if (user) rankSoon(); }
 // Top-bar rank: your place on the leaderboard (the campaign board while a campaign runs).
 let rankTimer = 0;
 async function refreshRank() {
@@ -800,7 +800,6 @@ function showStreak(st) {
   if (!st || !user) { $("stkPill").hidden = true; return; }
   $("stkWin").textContent = st.win > 0 ? `${st.win >= 10 ? "🔥🔥🔥" : st.win >= 5 ? "🔥🔥" : "🔥"} ${st.win}` : "–";
   $("stkWin").className = st.win > 0 ? "w" : "";
-  $("stkLogin").textContent = st.login > 0 ? `· 📅 Day ${st.login}` : "";
   $("stkPill").title = `Win streak: ${st.win} (best ${st.bestWin}). ${st.nextWin ? `Your next win pays +${fmt(st.nextWin)} XP.` : "Win two in a row to start earning XP."} Perfect sell (within ${st.perfect.pct}% of the crash, ${st.perfect.minX}x or more): +${fmt(st.perfect.xp)} XP. Daily login streak: ${st.login} day${st.login === 1 ? "" : "s"}, tomorrow +${fmt(st.nextLogin)} XP.`;
   $("stkPill").hidden = false;
 }
@@ -837,11 +836,7 @@ const raffleLine = (n) => (n > 0 ? `Even when you lose, you win. You won ${n} ra
 function badBeatToasts(list) { for (const b of list || []) toast(IMG.rekt2, `🍀 <b>Bad beat refund</b>: ${b.rugs} rugs in a row. <b>+${fmt(b.amount)}</b> back in your balance.`, 6000); }
 function loginToast(st) { if (st && st.loginAward) toast(IMG.me, `📅 <b>Day ${st.login} login streak</b> +${fmt(st.loginAward)} XP${st.boost > 1 ? `<br>⚡ <b>${st.boost}× Double XP hour</b>` : ""}`, 4200); }
 function showLevel(lv) {
-  if (!lv || !user) { $("lvlPill").hidden = true; return; }
-  $("lvlNum").textContent = lv.n;
-  $("lvlName").textContent = `· ${lv.name}${lv.next ? ` · ${lv.pct}%` : ""}`;
-  $("lvlLink").href = `p/${encodeURIComponent(user.username)}`;
-  $("lvlPill").hidden = false;
+  if (!lv || !user) return;
   if (lastLevel !== null && lv.n > lastLevel) {
     const newStage = lv.name !== lastStage;
     sfx.win();
@@ -1847,12 +1842,12 @@ function syncClaim() {
   const amt = fmt(((onb && onb.dailyAmount) || cfg.daily) / 1000);
   $("bonusBtn").textContent = `Claim ${amt}k`;
   $("bonusWait").hidden = locked || bReady;
-  if (!locked && !bReady) $("bonusWait").textContent = `next in ${untilTxt(bonus.claimAt)}`;
+  if (!locked && !bReady) $("bonusWait").textContent = `in ${untilTxt(bonus.claimAt)}`;
   const ready = now() >= (onb.claimAt || 0);
   $("claimBtn").hidden = !ready;
   $("claimBtn").textContent = `Claim ${amt}k`;
   $("claimWait").hidden = ready;
-  $("claimWait").textContent = `next in ${untilTxt(onb.claimAt)}`;
+  $("claimWait").textContent = `in ${untilTxt(onb.claimAt)}`;
 }
 setInterval(syncClaim, 30000);
 $("bonusLock").onclick = () => showOnb("nft", "info");

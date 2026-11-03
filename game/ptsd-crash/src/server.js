@@ -32,6 +32,8 @@ const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const PORT = Number(process.env.PORT || 3512);
 const BASE = (process.env.CRASH_BASE ?? "").replace(/\/+$/, ""); // e.g. "/crash", "" = site root
 const TEST = process.env.CRASH_TEST === "1";
+// Site password: everything except /admin (which has its own login) asks for it first. Set SITE_PASSWORD="" to turn it off.
+const SITE_PASSWORD = process.env.SITE_PASSWORD ?? "CrashTwo";
 const DB_PATH = process.env.DB_PATH || path.join(ROOT, "data/crash.db");
 const TEST_START = Number(process.env.TEST_START || 1_000_000);
 // Credits come from claims (starter pack + one every CLAIM_HOURS), see campaign.js.
@@ -670,10 +672,57 @@ function serveStatic(res, rel) {
   });
 }
 
+const GATE_COOKIE = "crash_gate";
+const gateToken = () => crypto.createHmac("sha256", "crash-gate-v1").update(SITE_PASSWORD).digest("hex");
+const gateOk = (req) => {
+  if (!SITE_PASSWORD) return true;
+  const m = /(?:^|;s*)crash_gate=([0-9a-f]{64})/.exec(req.headers.cookie || "");
+  return !!m && crypto.timingSafeEqual(Buffer.from(m[1]), Buffer.from(gateToken()));
+};
+const gateTries = new Map();   // ip -> { n, reset }: 10 wrong guesses per 10 minutes
+function gatePage(wrong, next) {
+  const esc = (v) => String(v).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>PTSD Crash</title>
+<style>body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0b0e14;color:#e6e9ef;font:16px system-ui,sans-serif}
+form{background:#141925;border:1px solid #232b3b;border-radius:12px;padding:28px;width:min(320px,86vw);text-align:center}
+h1{font-size:20px;margin:0 0 6px}p{margin:0 0 16px;color:#8a93a6;font-size:14px}
+input,button{width:100%;box-sizing:border-box;padding:11px;border-radius:8px;border:1px solid #2c3548;background:#0b0e14;color:inherit;font:inherit}
+button{margin-top:10px;background:#2ecc71;border-color:#2ecc71;color:#06210f;font-weight:700;cursor:pointer}.e{color:#ff5d6c;margin:10px 0 0;font-size:14px}</style></head>
+<body><form method="post" action="${BASE}/gate"><h1>PTSD Crash</h1><p>Enter the password to continue.</p>
+<input type="password" name="password" placeholder="Password" autofocus autocomplete="current-password"><input type="hidden" name="next" value="${esc(next)}">
+<button type="submit">Enter</button>${wrong ? '<div class="e">Wrong password.</div>' : ""}</form></body></html>`;
+}
+async function gateRoute(req, res, p, u) {
+  if (p === "/gate" && req.method === "POST") {
+    const ip = String(req.headers["x-forwarded-for"] || req.socket.remoteAddress || "").split(",")[0].trim(), now = Date.now();
+    let t = gateTries.get(ip); if (!t || t.reset < now) { t = { n: 0, reset: now + 600_000 }; gateTries.set(ip, t); }
+    const raw = await new Promise((ok) => { let b = ""; req.on("data", (c) => { if (b.length < 4096) b += c; }); req.on("end", () => ok(b)); });
+    const f = new URLSearchParams(raw), pw = f.get("password") || "";
+    const next = (f.get("next") || "").startsWith(BASE + "/") || f.get("next") === BASE + "/" ? f.get("next") : BASE + "/";
+    const a = crypto.createHash("sha256").update(pw).digest(), b = crypto.createHash("sha256").update(SITE_PASSWORD).digest();
+    if (t.n < 10 && crypto.timingSafeEqual(a, b)) {
+      res.writeHead(303, { location: next, "set-cookie": `${GATE_COOKIE}=${gateToken()}; Path=/; Max-Age=2592000; HttpOnly; SameSite=Lax${PUBLIC_URL.startsWith("https") ? "; Secure" : ""}` });
+      return res.end();
+    }
+    t.n++;
+    res.writeHead(t.n > 10 ? 429 : 401, { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" });
+    return res.end(gatePage(true, next));
+  }
+  if (p.startsWith("/api/")) return send(res, 401, { error: "Password required." });
+  res.writeHead(401, { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" });
+  res.end(gatePage(false, BASE + u.pathname.slice(BASE.length) + u.search));
+}
+
 const server = http.createServer(async (req, res) => {
   try {
     const u = new URL(req.url, "http://x");
     let p = u.pathname;
+    if (SITE_PASSWORD) {
+      const gp = BASE && p.startsWith(BASE + "/") ? p.slice(BASE.length) : p;
+      const open = gp === "/admin" || gp.startsWith("/api/admin/");
+      if (!open && !(gp === "/gate" && req.method === "POST") && !gateOk(req)) return await gateRoute(req, res, gp, u);
+      if (gp === "/gate" && req.method === "POST") return await gateRoute(req, res, gp, u);
+    }
     if (p.startsWith("/win/")) return await serveWin(req, res, p.slice(5));
     if (p.startsWith("/p/")) return await serveProfile(req, res, p.slice(3));
     if (BASE && p === BASE) { res.writeHead(301, { location: BASE + "/" }); return res.end(); }

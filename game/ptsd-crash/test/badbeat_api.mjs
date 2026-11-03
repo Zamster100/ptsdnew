@@ -10,7 +10,7 @@ const dir = fs.mkdtempSync(path.join(os.tmpdir(), "crash-bb-"));
 const PORT = 3581, B = `http://127.0.0.1:${PORT}/api/`;
 const now = Date.now();
 const srv = spawn(process.execPath, [path.join(ROOT, "src/server.js")], { cwd: ROOT, stdio: "ignore", env: {
-  ...process.env, PORT: String(PORT), HOST: "127.0.0.1", CRASH_BASE: "", CRASH_TEST: "1", CLAIMS: "1", DEMO_LOGIN: "1", X_CLIENT_ID: "", LOGIN_STEP: "0",
+  ...process.env, PORT: String(PORT), HOST: "127.0.0.1", CRASH_BASE: "", SITE_PASSWORD: "", CRASH_TEST: "1", CLAIMS: "1", DEMO_LOGIN: "1", X_CLIENT_ID: "", LOGIN_STEP: "0",
   DB_PATH: path.join(dir, "t.db"), LOG_DIR: path.join(dir, "logs"), MIN_BET: "100", MAX_BET: "1000", START_CREDITS: "0", DAILY_CREDITS: "10000",
   NFT_CONTRACT: "", NFT_RPC_URL: "", BAD_BEAT_COUNT: "2", BAD_BEAT_UNDER: "1000", BAD_BEAT_COOLDOWN_MIN: "0",
   CYCLES: JSON.stringify([{ id: 1, name: "Cycle 1", start: new Date(now - 1000).toISOString(), end: new Date(now + 900_000).toISOString() }]),

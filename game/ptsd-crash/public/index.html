@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&family=Manrope:wght@500;600;700;800&family=Nunito:wght@700;800;900&family=Rubik+Glitch&display=swap" rel="stylesheet">
 <link rel="icon" href="img/ptsd-logo.webp">
-<link rel="stylesheet" href="style.css?v=64">
+<link rel="stylesheet" href="style.css?v=66">
 </head>
 <body>
 <div class="boot" id="boot">
@@ -111,13 +111,12 @@
       <div class="chips" id="chips"></div>
     </div>
     <div class="trade-stats">
-      <div><span><i class="lg" style="font-style:normal">Account </i>Balance:</span><b id="balBottom">…</b></div>
-      <div><span>Season 2 PnL:</span><b id="pnlBottom">0</b><button class="claim-btn" id="pnlReset" type="button" hidden title="Reset your PNL to 0 by clearing a bounty">Reset</button></div>
-      <div id="rankPill" hidden><span>Rank:</span><a href="leaderboard" title="Open the leaderboard" style="color:inherit;text-decoration:none"><b id="rankNum">–</b> <span style="color:var(--mut);font-weight:700">/ <span id="rankTot">–</span></span></a></div>
-      <div id="lvlPill" hidden><span>Level:</span><a id="lvlLink" href="leaderboard" title="Your level never goes down" style="color:inherit;text-decoration:none"><b id="lvlNum">1</b> <span id="lvlName" style="color:var(--mut);font-weight:700"></span></a></div>
-      <div id="stkPill" hidden><span>Streak:</span><b id="stkWin">–</b> <span id="stkLogin" style="color:var(--mut);font-weight:700"></span></div>
-      <div class="claim" id="claimRow" hidden><span>Free credits:</span><button class="claim-btn" id="claimBtn" type="button">Claim</button><b id="claimWait"></b></div>
-      <div class="claim" id="bonusRow" hidden><span>NFT bonus credits:</span><button class="claim-btn lock" id="bonusLock" type="button" aria-label="Locked. Tap to see how to unlock">🔒</button><button class="claim-btn" id="bonusBtn" type="button" hidden>Claim</button><b id="bonusWait"></b></div>
+      <div><span>Balance</span><b id="balBottom">…</b></div>
+      <div><span>PNL</span><b id="pnlBottom">0</b><button class="claim-btn" id="pnlReset" type="button" hidden title="Reset your PNL to 0 by clearing a bounty">Reset</button></div>
+      <div id="rankPill" hidden><span>Rank</span><a href="leaderboard" title="Open the leaderboard" style="color:inherit;text-decoration:none"><b id="rankNum">–</b> <span style="color:var(--mut);font-weight:700">/ <span id="rankTot">–</span></span></a></div>
+      <div id="stkPill" hidden><span>Streak</span><b id="stkWin">–</b></div>
+      <div class="claim" id="claimRow" hidden><span>Daily</span><button class="claim-btn" id="claimBtn" type="button">Claim</button><b id="claimWait"></b></div>
+      <div class="claim" id="bonusRow" hidden><span>NFT Bonus</span><button class="claim-btn lock" id="bonusLock" type="button" aria-label="Locked. Tap to see how to unlock">🔒</button><button class="claim-btn" id="bonusBtn" type="button" hidden>Claim</button><b id="bonusWait"></b></div>
     </div>
   </footer>
 </main>
@@ -284,6 +283,6 @@
 <script src="sidepanel.js?v=6"></script>
 <script src="bigwins.js?v=1"></script>
 <script src="vendor/lwc.js"></script>
-<script type="module" src="app.js?v=104"></script>
+<script type="module" src="app.js?v=106"></script>
 </body>
 </html>

@@ -510,3 +510,10 @@ a.dbar-icon[hidden] { display: none; }
 .um-pop > :only-child { border-radius: 12px; }
 .um-pop > *:hover { background: var(--panel2); border-color: var(--gold); }
 .me-chip { cursor: pointer; }
+
+/* account block (desktop): one label per row, values on the right, buttons and timers pushed right */
+@media (min-width: 900px) {
+  .trade-stats .claim > :not(span), .trade-stats #pnlBottom { margin-left: auto; }
+  .trade-stats #pnlReset { margin-left: 8px; }
+  .trade-stats > div > span:first-child { min-width: 52px; }
+}

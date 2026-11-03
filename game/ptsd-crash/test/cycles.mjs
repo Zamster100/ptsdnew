@@ -11,7 +11,7 @@ const dir = fs.mkdtempSync(path.join(os.tmpdir(), "crash-cycles-"));
 const PORT = 3599, B = `http://127.0.0.1:${PORT}/api/`;
 const now = Date.now(), C1_END = now + 40_000;
 const env = {
-  ...process.env, PORT: String(PORT), HOST: "127.0.0.1", CRASH_BASE: "", CRASH_TEST: "1", CLAIMS: "1", DEMO_LOGIN: "1",
+  ...process.env, PORT: String(PORT), HOST: "127.0.0.1", CRASH_BASE: "", SITE_PASSWORD: "", CRASH_TEST: "1", CLAIMS: "1", DEMO_LOGIN: "1",
   DB_PATH: path.join(dir, "t.db"), LOG_DIR: path.join(dir, "logs"), MIN_BET: "100", MAX_BET: "1000",
   START_CREDITS: "0", DAILY_CREDITS: "10000", CLAIM_HOURS: "24", X_CLIENT_ID: "", LOGIN_STEP: "0", ACHIEVEMENTS: "0",
   CYCLES: JSON.stringify([
