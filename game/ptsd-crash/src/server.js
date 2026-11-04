@@ -689,7 +689,7 @@ h1{font-size:20px;margin:0 0 6px}p{margin:0 0 16px;color:#8a93a6;font-size:14px}
 input,button{width:100%;box-sizing:border-box;padding:11px;border-radius:8px;border:1px solid #2c3548;background:#0b0e14;color:inherit;font:inherit}
 button{margin-top:10px;background:#2ecc71;border-color:#2ecc71;color:#06210f;font-weight:700;cursor:pointer}.e{color:#ff5d6c;margin:10px 0 0;font-size:14px}</style></head>
 <body><form method="post" action="${BASE}/gate"><h1>PTSD Crash</h1><p>Enter the password to continue.</p>
-<input type="password" name="password" placeholder="Password" autofocus autocomplete="current-password"><input type="hidden" name="next" value="${esc(next)}">
+<input type="password" name="password" placeholder="Password" autofocus autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"><input type="hidden" name="next" value="${esc(next)}">
 <button type="submit">Enter</button>${wrong ? '<div class="e">Wrong password.</div>' : ""}</form></body></html>`;
 }
 async function gateRoute(req, res, p, u) {
@@ -697,14 +697,15 @@ async function gateRoute(req, res, p, u) {
     const ip = String(req.headers["x-forwarded-for"] || req.socket.remoteAddress || "").split(",")[0].trim(), now = Date.now();
     let t = gateTries.get(ip); if (!t || t.reset < now) { t = { n: 0, reset: now + 600_000 }; gateTries.set(ip, t); }
     const raw = await new Promise((ok) => { let b = ""; req.on("data", (c) => { if (b.length < 4096) b += c; }); req.on("end", () => ok(b)); });
-    const f = new URLSearchParams(raw), pw = f.get("password") || "";
+    const f = new URLSearchParams(raw), pw = (f.get("password") || "").trim().toLowerCase();
     const next = (f.get("next") || "").startsWith(BASE + "/") || f.get("next") === BASE + "/" ? f.get("next") : BASE + "/";
-    const a = crypto.createHash("sha256").update(pw).digest(), b = crypto.createHash("sha256").update(SITE_PASSWORD).digest();
+    const a = crypto.createHash("sha256").update(pw).digest(), b = crypto.createHash("sha256").update(SITE_PASSWORD.toLowerCase()).digest();
     if (t.n < 10 && crypto.timingSafeEqual(a, b)) {
       res.writeHead(303, { location: next, "set-cookie": `${GATE_COOKIE}=${gateToken()}; Path=/; Max-Age=2592000; HttpOnly; SameSite=Lax${PUBLIC_URL.startsWith("https") ? "; Secure" : ""}` });
       return res.end();
     }
     t.n++;
+    console.log(`[gate] wrong password (${pw.length} chars, attempt ${t.n}) from ${ip}`);
     res.writeHead(t.n > 10 ? 429 : 401, { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" });
     return res.end(gatePage(true, next));
   }
