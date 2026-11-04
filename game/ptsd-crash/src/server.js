@@ -687,9 +687,10 @@ function gatePage(wrong, next) {
 form{background:#141925;border:1px solid #232b3b;border-radius:12px;padding:28px;width:min(320px,86vw);text-align:center}
 h1{font-size:20px;margin:0 0 6px}p{margin:0 0 16px;color:#8a93a6;font-size:14px}
 input,button{width:100%;box-sizing:border-box;padding:11px;border-radius:8px;border:1px solid #2c3548;background:#0b0e14;color:inherit;font:inherit}
-button{margin-top:10px;background:#2ecc71;border-color:#2ecc71;color:#06210f;font-weight:700;cursor:pointer}.e{color:#ff5d6c;margin:10px 0 0;font-size:14px}</style></head>
+button{margin-top:10px;background:#2ecc71;border-color:#2ecc71;color:#06210f;font-weight:700;cursor:pointer}.sh{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:14px;color:#8a93a6;cursor:pointer}.sh input{width:auto;margin:0}.e{color:#ff5d6c;margin:10px 0 0;font-size:14px}</style></head>
 <body><form method="post" action="${BASE}/gate"><h1>PTSD Crash</h1><p>Enter the password to continue.</p>
-<input type="password" name="password" placeholder="Password" autofocus autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"><input type="hidden" name="next" value="${esc(next)}">
+<input id="pw" type="password" name="password" placeholder="Password" autofocus autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"><input type="hidden" name="next" value="${esc(next)}">
+<label class="sh"><input type="checkbox" onchange="document.getElementById('pw').type=this.checked?'text':'password'"> Show password</label>
 <button type="submit">Enter</button>${wrong ? '<div class="e">Wrong password.</div>' : ""}</form></body></html>`;
 }
 async function gateRoute(req, res, p, u) {
