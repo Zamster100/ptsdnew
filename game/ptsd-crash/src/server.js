@@ -676,7 +676,7 @@ const GATE_COOKIE = "crash_gate";
 const gateToken = () => crypto.createHmac("sha256", "crash-gate-v1").update(SITE_PASSWORD).digest("hex");
 const gateOk = (req) => {
   if (!SITE_PASSWORD) return true;
-  const m = /(?:^|;s*)crash_gate=([0-9a-f]{64})/.exec(req.headers.cookie || "");
+  const m = /(?:^|;\s*)crash_gate=([0-9a-f]{64})/.exec(req.headers.cookie || "");
   return !!m && crypto.timingSafeEqual(Buffer.from(m[1]), Buffer.from(gateToken()));
 };
 const gateTries = new Map();   // ip -> { n, reset }: 10 wrong guesses per 10 minutes
@@ -710,6 +710,7 @@ async function gateRoute(req, res, p, u) {
     res.writeHead(t.n > 10 ? 429 : 401, { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" });
     return res.end(gatePage(true, next));
   }
+  if (!p.startsWith("/api/") && !p.startsWith("/win/") && !p.startsWith("/p/")) console.log(`[gate] blocked ${req.method} ${p} cookies=[${(req.headers.cookie || "").split(";").map((c) => c.split("=")[0].trim()).filter(Boolean).join(",")}] site=${req.headers["sec-fetch-site"] || "-"} ref=${(req.headers.referer || "-").slice(0, 60)}`);
   if (p.startsWith("/api/")) return send(res, 401, { error: "Password required." });
   res.writeHead(401, { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" });
   res.end(gatePage(false, BASE + u.pathname.slice(BASE.length) + u.search));
