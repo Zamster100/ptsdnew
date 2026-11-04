@@ -1691,7 +1691,7 @@ function showBlocked(j) {
   if (url) $("blockedSupport").href = url;
   showOnb("blocked");
 }
-// No cycle running: say when the next one starts (or that Season 1 ended, before Cycle 1 exists).
+// No cycle running: say when the next one starts (or that no cycle is running).
 function fillOver() {
   const nx = cfg && cfg.nextCycle;
   if (!nx) return;

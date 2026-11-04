@@ -135,34 +135,17 @@
 <main class="lbp">
   <div class="lbp-head">
     <div><h1>Leaderboard</h1><p id="lbSub">Ranked by profit (PnL). Every round counts, wins and losses.</p></div>
-    <span class="lbp-play" id="lbPlay" aria-disabled="true" style="opacity:.4;cursor:not-allowed;box-shadow:none;background:#3a3b40">Season 1 over</span>
+    <span class="lbp-play" id="lbPlay" aria-disabled="true" style="opacity:.4;cursor:not-allowed;box-shadow:none;background:#3a3b40">Cycle ended</span>
   </div>
   <div class="over" id="over">
-    <h2>Season 1 of PTSD Crash is over.</h2>
-    <p>Congratulations to all the winners. The Top 25 will receive a Free Mint, and the Top 500 will be granted 1 GTD spot on the WL.</p>
-    <p>A snapshot has been taken and winners are under review. We are checking every account for botting and fairness, and any botted accounts and duplicates will be removed. Qualifying players from the Top 500 will be added to the WL.</p>
-    <p class="fine">If you were in the Top 500 and were removed, contact our <a href="https://discord.com/invite/ptsdshow" target="_blank" rel="noopener noreferrer" style="color:var(--teal)">Discord support</a> and we will review.</p>
-    <p><b>Final qualifying addresses will be uploaded on October 19th, 2026, after full review.</b></p>
-    <a class="go" href="/whitelist">Go to Whitelist</a>
+    <h2>No cycle is running right now.</h2>
+    <p>The next cycle is coming soon.</p>
   </div>
   <div class="camp" id="camp" hidden>
-    <div class="camp-top"><b>WL campaign</b><span id="campWhen"></span></div>
+    <div class="camp-top"><b>Leaderboard</b><span id="campWhen"></span></div>
     <div class="camp-clock" id="campClock"></div>
     <div class="camp-grid">
       <div><b id="campPlayers">0</b><span>Players on the board</span></div>
-    </div>
-    <div class="camp-prizes">
-      <div class="camp-prizes-h">Prizes</div>
-      <div class="prize-cards">
-        <div class="prize-card gold">
-          <div class="prize-ico">🏆</div>
-          <div><div class="prize-rank">TOP 25</div><div class="prize-big"><em>1 FREE MINT</em><br>+ 1 Guaranteed WL</div></div>
-        </div>
-        <div class="prize-card silver">
-          <div class="prize-ico">🎟️</div>
-          <div><div class="prize-rank">TOP 500</div><div class="prize-big"><em>1 Guaranteed WL</em></div></div>
-        </div>
-      </div>
     </div>
   </div>
   <div class="seg" id="seg">
@@ -205,9 +188,9 @@ let camp = null;
 function clock() {
   if (!camp) return;
   const ms = camp.end - Date.now();
-  if (ms <= 0) { $("campClock").innerHTML = `Snapshot taken<small>final results</small>`; return; }
+  if (ms <= 0) { $("campClock").innerHTML = `Final results<small>cycle over</small>`; return; }
   const d = Math.floor(ms / 864e5), h = Math.floor(ms / 36e5) % 24, m = Math.floor(ms / 6e4) % 60, s = Math.floor(ms / 1e3) % 60;
-  $("campClock").innerHTML = `${d}d ${String(h).padStart(2, "0")}h ${String(m).padStart(2, "0")}m ${String(s).padStart(2, "0")}s<small>until the snapshot</small>`;
+  $("campClock").innerHTML = `${d}d ${String(h).padStart(2, "0")}h ${String(m).padStart(2, "0")}m ${String(s).padStart(2, "0")}s<small>until it ends</small>`;
 }
 setInterval(clock, 1000);
 const cls = (n) => (n > 0 ? "w" : n < 0 ? "l" : "");
@@ -244,7 +227,7 @@ async function renderCycle(j) {
   const meUser = await mePromise;
   const you = !meUser ? "" : `<div class="you"><div class="you-h">Your position${j.mine ? ` <b>#${fmt(j.mine.rank)}</b> of ${fmt(j.players)}` : ""}</div><div class="tbl">${j.mine ? row(j.mine) : `<div class="you-none">You're not on this board yet. Play a round to get ranked.</div>`}</div></div>`;
   const list = j.top.length ? `<div class="tbl"><div class="tr th"><span>#</span><span>Player</span><span class="num hide-sm">Rounds</span><span class="num hide-sm">Best</span><span class="pnl">XP</span></div>${j.top.map(row).join("")}</div>` : `<div class="empty">No rounds this cycle yet. Be the first.</div>`;
-  $("board").innerHTML = head + podium + you + list + `<div class="foot2"><a href="?period=season1" style="color:var(--teal)">Season 1 results</a></div>`;
+  $("board").innerHTML = head + podium + you + list;
   cycleClock();
 }
 
@@ -326,24 +309,19 @@ async function load() {
     const st = !meUser ? "anon" : j.status;
     const DC = `<a href="https://discord.com/invite/ptsdshow" target="_blank" rel="noopener noreferrer" style="color:var(--teal)">Discord</a>`;
     const NOTES = {
-      mint: ["win", "Congratulations, you've won a Free Mint + a GTD spot!", `Your Free Mint will be airdropped to you within 24 hours of the mint, and you are also whitelisted for an additional 1 GTD spot. Final qualifying addresses are uploaded on October 19th, 2026.`],
-      gtd: ["win", "Congratulations, you've secured a GTD spot!", `You've won a Guaranteed (GTD) spot on the PTSD whitelist and your wallet has been whitelisted. Final qualifying addresses are uploaded on October 19th, 2026.`],
-      fcfs_priority: ["win", "Congratulations, you're on our FCFS priority list!", `Although you didn't qualify for a GTD spot, we saw your effort and have added you to our FCFS priority list. Thanks for playing Season 1.`],
-      moved: ["warn", "Your spot has been moved to the FCFS list", `We found that this account's wallet activity is linked to other accounts or showed automated behaviour. For this reason your GTD spot could not be secured and has been moved to the FCFS list. If you think this is an error, please reach out to us on ${DC}.`],
       suspended: ["warn", "X account suspended", `Sorry, the X account linked to this entry is suspended, and botted accounts are not permitted. If you think this is an error, please reach out to us on ${DC}.`],
     };
     const nt = st === "outcome" && NOTES[j.outcome];
     const noteHtml = nt ? `<div class="note ${nt[0]}"><h3>${nt[1]}</h3><p>${nt[2]}</p></div>` : "";
     const msg = {
       anon: `<div class="you-none">Sign in with X on the game page to see your position.</div>`,
-      none: `<div class="you-none">You didn't play a round this season, so you have no position.</div>`,
-      outside: `<div class="you-none">You finished outside the Top 500.</div>`,
-      review: `<div class="you-none">Your account is under review. If you think this is a mistake, contact our Discord support.</div>`,
+      none: `<div class="you-none">You didn't play a round, so you have no position.</div>`,
+            review: `<div class="you-none">Your account is under review. If you think this is a mistake, contact our Discord support.</div>`,
     }[st];
     const m = j.mine;
-    // prizes + total players stay visible; the old formula-based WL/mint counts and the clock don't apply any more
+    // prizes + total players stay visible; the clock doesn't apply any more
     $("camp").hidden = false;
-    $("campWhen").textContent = "Season 1 · final"; $("campClock").innerHTML = `Snapshot taken<small>under review</small>`;
+    $("campWhen").textContent = "Final"; $("campClock").innerHTML = `Final results<small>under review</small>`;
     $("campPlayers").textContent = fmt(j.players);
     const rowHtml = m ? `<div class="tbl"><div class="tr me"><span class="rk">${m.rank}</span><span class="who">${avatar(m)}<span>${handle(m)}</span></span><span class="num hide-sm">${fmt(m.rounds)}</span><span class="num hide-sm">${m.best ? m.best.toFixed(2) + "x" : "-"}</span><span class="pnl ${cls(m.net)}">${sgn(m.net)}</span></div></div>` : nt ? "" : `<div class="tbl">${msg}</div>`;
     const you = `<div class="you"><div class="you-h">${nt && !m ? "Your result" : "Your position"}${m ? ` <b>#${fmt(m.rank)}</b>${nt ? "" : ` <small style="color:var(--mut)">(provisional, pending review)</small>`}` : ""}</div>${rowHtml}${noteHtml}</div>`;
@@ -361,14 +339,13 @@ async function load() {
   $("camp").hidden = !camp || period !== "campaign";
   if (camp) {
     const end = new Date(camp.end);
-    // Same text for everyone, in New York time (the snapshot is 12pm ET).
-    $("campWhen").textContent = "Snapshot " + end.toLocaleString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric" }) + " · " + end.toLocaleString("en-US", { timeZone: "America/New_York", hour: "numeric" }).replace(" ", "") .toLowerCase() + " ET";
+    // Same text for everyone, in New York time (12pm ET).
+    $("campWhen").textContent = "Ends " + end.toLocaleString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric" }) + " · " + end.toLocaleString("en-US", { timeZone: "America/New_York", hour: "numeric" }).replace(" ", "") .toLowerCase() + " ET";
     $("campPlayers").textContent = fmt(camp.players);
     clock();
   }
   const isCamp = period === "campaign" && camp;
-  // prize badges follow the live counts: free mints go to the top N (N = mints so far), WLs to the top M
-  const badge = (r) => !isCamp ? "" : r.rank <= camp.mints ? `<span class="prize mint">MINT + WL</span>` : r.rank <= camp.wlSpots ? `<span class="prize wl">WL</span>` : "";
+    const badge = () => "";
   if (!j.top.length) { $("board").innerHTML = `<div class="empty">No rounds ${period === "all" ? "yet" : "in this period yet"}. Be the first.</div>`; return; }
   const pod = j.top.slice(0, 3);
   const order = pod.length === 3 ? [pod[1], pod[0], pod[2]] : pod;

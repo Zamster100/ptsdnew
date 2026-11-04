@@ -1,4 +1,4 @@
-// WL campaign: onboarding (X -> wallet -> social task -> how to play), free
+// Campaign setup: onboarding (X -> wallet -> social task -> how to play), free
 // credits (a starter pack, then one claim every CLAIM_HOURS), and the campaign
 // leaderboard window with its live prize counts.
 //
