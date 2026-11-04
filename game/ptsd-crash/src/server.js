@@ -702,7 +702,7 @@ async function gateRoute(req, res, p, u) {
     const next = (f.get("next") || "").startsWith(BASE + "/") || f.get("next") === BASE + "/" ? f.get("next") : BASE + "/";
     const a = crypto.createHash("sha256").update(pw).digest(), b = crypto.createHash("sha256").update(SITE_PASSWORD.toLowerCase()).digest();
     if (t.n < 10 && crypto.timingSafeEqual(a, b)) {
-      res.writeHead(303, { location: next, "set-cookie": `${GATE_COOKIE}=${gateToken()}; Path=/; Max-Age=2592000; HttpOnly; SameSite=Lax${PUBLIC_URL.startsWith("https") ? "; Secure" : ""}` });
+      res.writeHead(303, { location: next, "set-cookie": `${GATE_COOKIE}=${gateToken()}; Path=/; Max-Age=2592000; HttpOnly; ${PUBLIC_URL.startsWith("https") ? "SameSite=None; Secure" : "SameSite=Lax"}` });
       return res.end();
     }
     t.n++;
@@ -721,7 +721,8 @@ const server = http.createServer(async (req, res) => {
     let p = u.pathname;
     if (SITE_PASSWORD) {
       const gp = BASE && p.startsWith(BASE + "/") ? p.slice(BASE.length) : p;
-      const open = gp === "/admin" || gp.startsWith("/api/admin/");
+      // /auth/ stays open so the sign-in round trip through X can never be bounced by the gate.
+      const open = gp === "/admin" || gp.startsWith("/api/admin/") || gp.startsWith("/auth/");
       if (!open && !(gp === "/gate" && req.method === "POST") && !gateOk(req)) return await gateRoute(req, res, gp, u);
       if (gp === "/gate" && req.method === "POST") return await gateRoute(req, res, gp, u);
     }
