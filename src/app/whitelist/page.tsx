@@ -1,6 +1,5 @@
 import { TicketsHeader } from '@/components/sections/TicketsPage/TicketsHeader'
-import { MintCountdown } from '@/components/shared/MintCountdown'
-import { MINT_DATE, MINT_URL } from '@/lib/mint'
+import { MINT_URL } from '@/lib/mint'
 
 // The whitelist checker is retired — the list now lives on OpenSea.
 export default function WhitelistPage() {
@@ -34,9 +33,8 @@ export default function WhitelistPage() {
             The whitelist has been finalized and moved over to OpenSea. You will see which group you qualify for.
           </p>
           <p className="mt-5 font-mono text-[10px] font-bold uppercase tracking-[0.3em] text-ticket-gold md:text-xs">
-            Minting {MINT_DATE}
+            PTSD Non Fuddable Tickets · SOLD OUT
           </p>
-          <MintCountdown size="xl" className="mt-3" />
           <a
             href={MINT_URL}
             className="mt-5 inline-block rounded-lg bg-ticket-red px-6 py-2.5 font-sans text-sm font-bold text-white transition-opacity hover:opacity-80 md:px-8 md:text-base"

@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
-import { MINT_DATE, MINT_URL } from '@/lib/mint'
+import { MINT_URL } from '@/lib/mint'
 
 export const FinalCTASection = () => {
   return (
@@ -20,7 +20,7 @@ export const FinalCTASection = () => {
         </h2>
 
         <p className="font-manrope mx-auto mb-6 max-w-xl text-lg font-black uppercase text-white md:text-xl">
-          Minting {MINT_DATE} on{' '}
+          SOLD OUT · trade on{' '}
           <a href={MINT_URL} target="_blank" rel="noopener noreferrer" className="text-ticket-gold underline underline-offset-2">OpenSea</a>
         </p>
         <p className="font-manrope mx-auto mb-3 max-w-xl text-base leading-[1.75] text-light-text md:text-lg">

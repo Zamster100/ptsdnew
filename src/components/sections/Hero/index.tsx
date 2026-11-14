@@ -7,8 +7,6 @@ import { AnimatedBackground } from './components/AnimatedBackground'
 import { PlayIcon } from '@/components/icons/PlayIcon'
 import Image from 'next/image'
 import Logo from '@/public/images/hero/logo.png'
-import { MintCountdown } from '@/components/shared/MintCountdown'
-import { MINT_URL } from '@/lib/mint'
 
 interface HeroProps {
   originStoryRef: React.RefObject<HTMLDivElement | null>
@@ -93,7 +91,6 @@ export const Hero = ({ originStoryRef }: HeroProps) => {
               Play
             </Button>
           </div>
-          <MintNotice className="z-10 mt-2 lg:mt-3" />
         </div>
       </div>
       {/* Mobile */}
@@ -101,23 +98,6 @@ export const Hero = ({ originStoryRef }: HeroProps) => {
     </section>
   )
 }
-
-const MintNotice = ({ className = '' }: { className?: string }) => (
-  <div className={`flex flex-col items-start gap-2 ${className}`}>
-    <p className="font-manrope text-sm font-black uppercase tracking-wider text-ticket-gold lg:text-lg">
-      PTSD NFT Collection Minting in:
-    </p>
-    <MintCountdown />
-    <a
-      href={MINT_URL}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="text-xs font-semibold text-white/70 underline underline-offset-2 transition-colors hover:text-white"
-    >
-      View on OpenSea →
-    </a>
-  </div>
-)
 
 const MobileHero = ({ handlePlay }: { handlePlay: () => void }) => {
   return (
@@ -206,7 +186,6 @@ const MobileHero = ({ handlePlay }: { handlePlay: () => void }) => {
             Play
           </Button>
         </div>
-        <MintNotice className="z-10 mb-8" />
       </div>
     </div>
   )
