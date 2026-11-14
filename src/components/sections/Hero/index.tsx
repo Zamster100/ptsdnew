@@ -50,7 +50,7 @@ export const Hero = ({ originStoryRef }: HeroProps) => {
             <div className="bg-light-bg h-5 w-px" />
             <span>2026</span>
             <div className="bg-light-bg h-5 w-px" />
-            <span>12 Episodes</span>
+            <span>6 Episodes</span>
             <div className="bg-light-bg h-5 w-px" />
             <Badge
               theme="gray"
@@ -163,7 +163,7 @@ const MobileHero = ({ handlePlay }: { handlePlay: () => void }) => {
           <div className="bg-light-bg h-5 w-px" />
           <span>2026</span>
           <div className="bg-light-bg h-5 w-px" />
-          <span>12 Episodes</span>
+          <span>6 Episodes</span>
           <div className="bg-light-bg h-5 w-px" />
           <Badge
             theme="gray"
